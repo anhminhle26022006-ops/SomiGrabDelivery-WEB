@@ -1,6 +1,6 @@
 # 🇻🇳 LocalTaste Web
 
-### 🔔 **Three Belles**
+### 🌸 **Three Belles**
 
 #### *Three girls, one taste.*
 

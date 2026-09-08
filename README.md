@@ -1,4 +1,4 @@
-# 🇻🇳 LocalTaste
+# 🇻🇳 LocalTaste Web
 
 ### 🔔 **Three Belles**
 

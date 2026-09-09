@@ -1,6 +1,6 @@
 # 🇻🇳 LocalTaste Web
 
-### 🌸 **Three Belles**
+### **Three Belles**
 
 #### *Three girls, one taste.*
 
@@ -12,7 +12,7 @@ From traditional foods and regional specialties to unique local products, LocalT
 
 ---
 
-## 🌾 About LocalTaste
+## About LocalTaste
 
 Vietnam is a country rich in regional flavors, traditional products, local craftsmanship, and cultural heritage. Every region has its own unique specialties, yet many local products remain difficult to discover and access beyond their hometowns.
 
@@ -20,19 +20,19 @@ Vietnam is a country rich in regional flavors, traditional products, local craft
 
 Our platform creates a digital marketplace where customers can discover products by **category, region, seller, and story**, while local sellers gain an opportunity to introduce their products and reach a wider audience.
 
-### 🍵 Discover Local Flavors
+### Discover Local Flavors
 
 Explore authentic specialties and unique products from different regions of Vietnam.
 
-### 📍 Explore Their Origins
+### Explore Their Origins
 
 Discover where products come from and learn more about the places and traditions behind them.
 
-### 🏪 Meet Local Sellers
+### Meet Local Sellers
 
 Connect products with the local businesses, producers, and sellers who create and bring them to customers.
 
-### ❤️ Share the Experience
+### Share the Experience
 
 Leave reviews, save favorite products, and share your discoveries with the community.
 
@@ -41,7 +41,7 @@ Leave reviews, save favorite products, and share your discoveries with the commu
 
 ---
 
-# ✨ Why LocalTaste?
+# Why LocalTaste?
 
 ### More Than Just an Online Store
 
@@ -50,19 +50,19 @@ LocalTaste is designed not only as an e-commerce website, but as a **digital mar
 Every product has a story:
 
 ```text
-        📍 WHERE
+        WHERE
            │
        Where is it from?
            ↓
-        🏪 WHO
+        WHO
            │
        Who makes it?
            ↓
-        📖 WHY
+        WHY
            │
        Why is it special?
            ↓
-        ❤️ TASTE
+        TASTE
            │
        What makes it unique?
 ```

@@ -1,567 +1,935 @@
-# 🇻🇳 LocalTaste Web
+# 🚚 Somi Grab Delivery
 
-### **Three Belles**
+> **A Delivery Application for Part-Time Workers**
 
-#### *Three girls, one taste.*
+Somi Grab Delivery is a delivery platform that connects people who need to send packages with **part-time delivery workers (Part-time Shippers)**.
 
-> **Discover the place. Meet the maker. Taste the story.**
+The system allows customers to create delivery requests, provide pickup and delivery locations, calculate estimated delivery fees, make payments, and track their orders.
 
-**LocalTaste** is an e-commerce platform dedicated to authentic Vietnamese local specialties, connecting customers with regional products, local sellers, and the stories behind every product.
+Part-time shippers can browse available delivery requests, accept suitable orders, pick up packages, update delivery statuses, and manage their delivery history and earnings.
 
-From traditional foods and regional specialties to unique local products, LocalTaste makes it easier to **discover, explore, and shop the authentic taste of Vietnam** — all in one place.
-
----
-
-## About LocalTaste
-
-Vietnam is a country rich in regional flavors, traditional products, local craftsmanship, and cultural heritage. Every region has its own unique specialties, yet many local products remain difficult to discover and access beyond their hometowns.
-
-**LocalTaste was created to bring those products closer to everyone.**
-
-Our platform creates a digital marketplace where customers can discover products by **category, region, seller, and story**, while local sellers gain an opportunity to introduce their products and reach a wider audience.
-
-### Discover Local Flavors
-
-Explore authentic specialties and unique products from different regions of Vietnam.
-
-### Explore Their Origins
-
-Discover where products come from and learn more about the places and traditions behind them.
-
-### Meet Local Sellers
-
-Connect products with the local businesses, producers, and sellers who create and bring them to customers.
-
-### Share the Experience
-
-Leave reviews, save favorite products, and share your discoveries with the community.
-
-> **LocalTaste is more than a place to shop.**
-> **It is a place to discover the taste, culture, and stories of Vietnam. 🇻🇳**
+The project is developed using **Object-Oriented Programming (OOP)** and the **MVC architecture**, with **Bootstrap** for the user interface, **AJAX/JSON** for asynchronous communication, and **External APIs/Webservices** for location, distance, and payment services.
 
 ---
 
-# Why LocalTaste?
+## 📌 Table of Contents
 
-### More Than Just an Online Store
+* [Introduction](#-introduction)
+* [Project Objectives](#-project-objectives)
+* [Target Users](#-target-users)
+* [Main Features](#-main-features)
+* [Delivery Workflow](#-delivery-workflow)
+* [Technologies](#-technologies)
+* [System Architecture](#-system-architecture)
+* [API & Webservice Integration](#-api--webservice-integration)
+* [AJAX & JSON](#-ajax--json)
+* [Database](#-database)
+* [Project Structure](#-project-structure)
+* [Installation](#-installation)
+* [Git Workflow](#-git-workflow)
+* [Project Management](#-project-management)
+* [Team Members](#-team-members)
+* [Future Development](#-future-development)
 
-LocalTaste is designed not only as an e-commerce website, but as a **digital marketplace for Vietnamese local products**.
+---
 
-Every product has a story:
+# 📖 Introduction
+
+Somi Grab Delivery is a delivery platform designed to connect **customers who need to send packages** with **part-time delivery workers**.
+
+Customers can create delivery requests by providing pickup and delivery addresses, recipient information, package details, and delivery requirements.
+
+The system can use external map and distance services to determine locations, calculate the estimated distance and travel time, and estimate the delivery fee.
+
+After the order is created and the payment process is completed, available part-time shippers can view and accept suitable delivery requests.
+
+The shipper then picks up the package, transports it, updates the delivery status, and confirms successful delivery.
 
 ```text
-        WHERE
-           │
-       Where is it from?
-           ↓
-        WHO
-           │
-       Who makes it?
-           ↓
-        WHY
-           │
-       Why is it special?
-           ↓
-        TASTE
-           │
-       What makes it unique?
+Customer
+   │
+   │ Create Delivery Order
+   ▼
+Somi Grab Delivery
+   │
+   ├── Map / Location API
+   │
+   ├── Distance / Routing API
+   │
+   ├── Delivery Fee Calculation
+   │
+   └── Payment API
+   │
+   ▼
+Part-time Shipper
+   │
+   ├── Accept Order
+   ├── Pick Up Package
+   ├── Deliver Package
+   └── Complete Order
 ```
 
-Instead of simply asking:
+---
 
-> *"What should I buy?"*
+# 🎯 Project Objectives
 
-LocalTaste encourages customers to discover:
+The main objectives of Somi Grab Delivery are:
 
-> **"Where does it come from, who makes it, and what makes it special?"**
-
-Our goal is to make local products easier to **discover, access, appreciate, and share** — while creating new opportunities for local sellers.
+* Provide a simple platform for creating delivery requests.
+* Connect customers with part-time delivery workers.
+* Support pickup and delivery address management.
+* Calculate delivery distance and estimated travel time.
+* Calculate estimated delivery fees.
+* Support online payment through an external payment service.
+* Allow part-time shippers to find and accept available delivery orders.
+* Allow shippers to update delivery statuses.
+* Allow customers to track their delivery orders.
+* Provide order history for customers and shippers.
+* Allow customers to rate and review shippers.
+* Provide basic administration and management functions.
+* Apply Object-Oriented Programming principles.
+* Apply the MVC architecture.
+* Use AJAX and JSON for asynchronous operations.
+* Integrate existing external APIs/Webservices.
+* Support collaborative development through Git and GitHub.
 
 ---
 
-# 🚀 Core Features
+# 👥 Target Users
 
-## 👤 Customer Experience
+## 👤 Customer
 
-### 🔐 Account & Authentication
+Customers are users who need to send packages from one location to another.
 
-* Create an account
-* Login / Logout
-* Manage personal profile
-* Update account information
-* Manage password
+### Customer Features
 
-### 🔎 Product Discovery
-
-* Browse product catalog
-* Search products
-* Filter by category
-* Filter by region
-* Filter by price
-* Sort by price and rating
-* View detailed product information
-* Explore product origin and seller information
-
-### 🛒 Shopping
-
-* Add products to cart
-* Update product quantity
-* Remove products from cart
-* Save products to wishlist
-* Checkout
-* Confirm orders
-
-### 📦 Order Management
-
-* View order history
-* View order details
-* Track order status
-* Monitor purchasing activity
-
-### ⭐ Reviews & Community
-
-* Rate products
-* Write product reviews
-* Read customer reviews
-* Share shopping experiences
+* Register and log in.
+* Manage personal information.
+* Create delivery orders.
+* Enter pickup address.
+* Enter delivery address.
+* Enter recipient information.
+* Enter package information.
+* View estimated distance and travel time.
+* View estimated delivery fee.
+* Make payment.
+* Track delivery status.
+* View order history.
+* Rate and review shippers.
 
 ---
 
-# 🏪 Seller Center
+## 🛵 Part-time Shipper
 
-LocalTaste is designed with the potential to evolve into a **multi-vendor marketplace**, allowing local businesses and sellers to manage and promote their own products.
+Part-time shippers are users who want to accept delivery jobs flexibly during their available time.
 
-### Seller Features
+### Shipper Features
 
-* Create and manage seller profiles
-* Add new products
-* Edit product information
-* Remove products
-* Manage product inventory
-* Manage incoming orders
-* View customer reviews
-* Monitor product performance
-* Track sales
-
-The multi-vendor architecture provides a foundation for expanding LocalTaste from a single-store e-commerce website into a platform where **multiple local sellers can build and manage their own stores**.
+* Register as a shipper.
+* Manage personal information.
+* Set availability status.
+* View available delivery orders.
+* Search and filter delivery orders.
+* View order details.
+* Accept delivery orders.
+* Confirm package pickup.
+* Update delivery status.
+* Confirm successful delivery.
+* View delivery history.
+* View delivery earnings.
 
 ---
 
-# 👑 Admin Dashboard
+## 🧑‍💼 Administrator
 
-The Admin Dashboard provides centralized control over the entire platform.
+Administrators are responsible for managing and monitoring the platform.
 
-### 📂 Platform Management
+### Admin Features
 
-* Manage users
-* Manage sellers
-* Manage categories
-* Manage products
-* Manage orders
-* Manage reviews
+* Manage customers.
+* Manage shippers.
+* Manage delivery orders.
+* Manage order statuses.
+* Manage delivery areas.
+* Manage delivery fees.
+* Manage payment records.
+* Manage reviews.
+* Handle reports and delivery issues.
 
-### 📊 Dashboard & Analytics
+---
 
-Administrators can monitor important platform information such as:
+# ✨ Main Features
 
-* Total users
-* Total sellers
-* Total products
-* Total orders
-* Revenue
-* Best-selling products
-* Product categories
+## 1. Authentication & Authorization
 
-The administration system provides the foundation for maintaining product quality, managing platform activity, and monitoring overall business performance.
+The system provides:
+
+* User registration.
+* User login.
+* User logout.
+* Role-based access control.
+* Customer role.
+* Shipper role.
+* Admin role.
+* Personal profile management.
+
+---
+
+## 2. Create Delivery Order
+
+Customers can create a delivery request by entering:
+
+```text
+Pickup Address
+Delivery Address
+Recipient Information
+Package Type
+Package Weight
+Delivery Notes
+Preferred Delivery Time
+```
+
+The system can then use external location and routing services to process the provided addresses.
+
+---
+
+## 3. Distance & Delivery Fee Calculation
+
+The system integrates external map and routing services to support:
+
+* Address geocoding.
+* Coordinate identification.
+* Distance calculation.
+* Estimated travel time.
+* Delivery fee calculation.
+
+Example:
+
+```text
+Pickup Location:
+District 10
+
+Delivery Location:
+District 7
+
+Estimated Distance:
+6.8 km
+
+Estimated Duration:
+25 minutes
+
+Estimated Delivery Fee:
+35,000 VND
+```
+
+---
+
+## 4. Online Payment
+
+After the delivery fee is calculated, customers can proceed with payment through an external payment gateway.
+
+```text
+Create Order
+      ↓
+Calculate Delivery Fee
+      ↓
+Select Payment Method
+      ↓
+Payment API
+      ↓
+Payment Successful
+      ↓
+Update Payment Status
+      ↓
+Find Available Shipper
+```
+
+The project can use a **sandbox environment** for payment API integration during development and testing.
+
+### Payment Status
+
+```text
+PENDING
+   ↓
+PAID
+   │
+   ├── FAILED
+   │
+   └── CANCELLED
+```
+
+---
+
+# 5. Find & Accept Delivery Orders
+
+Part-time shippers can browse available delivery requests.
+
+Example:
+
+```text
+┌──────────────────────────────┐
+│       ORDER #SGD00125        │
+├──────────────────────────────┤
+│ Pickup: District 10          │
+│ Delivery: District 7         │
+│ Package: Documents           │
+│ Distance: 6.8 km             │
+│ Delivery Fee: 35,000 VND    │
+├──────────────────────────────┤
+│        [ ACCEPT ORDER ]      │
+└──────────────────────────────┘
+```
+
+Once a shipper accepts an order, the system updates the order status so that the order is no longer available to other shippers.
+
+---
+
+# 6. Delivery Status Tracking
+
+A delivery order can go through the following statuses:
+
+```text
+Order Created
+      ↓
+Payment Completed
+      ↓
+Finding Shipper
+      ↓
+Shipper Accepted
+      ↓
+Package Picked Up
+      ↓
+In Transit
+      ↓
+Delivered Successfully
+      ↓
+Customer Review
+```
+
+If a delivery cannot be completed:
+
+```text
+Shipper Accepted
+      ↓
+Delivery Failed
+      ↓
+Issue Handling
+```
+
+---
+
+# 7. Rating & Review
+
+After a successful delivery, customers can provide feedback about the shipper.
+
+Customers can:
+
+* Give a rating from 1 to 5 stars.
+* Write a review.
+* Submit feedback.
+
+The review information is stored in the database and can be displayed on the shipper's profile.
+
+---
+
+# 🔄 Delivery Workflow
+
+```text
+                         CUSTOMER
+                            │
+                            │ Create Order
+                            ▼
+                  ┌────────────────────┐
+                  │  SOMI GRAB         │
+                  │     DELIVERY       │
+                  └─────────┬──────────┘
+                            │
+                    Enter Addresses
+                            │
+                            ▼
+                    Map / Location API
+                            │
+                            ▼
+                  Distance / Routing API
+                            │
+                            ▼
+                    Calculate Delivery Fee
+                            │
+                            ▼
+                       Payment API
+                            │
+                            ▼
+                  Find Part-time Shipper
+                            │
+                            ▼
+                       Accept Order
+                            │
+                            ▼
+                       Pick Up Package
+                            │
+                            ▼
+                         In Transit
+                            │
+                            ▼
+                    Delivery Completed
+                            │
+                            ▼
+                      Customer Review
+```
+
+---
+
+# 🛠 Technologies
+
+| Technology               | Purpose                              |
+| ------------------------ | ------------------------------------ |
+| **PHP**                  | Backend development                  |
+| **OOP**                  | Object-Oriented Programming          |
+| **MVC**                  | Application architecture             |
+| **MySQL**                | Database management                  |
+| **HTML5**                | Web structure                        |
+| **CSS3**                 | Custom styling                       |
+| **Bootstrap**            | Responsive UI design                 |
+| **JavaScript**           | Client-side interaction              |
+| **AJAX**                 | Asynchronous communication           |
+| **JSON**                 | Data exchange format                 |
+| **Map API**              | Location and map services            |
+| **Distance/Routing API** | Distance and travel-time calculation |
+| **Payment API**          | Online payment integration           |
+| **Git**                  | Version control                      |
+| **GitHub**               | Source code and team collaboration   |
+
+---
+
+# 🏗 System Architecture
+
+Somi Grab Delivery follows the **MVC architecture** combined with Object-Oriented Programming.
+
+```text
+                         USER
+                           │
+                           ▼
+                          VIEW
+                           │
+                           ▼
+                      CONTROLLER
+                     /     |      \
+                    /      |       \
+                   ▼       ▼        ▼
+                MODEL     AJAX     SERVICE
+                  │         │       /    \
+                  │         │      /      \
+                  ▼         ▼     ▼        ▼
+              DATABASE    JSON   MAP     PAYMENT
+```
+
+## Model
+
+The Model layer manages application data and business logic.
+
+Main models include:
+
+* User
+* Order
+* OrderDetail
+* Shipper
+* Delivery
+* Address
+* Payment
+* Review
+
+---
+
+## View
+
+The View layer is responsible for displaying the user interface.
+
+Main interfaces include:
+
+* Customer interface.
+* Shipper dashboard.
+* Delivery management.
+* Admin dashboard.
+* Order management.
+* Payment interface.
+
+**Bootstrap** is used to build a responsive interface.
+
+---
+
+## Controller
+
+The Controller layer handles:
+
+* HTTP requests.
+* Input validation.
+* Model interaction.
+* Business processes.
+* External API requests.
+* AJAX requests.
+* JSON responses.
+* View navigation.
+
+---
+
+# 🌐 API & Webservice Integration
+
+The project uses **existing external APIs/Webservices** to extend the functionality of the delivery platform.
+
+## 🗺 Map / Location API
+
+The Map API can be used for:
+
+* Geocoding addresses.
+* Converting addresses into coordinates.
+* Displaying locations on a map.
+* Supporting route information.
+
+```text
+Address
+   ↓
+Geocoding API
+   ↓
+Latitude + Longitude
+```
+
+---
+
+## 📏 Distance / Routing API
+
+The Routing API can be used to calculate:
+
+* Distance between pickup and delivery locations.
+* Estimated travel duration.
+* Route information.
+
+```text
+Pickup Coordinates
+        +
+Delivery Coordinates
+        ↓
+Routing API
+        ↓
+Distance + Duration
+```
+
+---
+
+## 💳 Payment API
+
+The Payment API is used to support online delivery payments.
+
+```text
+Delivery Order
+      ↓
+Delivery Fee
+      ↓
+Payment Request
+      ↓
+Payment Gateway
+      ↓
+Payment Result
+      ↓
+Update Payment Status
+```
+
+The system should use a **sandbox environment** for development and testing.
 
 ---
 
 # ⚡ AJAX & JSON
 
-To provide a smoother and more responsive shopping experience, LocalTaste integrates **AJAX** for selected interactions without requiring unnecessary page reloads.
+AJAX is used to perform asynchronous operations without requiring the entire page to reload.
 
-### Example Request Flow
+## Example 1 – Calculate Distance
 
 ```text
-┌──────────────┐
-│    Client    │
-│ HTML / CSS   │
-│ JavaScript   │
-└──────┬───────┘
-       │
-       │ AJAX Request
-       ↓
-┌──────────────┐
-│  Controller  │
-└──────┬───────┘
-       │
-       ↓
-┌──────────────┐
-│    Model     │
-└──────┬───────┘
-       │
-       ↓
-┌──────────────┐
-│   Database   │
-└──────┬───────┘
-       │
-       │ JSON Response
-       ↓
-┌──────────────┐
-│  Update UI   │
-└──────────────┘
+Enter Addresses
+      ↓
+     AJAX
+      ↓
+Controller
+      ↓
+Routing API
+      ↓
+    JSON
+      ↓
+Frontend
 ```
 
-### AJAX Use Cases
+Example response:
 
-* 🔎 Product search
-* 🏷️ Product filtering
-* 🛒 Add to cart
-* 🔢 Update cart quantity
-* ❤️ Wishlist
-* ⭐ Product reviews
-* 💬 Comments
-
-Data exchanged between the client and server is structured using **JSON** where appropriate, providing lightweight and organized communication between the frontend and backend.
+```json
+{
+    "success": true,
+    "distance": 6.8,
+    "duration": 25,
+    "estimated_fee": 35000
+}
+```
 
 ---
 
-# 🏗️ System Architecture
-
-LocalTaste is developed using **Object-Oriented Programming (OOP)** and follows the **Model–View–Controller (MVC)** architectural pattern.
+## Example 2 – Accept Delivery Order
 
 ```text
-                         LOCAL TASTE
-                              │
-                              ↓
-                    ┌──────────────────┐
-                    │      CLIENT      │
-                    │ HTML / CSS / JS  │
-                    │    Bootstrap     │
-                    └────────┬─────────┘
-                             │
-                        AJAX / JSON
-                             │
-                             ↓
-                    ┌──────────────────┐
-                    │   CONTROLLER     │
-                    │       MVC        │
-                    └────────┬─────────┘
-                             │
-                             ↓
-                    ┌──────────────────┐
-                    │      MODEL       │
-                    │       OOP        │
-                    └────────┬─────────┘
-                             │
-                             ↓
-                    ┌──────────────────┐
-                    │     MySQL DB     │
-                    └──────────────────┘
+Shipper clicks "Accept Order"
+             ↓
+            AJAX
+             ↓
+      OrderController
+             ↓
+          Database
+             ↓
+            JSON
+             ↓
+     Update Order Status
 ```
 
-The architecture separates the **presentation layer, application logic, and data access layer**, making the system easier to maintain, test, and extend.
+Example response:
 
-This structure also provides a foundation for future features such as multi-vendor management, payment integration, recommendation systems, and mobile applications.
+```json
+{
+    "success": true,
+    "message": "Order accepted successfully",
+    "order_status": "ACCEPTED"
+}
+```
 
 ---
 
-# 🛠️ Technology Stack
+## AJAX Use Cases
 
-## 🎨 Frontend
+AJAX can be applied to:
 
-* HTML5
-* CSS3
-* JavaScript
-* Bootstrap 5
-* AJAX
-* JSON
+* Search delivery orders.
+* Filter orders by delivery area.
+* Calculate delivery distance.
+* Calculate delivery fees.
+* Accept delivery orders.
+* Update delivery status.
+* Update dashboard information.
+* Submit customer reviews.
+* Refresh available delivery orders.
 
-## ⚙️ Backend
+---
 
-* PHP
-* Object-Oriented Programming
-* MVC Architecture
+# 🗄 Database
 
-## 🗄️ Database
+The main database tables are planned as follows:
 
-* MySQL
+```text
+users
+shipper_profiles
+addresses
+orders
+order_details
+deliveries
+payments
+reviews
+areas
+```
 
-## 🔧 Development Tools
+## Main Relationships
 
-* Visual Studio Code
-* XAMPP
-* Git
-* GitHub
+```text
+USER
+ │
+ ├──────── CUSTOMER
+ │             │
+ │             └──── ORDERS
+ │                    │
+ │                    ├──── ORDER_DETAILS
+ │                    │
+ │                    ├──── PAYMENT
+ │                    │
+ │                    └──── DELIVERY
+ │                              │
+ │                              └──── SHIPPER
+ │
+ └──────── SHIPPER
+```
 
 ---
 
 # 📁 Project Structure
 
 ```text
-LocalTaste-Web-ThreeBelles/
-│
-├── app/
-│   ├── controllers/
-│   ├── models/
-│   ├── views/
-│   └── services/
+SomiGrabDelivery/
 │
 ├── config/
-│   └── database.php
+│   ├── Database.php
+│   └── ApiConfig.php
+│
+├── controllers/
+│   ├── AuthController.php
+│   ├── OrderController.php
+│   ├── ShipperController.php
+│   ├── DeliveryController.php
+│   ├── PaymentController.php
+│   └── ReviewController.php
+│
+├── models/
+│   ├── User.php
+│   ├── Order.php
+│   ├── OrderDetail.php
+│   ├── Shipper.php
+│   ├── Delivery.php
+│   ├── Payment.php
+│   └── Review.php
+│
+├── services/
+│   ├── MapService.php
+│   └── PaymentService.php
+│
+├── views/
+│   ├── auth/
+│   ├── customer/
+│   ├── shipper/
+│   ├── delivery/
+│   └── admin/
+│
+├── ajax/
+│   ├── search-order.php
+│   ├── calculate-distance.php
+│   ├── accept-order.php
+│   └── update-status.php
 │
 ├── public/
 │   ├── css/
 │   ├── js/
-│   ├── images/
-│   └── index.php
-│
-├── routes/
+│   └── images/
 │
 ├── database/
-│   └── localtaste.sql
+│   └── somi_grab_delivery.sql
 │
-├── .gitignore
-├── README.md
-└── index.php
+├── index.php
+└── README.md
 ```
-
-> The project structure may evolve during development as new modules, features, and services are introduced.
 
 ---
 
-# 🗄️ Data Model
+# 🚀 Installation
 
-The core system is organized around several key entities.
+## 1. Clone the Repository
+
+```bash
+git clone https://github.com/your-username/SomiGrabDelivery.git
+```
+
+## 2. Move the Project
+
+If using XAMPP:
 
 ```text
-                         User
-                          │
-             ┌────────────┼────────────┐
-             │            │            │
-             ↓            ↓            ↓
-           Order       Review      Wishlist
-             │            │            │
-             ↓            ↓            ↓
-       OrderDetail     Product ←────────┘
-                          │
-                          ↓
-                       Category
-
-                        Seller
-                          │
-                          ↓
-                       Product
+C:\xampp\htdocs\SomiGrabDelivery
 ```
 
-### Core Entities
-
-| Entity          | Purpose                                        |
-| --------------- | ---------------------------------------------- |
-| **User**        | Customer account and personal information      |
-| **Seller**      | Local business or product provider             |
-| **Product**     | Vietnamese local specialty or regional product |
-| **Category**    | Product classification                         |
-| **Order**       | Customer purchase                              |
-| **OrderDetail** | Products contained in an order                 |
-| **Review**      | Customer feedback and ratings                  |
-| **Wishlist**    | Products saved by customers                    |
-
-This data model provides a foundation for future marketplace functionality, including multiple sellers, product management, customer engagement, and business analytics.
-
 ---
 
-# 🌟 Future Roadmap
+## 3. Start XAMPP
 
-LocalTaste is designed with **scalability and real-world expansion** in mind.
-
-## Phase 1 — E-Commerce Foundation
-
-* [x] Product catalog
-* [x] Categories
-* [x] User authentication
-* [x] Shopping cart
-* [x] Order management
-* [x] Basic administration
-
-## Phase 2 — Better Shopping Experience
-
-* [ ] Advanced search
-* [ ] Wishlist
-* [ ] Product reviews
-* [ ] Seller profiles
-* [ ] Promotional campaigns
-* [ ] Discount vouchers
-* [ ] Flash sales
-
-## Phase 3 — Multi-Vendor Marketplace
-
-* [ ] Multiple independent sellers
-* [ ] Seller dashboard
-* [ ] Seller verification
-* [ ] Seller analytics
-* [ ] Seller order management
-* [ ] Seller storefronts
-
-## Phase 4 — Smart LocalTaste
-
-* [ ] Personalized product recommendations
-* [ ] AI-powered product search
-* [ ] Intelligent product suggestions
-* [ ] Customer–seller chat
-* [ ] Real-time notifications
-* [ ] Personalized shopping experience
-
-## Phase 5 — Real-World Integration
-
-* [ ] Online payment
-* [ ] Shipping service integration
-* [ ] Location and map services
-* [ ] Mobile application
-* [ ] Production deployment
-* [ ] External service integration
-
----
-
-# 📱 Web & Mobile Ecosystem
-
-LocalTaste is designed as a multi-platform ecosystem rather than being limited to a single web application.
+Start the following services:
 
 ```text
-                         LOCAL TASTE
-                              │
-                 ┌────────────┴────────────┐
-                 │                         │
-                WEB                     MOBILE
-                 │                         │
-         Online Shopping          Shopping On-the-Go
-                 │                         │
-                 └────────────┬────────────┘
-                              │
-                           DATABASE
-                              │
-                     ┌────────┴────────┐
-                     │                 │
-                Local Sellers    Local Products
-                     │                 │
-                     └────────┬────────┘
-                              ↓
-                  Authentic Vietnamese
-                       Local Taste 🇻🇳
+Apache
+MySQL
 ```
 
-### Related Repository
+---
 
-📱 **LocalTaste Mobile — Three Belles**
+## 4. Create the Database
 
-The mobile application extends the LocalTaste experience to smartphones, allowing customers to discover, explore, and shop for Vietnamese local products anytime and anywhere.
+Open phpMyAdmin:
+
+```text
+http://localhost/phpmyadmin
+```
+
+Create a database:
+
+```text
+somi_grab_delivery
+```
+
+Import:
+
+```text
+database/somi_grab_delivery.sql
+```
 
 ---
 
-# 🌐 Deployment
+## 5. Configure Database Connection
 
-LocalTaste is designed to be deployable on a shared hosting environment for real-world accessibility and demonstration.
+Open:
 
-### Deployment Objectives
+```text
+config/Database.php
+```
 
-* Web hosting
-* MySQL database
-* Public website access
-* Production configuration
-* Database deployment
-* Environment configuration
+Configure the database connection:
 
-> 🚀 **From a university project to a potential real-world marketplace.**
+```php
+private $host = "localhost";
+private $dbName = "somi_grab_delivery";
+private $username = "root";
+private $password = "";
+```
 
 ---
 
-# 🔀 Git Workflow
+## 6. Configure External APIs
 
-To maintain a clean and collaborative development process, **Three Belles** uses GitHub with feature branches.
+Open:
+
+```text
+config/ApiConfig.php
+```
+
+Configure the required API credentials.
+
+> **Important:** Do not commit real API keys or payment credentials to GitHub.
+
+---
+
+## 7. Run the Project
+
+Open:
+
+```text
+http://localhost/SomiGrabDelivery/
+```
+
+---
+
+# 🌿 Git Workflow
+
+GitHub is used for source-code management and team collaboration.
+
+## Branch Structure
 
 ```text
 main
- │
- └── develop
-       │
-       ├── feature/authentication
-       ├── feature/products
-       ├── feature/categories
-       ├── feature/cart
-       ├── feature/orders
-       ├── feature/admin
-       └── feature/ajax
+│
+└── develop
+     │
+     ├── feature/authentication
+     ├── feature/customer-order
+     ├── feature/shipper
+     ├── feature/delivery
+     ├── feature/map-api
+     ├── feature/payment
+     └── feature/admin
 ```
 
-Each feature is developed independently before being reviewed and merged into the development branch.
+## Development Workflow
 
-This workflow helps the team:
+```text
+Create Feature Branch
+        ↓
+Develop Feature
+        ↓
+Commit Changes
+        ↓
+Push Branch
+        ↓
+Create Pull Request
+        ↓
+Code Review
+        ↓
+Merge
+```
 
-* Keep development organized
-* Work on features independently
-* Reduce code conflicts
-* Track individual contributions
-* Maintain a clear development history
-
----
-
-# 👩‍💻 Team — Three Belles
-
-### 🔔 **Three Belles**
-
-#### *Three girls, one taste.*
-
-Three girls.
-Three perspectives.
-Three different ideas.
-**One shared vision.**
-
-We believe technology can do more than create convenient shopping experiences.
-
-It can also help people **discover local products, support local sellers, and connect with the stories and traditions behind Vietnamese specialties.**
-
-LocalTaste is our attempt to turn that idea into a real digital experience.
-
-> **Three minds. One vision. One LocalTaste. 🇻🇳**
+Each team member works on a separate feature branch and creates a Pull Request before merging changes into the shared development branch.
 
 ---
 
-# 📚 Academic Project
+# 📊 Project Management
 
-**Course:** Web Application Development
-**Project Type:** E-Commerce Website
-**Topic:** Vietnamese Local Specialty Marketplace
-**Team:** Three Belles
-**Project:** LocalTaste
+The project uses the following tools:
 
----
+* **GitHub** – Source code management.
+* **GitHub Branches** – Feature-based development.
+* **GitHub Issues / Projects** – Task management.
+* **Microsoft Teams** – Team communication.
+* **Shared Hosting** – Website and database deployment.
 
-# 💚 Our Vision
-
-> ### **Local products deserve a local story.**
-
-We envision LocalTaste as more than an e-commerce platform.
-
-We want it to become a place where people can:
-
-**Discover** unique Vietnamese products.
-**Connect** with local sellers.
-**Explore** the stories behind every product.
-**Support** local businesses.
-**Share** the taste of Vietnam.
-
-From a university project to a platform with real-world potential, LocalTaste is our first step toward making Vietnamese local products **easier to discover, easier to access, and easier to share with the world.**
+Screenshots of project management activities can be included in the final project report as evidence of team collaboration and progress.
 
 ---
 
-## 🇻🇳 LocalTaste × Three Belles
+# 🔮 Future Development
 
-> **Discover the place.**
-> **Meet the maker.**
-> **Taste the story.**
+Possible future improvements include:
 
-### 🔔 **Three Belles**
+* Real-time shipper location tracking.
+* Navigation support for shippers.
+* Automatic shipper-order matching.
+* Location-based order recommendations.
+* Advanced online payment support.
+* Shipper digital wallet.
+* Shipper reward system.
+* Real-time notifications.
+* Customer–shipper chat.
+* Delivery issue and complaint management.
+* Mobile applications for customers and shippers.
+* More advanced delivery analytics.
 
-### *Three girls, one taste.*
+---
 
-**LocalTaste — Bringing Vietnam's local taste closer to you. 🇻🇳**
+# 👥 Team Members
+
+| Member        | Role                     |
+| ------------- | ------------------------ |
+| Team Member 1 | Backend / MVC            |
+| Team Member 2 | Frontend / Bootstrap     |
+| Team Member 3 | Database / API           |
+| Team Member 4 | AJAX / Payment / Testing |
+
+> Team responsibilities may be updated during the development process.
+
+---
+
+# 📚 Project Information
+
+| Information           | Details                                    |
+| --------------------- | ------------------------------------------ |
+| **Project Name**      | Somi Grab Delivery                         |
+| **Project Type**      | Delivery Platform                          |
+| **Target Users**      | Customers & Part-time Shippers             |
+| **Architecture**      | OOP + MVC                                  |
+| **Backend**           | PHP                                        |
+| **Database**          | MySQL                                      |
+| **Frontend**          | HTML, CSS, JavaScript, Bootstrap           |
+| **Data Format**       | JSON                                       |
+| **Communication**     | AJAX                                       |
+| **External Services** | Map API, Distance/Routing API, Payment API |
+| **Version Control**   | Git & GitHub                               |
+
+---
+
+# 🎓 Academic Project
+
+Somi Grab Delivery is developed as a **Web Development course project**, focusing on:
+
+* Object-Oriented Programming.
+* MVC architecture.
+* Responsive web design with Bootstrap.
+* AJAX and JSON communication.
+* External API/Webservice integration.
+* Database management.
+* Git and GitHub collaboration.
+* Basic software development workflow.
+
+---
+
+## 📌 Project Scope
+
+The core scope of the project is:
+
+> **Connecting customers who need to send packages with part-time delivery workers through a web-based delivery platform.**
+
+The project focuses on the **delivery process**, rather than operating as an online product marketplace.
+
+**Somi Grab Delivery — Connecting deliveries with flexible part-time shippers.**

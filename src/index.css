@@ -1,0 +1,24 @@
+@import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap");
+@theme{--font-somi:"Be Vietnam Pro",ui-sans-serif,system-ui,sans-serif;}
+:root{font-family:"Be Vietnam Pro",ui-sans-serif,system-ui,sans-serif;color:#14284b;font-synthesis:none;text-rendering:optimizeLegibility;}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%;}
+body{margin:0;min-width:0;overflow-x:hidden;background:#f0f0f0;}
+img,video,svg{max-width:100%;}
+button,input,select,textarea{font:inherit;}
+button{cursor:pointer;}
+input,select,textarea{max-width:100%;}
+@media (max-width:640px){
+  body{font-size:15px;}
+  button{min-height:40px;}
+  input,select,textarea{min-height:42px;}
+  html,body,#root{width:100%;min-height:100%;overflow-x:hidden;}
+}
+:root{--somi-navy:#14284b;--somi-soft:#26364f;--somi-bg:#f0f0f0;--somi-line:rgba(20,40,75,.10)}
+body{color:var(--somi-navy)}
+::selection{background:rgba(20,40,75,.14);color:var(--somi-navy)}
+@media (max-width:640px){input,select,textarea{font-size:16px!important}}
+.lang-control svg{stroke-width:1.7}
+.somi-icon{stroke-width:1.7}
+

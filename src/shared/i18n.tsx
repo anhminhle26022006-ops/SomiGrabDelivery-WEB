@@ -93,7 +93,8 @@ auth: {
   }
 } as const;
 
-type Dictionary = typeof translations.en;
+type Widen<T> = T extends string ? string : T extends readonly (infer U)[] ? readonly Widen<U>[] : T extends object ? { [K in keyof T]: Widen<T[K]> } : T;
+type Dictionary = Widen<typeof translations.en>;
 const LanguageContext = createContext<{ lang: Language; setLang: (lang: Language) => void; t: Dictionary } | null>(null);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {

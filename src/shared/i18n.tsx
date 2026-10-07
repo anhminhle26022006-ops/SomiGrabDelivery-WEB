@@ -91,10 +91,9 @@ auth: {
       termsIntro: "Tôi đồng ý với", termsLink: "Điều khoản sử dụng", and: "và", privacyLink: "Chính sách bảo mật", terms: "Tôi đồng ý với Điều khoản sử dụng và Chính sách bảo mật của Somi.", secureNote: "Thông tin của bạn được bảo vệ và chỉ dùng cho việc thiết lập tài khoản.", passwordMismatch: "Mật khẩu xác nhận không khớp.", passwordTooShort: "Mật khẩu phải có ít nhất 8 ký tự.", termsRequired: "Vui lòng đồng ý với điều khoản để tạo tài khoản.", nationalIdInvalid: "Vui lòng nhập đúng 12 số CCCD.", vneidRequired: "Vui lòng hoàn tất xác thực VNeID/eKYC trước khi tiếp tục."
     }
   }
-} as const;
+};
 
-type Widen<T> = T extends string ? string : T extends readonly (infer U)[] ? readonly Widen<U>[] : T extends object ? { [K in keyof T]: Widen<T[K]> } : T;
-type Dictionary = Widen<typeof translations.en>;
+type Dictionary = typeof translations.en;
 const LanguageContext = createContext<{ lang: Language; setLang: (lang: Language) => void; t: Dictionary } | null>(null);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {

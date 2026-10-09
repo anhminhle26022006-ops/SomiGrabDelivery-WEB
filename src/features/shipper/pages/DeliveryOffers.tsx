@@ -1,0 +1,11 @@
+import { ArrowRight, Clock3, MapPin } from "lucide-react";
+import type { DeliveryOfferData } from "../../../shared/domain/types";
+import { formatVnd } from "../../../shared/utils";
+import { useShipperCopy } from "../i18n";
+import type { Language } from "../../../shared/i18n";
+
+interface Props { lang: Language; offers: DeliveryOfferData[]; onView: (id: string) => void; }
+export function DeliveryOffers({ lang, offers, onView }: Props) {
+  const c = useShipperCopy(lang).offers;
+  return <section className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-5 sm:py-8 md:px-8 md:py-12"><div className="mb-7"><p className="text-xs font-semibold uppercase tracking-[0.2em] text-[#14284b]/50">SOMI SHIPPER</p><h1 className="mt-2 text-2xl font-semibold tracking-[-0.04em] text-[#14284b] sm:text-3xl">{c.title}</h1><p className="mt-2 text-sm leading-6 text-slate-500">{c.description}</p></div><div className="grid gap-5 md:grid-cols-2">{offers.length ? offers.map(offer => <article key={offer.order.id} className="rounded-[2rem] border border-slate-200 bg-white p-5 shadow-sm sm:p-6"><div className="flex items-start justify-between gap-4"><div><span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">{c.new}</span><h2 className="mt-3 text-lg font-semibold text-[#14284b]">{offer.order.id}</h2></div><div className="text-right"><p className="text-xs text-slate-400">{c.earnings}</p><p className="mt-1 text-xl font-semibold text-[#14284b]">{formatVnd(offer.order.fee * .8)}</p></div></div><div className="mt-6 space-y-3 text-sm text-slate-600"><p className="flex items-start gap-2"><MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#14284b]" />{offer.order.pickup} <span className="text-slate-300">→</span> {offer.order.dropoff}</p><p className="flex items-center gap-2"><Clock3 className="h-4 w-4 text-[#14284b]" />{c.distance}: {offer.order.distanceKm} km · {c.eta}: {offer.etaMinutes} min</p></div><button onClick={() => onView(offer.order.id)} className="mt-6 flex w-full items-center justify-center gap-2 rounded-full bg-[#14284b] px-4 py-3 text-sm font-semibold text-white transition hover:bg-[#1d3968]">{c.view}<ArrowRight className="h-4 w-4" /></button></article>) : <div className="md:col-span-2 rounded-[2rem] border border-dashed border-slate-300 bg-white p-10 text-center text-sm text-slate-500">{c.noOffers}</div>}</div></section>;
+}

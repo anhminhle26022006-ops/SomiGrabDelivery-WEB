@@ -1,262 +1,69 @@
-<<<<<<< HEAD
-# SOMI Grab Delivery
-
-## Public website
-- `/` is public and does not require login.
-- Public menu: Home, How It Works, For Customers, For Shippers, Pricing.
-- Language switcher: Vietnamese / English.
-- Pricing is displayed in Vietnamese Dong (VND).
-- Customer/Shipper authenticated workspaces are entered from Send a Package / Become a Shipper.
-
-## Internal admin
-- `/admin`
-- `/internal/admin`
-- Admin is intentionally not shown in the public navigation or public role selector.
-
-## Run
-Use VS Code **NPM Scripts → dev → Run**. If PowerShell blocks `npm.ps1`, set the VS Code terminal profile to **Command Prompt**.
-=======
-# Somi Grab Delivery
-
-> Web-based delivery platform connecting customers with part-time shippers.
-
-## 1. Overview
-
-Somi Grab Delivery allows customers to create delivery orders, estimate fees, make payments, and track orders. Part-time shippers can view available orders, accept jobs, update delivery status, and manage delivery history.
-
-Academic project using OOP, MVC, Bootstrap, AJAX/JSON, MySQL, and external APIs.
-
-## 2. Main Features
-
-### Customer
-- Register / Login
-- Manage profile
-- Create delivery order
-- Calculate distance and delivery fee
-- Make payment
-- Track order
-- View order history
-- Rate and review shipper
-
-### Shipper
-- Register / Login
-- Manage profile
-- Set availability
-- View available orders
-- Accept orders
-- Confirm pickup
-- Update delivery status
-- Confirm delivery
-- View history and earnings
-
-### Admin
-- Manage customers and shippers
-- Manage orders and payments
-- Manage reviews
-- Manage delivery areas and fees
-- Handle delivery issues
-
-## 3. Delivery Flow
-
-Customer
-    ↓
-Create Order
-    ↓
-Calculate Distance & Fee
-    ↓
-Payment
-    ↓
-Find Shipper
-    ↓
-Shipper Accepts
-    ↓
-Pick Up
-    ↓
-In Transit
-    ↓
-Delivered
-    ↓
-Review
-
-## 4. Technologies
-
-| Technology | Purpose |
-|---|---|
-| PHP | Backend |
-| MySQL | Database |
-| HTML5 / CSS3 | Frontend |
-| Bootstrap | Responsive UI |
-| JavaScript | Client-side interaction |
-| AJAX | Asynchronous requests |
-| JSON | Data exchange |
-| OOP | Programming approach |
-| MVC | Application architecture |
-| Map / Routing API | Location and distance |
-| Payment API | Online payment |
-| Git / GitHub | Version control |
-
-## 5. Architecture
-
-The application follows an OOP + MVC structure.
-
-View
-  ↓
-Controller
-  ↓
-Model
-  ↓
-Database
-
-Controller
-  ↓
-Services
-  ├── Map / Routing API
-  └── Payment API
-
-## 6. Project Structure
-
-SomiGrabDelivery/
-│
-├── config/
-├── controllers/
-├── models/
-├── services/
-├── views/
-│   ├── auth/
-│   ├── customer/
-│   ├── shipper/
-│   ├── delivery/
-│   └── admin/
-│
-├── ajax/
-├── public/
-├── database/
-├── index.php
-└── README.md
-
-## 7. Database
-
-Main tables:
-
-users
-shipper_profiles
-addresses
-orders
-order_details
-deliveries
-payments
-reviews
-areas
-
-## 8. Installation
-
-### Requirements
-
-- PHP
-- MySQL
-- XAMPP
-- Git
-
-### Setup
-
-1. Clone the repository:
-
-git clone https://github.com/your-username/SomiGrabDelivery.git
-
-2. Move the project to:
-
-C:\xampp\htdocs\SomiGrabDelivery
-
-3. Start Apache and MySQL in XAMPP.
-
-4. Create database:
-
-somi_grab_delivery
-
-5. Import:
-
-database/somi_grab_delivery.sql
-
-6. Configure:
-
-config/Database.php
-
-7. Configure API credentials:
-
-config/ApiConfig.php
-
-Do not commit real API keys or payment credentials to GitHub.
-
-8. Open:
-
-http://localhost/SomiGrabDelivery/
-
-## 9. Git Workflow
-
-main
-  ↓
-develop
-  ↓
-feature/...
-
-Example:
-
-git checkout develop
-git checkout -b feature/customer-order
-
-git add .
-git commit -m "feat: add customer order"
-
-git push origin feature/customer-order
-
-Create a Pull Request before merging into develop.
-
-## 10. API Integration
-
-The system is designed to support:
-
-- Map / Location API
-- Distance / Routing API
-- Payment API
-
-Use sandbox/test environments during development where available.
-
-## 11. Future Development
-
-- Automatic shipper matching
-- Real-time location tracking
-- Real-time notifications
-- Customer–shipper chat
-- Digital wallet
-- Mobile application
-- Delivery analytics
-- AI-assisted matching and ETA
-
-## 12. Project Information
-
-Project: Somi Grab Delivery
-Type: Delivery Platform
-Backend: PHP
-Database: MySQL
-Frontend: HTML, CSS, JavaScript, Bootstrap
-Architecture: OOP + MVC
-Communication: AJAX / JSON
-APIs: Map, Routing, Payment
-Version Control: Git / GitHub
-
-## 13. Academic Project
-
-Somi Grab Delivery is an academic web development project focusing on:
-
-- Object-Oriented Programming
-- MVC architecture
-- Responsive web design
-- AJAX and JSON
-- External API integration
-- Database management
-- Git and GitHub collaboration
-
----
-
-Somi Grab Delivery — Connecting customers with flexible part-time shippers.
->>>>>>> 38317331cd2f8c39266186fc4259b2901cf3fb5c
+# SOMI Grab Delivery — PHP + TypeScript (Modular UI)
+
+Frontend-only project. React and Vite are not used. PHP renders the pages; HTML/CSS and JavaScript/TypeScript implement the interface. There is no backend API or database.
+
+## Run locally
+
+Requirements: PHP 8+, Node.js/npm (only for TypeScript compilation), and optionally XAMPP.
+
+### XAMPP
+1. Copy this folder into `C:\xampp\htdocs\SOMI-Grab-Delivery-PHP`.
+2. Start Apache.
+3. Open `http://localhost/SOMI-Grab-Delivery-PHP/`.
+
+### PHP development server
+From this directory:
+
+```bash
+php -S localhost:8000
+```
+
+Open `http://localhost:8000`.
+
+## Routes
+- `/?page=home`, `how`, `customers`, `shippers`, `pricing`: public pages
+- `/?page=auth`: shared sign-in/signup demo
+- `/?page=customer`: Customer workspace
+- `/?page=shipper` and `/?page=shipper&view=...`: Shipper workspace/views
+- `/?page=admin`: Admin workspace
+
+## Module ownership
+
+```text
+app/
+  Views/
+    shared/       # public website + shared authentication (FROZEN)
+    customer/     # Customer UI
+    shipper/      # Shipper UI
+    admin/        # Admin UI
+public/assets/
+  css/
+    app.css       # current shared design baseline (FROZEN)
+    modules/
+      customer.css
+      shipper.css
+      admin.css
+  js/
+    app.js        # current existing interaction runtime; preserve behavior
+resources/ts/
+  app.ts          # existing typed helpers
+  modules/
+    shared/       # shared contracts/utilities; coordinate before changes
+    customer/     # Customer-only TypeScript
+    shipper/      # Shipper-only TypeScript
+    admin/        # Admin-only TypeScript
+```
+
+## Collaboration rules
+
+- Shared UI is frozen: do not change `app.css`, public pages, shared auth, navigation, language selector, or global interactions without explicit approval.
+- Module owners should edit only their own `app/Views/<module>/`, `public/assets/css/modules/<module>.css`, and `resources/ts/modules/<module>/`.
+- Scope CSS to the module root (`.customer-workspace`, `.shipper-workspace`, `.admin-workspace`). Avoid global element selectors and `!important` overrides.
+- Do not change `index.php`, routing, shared templates, or shared runtime without coordinating with the integrator.
+- Preserve existing functions and demo behavior; no functionality may be removed without approval.
+
+## TypeScript
+The browser runtime remains in `public/assets/js/app.js` to preserve current behavior. Module TypeScript entrypoints are created as safe extension points and do not yet replace the existing runtime. Compile using the TypeScript compiler available in your environment. No React or Vite is used.
+
+## Limitations
+This is a frontend demo only. Authentication, OTP, eKYC, payment, delivery tracking, chat persistence, and admin authorization are not connected to a backend/database.

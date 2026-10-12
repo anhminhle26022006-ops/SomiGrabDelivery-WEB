@@ -1,0 +1,4 @@
+Options -Indexes
+DirectoryIndex index.php
+RewriteEngine On
+RewriteRule ^admin/?$ index.php?page=admin [L,QSA]

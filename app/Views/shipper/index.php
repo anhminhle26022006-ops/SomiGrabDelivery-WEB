@@ -1,39 +1,53 @@
 <?php
-$views = [
-'dashboard'=>['Dashboard','Your delivery day, at a glance.'],
-'offers'=>['Delivery offers','Review nearby delivery requests and choose the offers that work for you.'],
-'detail'=>['Offer detail','Review the route, package information and estimated earnings before accepting.'],
-'active'=>['Active delivery','Follow the current delivery and update its progress.'],
-'history'=>['Delivery history','Review completed and previous deliveries.'],
-'earnings'=>['Earnings','Review your demo earnings by day, week or month.'],
-'account'=>['Account','Manage your personal and vehicle information.'],
-'registration'=>['Shipper registration','Complete the steps required for your shipper profile.'],
-'chat'=>['Chat','Message support about a delivery.'],
-'support'=>['Support center','Find help for your delivery and account.'],
-'cancel'=>['Cancel account','Review the account cancellation information.'],
-'withdraw'=>['Withdraw earnings','Review the demo withdrawal form.'],
-'report'=>['Report an issue','Tell us what happened with a delivery.']
-];
-$current = $views[$shipperView];
-$shipperNav = ['dashboard'=>'Dashboard','offers'=>'Delivery offers','active'=>'Active delivery','history'=>'Delivery history','earnings'=>'Earnings','account'=>'Account'];
+// Shipper module UI based on the approved responsive shipper demo.
 ?>
-<header class="workspace-header"><a class="brand" href="?page=home"><strong>SOMI</strong><span>DELIVERY</span></a><nav><?php foreach ($shipperNav as $key=>$label): ?><a class="<?= $shipperView === $key ? 'active' : '' ?>" href="<?= linkTo('shipper',['view'=>$key]) ?>" data-shipper-nav="<?= e($key) ?>"><?= e($label) ?></a><?php endforeach; ?></nav><div class="header-actions"><span class="user-pill" data-i18n="shipperRole">◉ Shipper</span><div class="shipper-avatar-menu"><button class="avatar-trigger" type="button" data-avatar-toggle aria-expanded="false" aria-label="Account menu">◉</button><div class="avatar-dropdown" data-avatar-menu hidden><div class="avatar-summary"><strong>Nguyễn Minh</strong><span data-i18n="shipperRole">Shipper account</span></div><a href="<?= linkTo('shipper',['view'=>'account']) ?>" data-i18n="personalInfo">Personal information</a><a href="<?= linkTo('shipper',['view'=>'account']) ?>" data-i18n="accountLabel">Account</a><a href="<?= linkTo('shipper',['view'=>'registration']) ?>" data-i18n="vehicleInfo">Vehicle information</a><a href="<?= linkTo('shipper',['view'=>'support']) ?>" data-i18n="supportCenter">Support center</a><a href="<?= linkTo('shipper',['view'=>'cancel']) ?>" data-i18n="cancelAccount">Cancel account</a><a href="<?= linkTo('shipper',['view'=>'chat']) ?>" data-i18n="chat">Chat</a><button type="button" data-signout data-i18n="signout">Sign out</button></div></div></div></header>
-<main class="workspace">
-  <div class="workspace-heading"><p class="eyebrow dark-eyebrow" data-i18n="shipperWorkspace">SHIPPER WORKSPACE</p><h1 data-shipper-title><?= e($current[0]) ?></h1><p data-shipper-subtitle><?= e($current[1]) ?></p></div>
-  <?php if ($shipperView === 'dashboard' || $shipperView === 'earnings'): ?>
-    <div class="period-tabs" role="group" aria-label="Earnings period"><button class="active" data-period="day">Day</button><button data-period="week">Week</button><button data-period="month">Month</button></div>
-    <section class="stat-grid"><article class="stat-card"><span>Completed deliveries</span><strong data-stat="orders">12</strong><small>Across selected period</small></article><article class="stat-card"><span>Earnings</span><strong data-stat="income">₫420,000</strong><small>Demo figures</small></article><article class="stat-card"><span>Active hours</span><strong data-stat="hours">4.8h</strong><small>Across selected period</small></article><article class="stat-card"><span>Acceptance rate</span><strong data-stat="rate">98%</strong><small>Demo figures</small></article></section>
-  <?php endif; ?>
-  <?php if ($shipperView === 'dashboard' || $shipperView === 'offers'): ?>
-    <section class="panel orders-panel"><div class="panel-heading"><div><p class="eyebrow dark-eyebrow">NEARBY NETWORK</p><h2>Delivery offers</h2></div><span class="status status-green">AVAILABLE</span></div><div class="offer-list" data-offers><article class="offer-row"><div class="offer-route"><span class="route-point"></span><div><strong>District 1</strong><small>Pickup · SOMI-240126</small></div><span class="route-line"></span><span class="route-point route-point-end"></span><div><strong>District 3</strong><small>Drop-off · 3 km</small></div></div><div class="offer-meta"><strong>₫42,000</strong><span>~12 min</span><div class="offer-actions"><button class="button button-light button-small" data-offer-action="reject">Skip</button><button class="button button-dark button-small" data-offer-action="accept">Accept</button></div></div></article><p class="empty-state" data-no-offers hidden>No more demo offers available.</p></div></section>
-  <?php elseif ($shipperView === 'active' || $shipperView === 'detail'): ?>
-    <section class="panel"><div class="panel-heading"><div><p class="eyebrow dark-eyebrow">SOMI-240126</p><h2><?= $shipperView === 'detail' ? 'Delivery offer details' : 'Current delivery' ?></h2></div><span class="status status-blue" data-active-status>MATCHING</span></div><div class="detail-grid"><div><span class="detail-label">Pickup</span><strong>Phu Nhuan</strong></div><div><span class="detail-label">Drop-off</span><strong>District 3</strong></div><div><span class="detail-label">Distance</span><strong>3 km</strong></div><div><span class="detail-label">Estimated earnings</span><strong>₫42,000</strong></div></div><div class="action-row"><button class="button button-light" data-offer-action="reject">Reject offer</button><button class="button button-dark" data-offer-action="accept">Accept delivery <span>→</span></button><button class="button button-dark" data-delivery-progress hidden>Mark picked up</button></div></section>
-  <?php elseif ($shipperView === 'history'): ?>
-    <section class="panel"><div class="panel-heading"><h2>Previous deliveries</h2></div><div class="table-wrap"><table><thead><tr><th>Order</th><th>Route</th><th>Date</th><th>Earnings</th><th>Status</th></tr></thead><tbody><tr><td>SOMI-240121</td><td>District 1 → District 4</td><td>Today, 09:20</td><td>₫38,000</td><td><span class="status status-green">COMPLETED</span></td></tr><tr><td>SOMI-240118</td><td>Phu Nhuan → District 3</td><td>Yesterday</td><td>₫45,000</td><td><span class="status status-green">COMPLETED</span></td></tr></tbody></table></div></section>
-  <?php elseif ($shipperView === 'account' || $shipperView === 'registration'): ?>
-    <section class="panel"><div class="panel-heading"><div><p class="eyebrow dark-eyebrow">PROFILE</p><h2><?= e($current[0]) ?></h2></div><span class="status status-amber">DEMO PROFILE</span></div><form class="profile-form" data-demo-form><div class="form-two"><div class="field"><label for="shipper-name">Full name</label><input id="shipper-name" value="Nguyễn Minh"></div><div class="field"><label for="shipper-phone">Phone number</label><input id="shipper-phone" value="090 123 4567"></div></div><div class="form-two"><div class="field"><label for="vehicle-type">Vehicle type</label><select id="vehicle-type"><option>Motorbike</option><option>Car</option></select></div><div class="field"><label for="vehicle-number">Vehicle number</label><input id="vehicle-number" value="59A1-123.45"></div></div><div class="field"><label for="national-id">CCCD / National ID number</label><input id="national-id" placeholder="12-digit number"></div><button class="button button-dark" type="submit">Save demo changes</button><p class="muted" data-form-feedback role="status"></p></form></section>
-  <?php else: ?>
-    <section class="panel"><div class="panel-heading"><div><p class="eyebrow dark-eyebrow">SUPPORT & ACCOUNT</p><h2><?= e($current[0]) ?></h2></div></div><form data-demo-form class="profile-form"><div class="field"><label for="subject">Subject</label><input id="subject" placeholder="Briefly describe your request" required></div><div class="field"><label for="message">Details</label><textarea id="message" rows="5" placeholder="Add more information" required></textarea></div><?php if ($shipperView === 'withdraw'): ?><div class="field"><label for="amount">Withdrawal amount (₫)</label><input id="amount" type="number" min="1" placeholder="100000" required></div><?php endif; ?><button class="button button-dark" type="submit">Submit demo request</button><p class="muted" data-form-feedback role="status"></p></form></section>
-  <?php endif; ?>
-  <div class="quick-links"><a href="<?= linkTo('shipper',['view'=>'registration']) ?>">Registration <span>→</span></a><a href="<?= linkTo('shipper',['view'=>'chat']) ?>">Chat <span>→</span></a><a href="<?= linkTo('shipper',['view'=>'support']) ?>">Support center <span>→</span></a><a href="<?= linkTo('shipper',['view'=>'report']) ?>">Report issue <span>→</span></a><a href="<?= linkTo('shipper',['view'=>'withdraw']) ?>">Withdraw <span>→</span></a><a href="<?= linkTo('shipper',['view'=>'cancel']) ?>">Cancel account <span>→</span></a></div>
+
+<header class="topbar">
+  <div class="brand">SOMI <small>DELIVERY</small></div>
+
+  <div class="top-actions">
+    <button class="iconbtn" id="bellBtn" title="Thông báo" aria-label="Thông báo">🔔<span class="badge-count" id="bellCount">3</span></button>
+    <div class="profile">
+      <button class="profilebtn" id="profileBtn" aria-expanded="false">
+        <span class="avatar" id="avatar"><span>NA</span></span>
+      </button>
+      <div class="dropdown" id="profileDropdown">
+        <div class="drophead"><strong>Nguyễn Văn A</strong><span>Quản lý tài khoản & trợ giúp</span></div>
+        <button data-profile-action="account">👤 Tài khoản & hồ sơ</button>
+        <button data-profile-action="support">🎧 Trung tâm hỗ trợ</button>
+        <button data-profile-action="policy">📄 Chính sách & điều khoản</button>
+        <button class="danger" data-profile-action="logout">↪ Đăng xuất</button>
+      </div>
+    </div>
+  </div>
+</header>
+<div class="layout">
+<aside id="sidebar">
+  <div class="side-label">KHÔNG GIAN NGƯỜI GIAO</div>
+  <a class="sidebtn<?= $shipperPage === 'dashboard' ? ' active' : '' ?>" href="?page=shipper&amp;view=dashboard" data-page="dashboard" aria-controls="page-dashboard"<?= $shipperPage === 'dashboard' ? ' aria-current="page"' : '' ?>><span>⌂</span>Tổng quan</a>
+  <a class="sidebtn<?= $shipperPage === 'offers' ? ' active' : '' ?>" href="?page=shipper&amp;view=offers" data-page="offers" aria-controls="page-offers"<?= $shipperPage === 'offers' ? ' aria-current="page"' : '' ?>>Đơn giao phù hợp</a>
+  <a class="sidebtn<?= $shipperPage === 'active' ? ' active' : '' ?>" href="?page=shipper&amp;view=active" data-page="active" aria-controls="page-active"<?= $shipperPage === 'active' ? ' aria-current="page"' : '' ?>>Đơn đang giao</a>
+  <a class="sidebtn<?= $shipperPage === 'history' ? ' active' : '' ?>" href="?page=shipper&amp;view=history" data-page="history" aria-controls="page-history"<?= $shipperPage === 'history' ? ' aria-current="page"' : '' ?>>Lịch sử giao hàng</a>
+  <a class="sidebtn<?= $shipperPage === 'earnings' ? ' active' : '' ?>" href="?page=shipper&amp;view=earnings" data-page="earnings" aria-controls="page-earnings"<?= $shipperPage === 'earnings' ? ' aria-current="page"' : '' ?>>Thu nhập</a>
+  <div class="asidebottom">
+    <div class="statusrow"><strong>Trạng thái nhận đơn</strong><button class="toggle on" id="availabilityToggle" aria-label="Bật tắt nhận đơn"></button></div>
+    <div style="margin-top:8px"><span class="pill" id="availabilityPill">ĐANG NHẬN ĐƠN</span></div>
+    <p class="muted" style="font-size:11px;margin:8px 0 0" id="availabilityHelp">Bạn sẽ nhận được các đơn phù hợp khi trực tuyến.</p>
+  </div>
+</aside>
+<main>
+  <?php require __DIR__ . '/pages/' . $shipperPage . '.php'; ?>
 </main>
+</div>
+<div id="contactModal" class="modalback hidden" role="dialog" aria-modal="true" aria-labelledby="contactTitle">
+  <div class="modal">
+    <div class="modalhead"><div><h2 id="contactTitle">Liên hệ người nhận</h2><span class="muted" style="font-size:11px">Đơn SOMI-240126 · Nguyễn Minh Anh</span></div><button class="outline" onclick="closeContactChat()">✕</button></div>
+    <div class="modalbody">
+      <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:12px"><a class="primary blue" href="tel:0900000000" style="text-decoration:none">☎ Gọi người nhận</a><span class="pill">Chat trong đơn hàng</span></div>
+      <div class="chatmessages" id="chatMessages"><div class="bubble">Chào anh/chị, tôi là shipper của đơn SOMI-240126. Tôi đang đến điểm giao hàng.</div><div class="bubble mine">Tôi đã đến nơi, anh/chị có thể nhận hàng chưa ạ?</div></div>
+      <form class="chatcompose" id="chatForm"><input id="chatInput" placeholder="Nhập tin nhắn cho người nhận..." autocomplete="off" required><button class="primary blue" type="submit">Gửi</button></form>
+      <p class="muted" style="font-size:11px;margin-bottom:0">Chat và gọi điện chỉ mô phỏng trong demo; số điện thoại cần được lấy từ dữ liệu đơn hàng khi tích hợp thật.</p>
+    </div>
+  </div>
+</div>
+<div id="toast" style="position:fixed;right:20px;bottom:20px;background:#142c53;color:#fff;padding:13px 17px;border-radius:12px;box-shadow:0 8px 30px #0002;z-index:100;display:none;max-width:360px"></div>

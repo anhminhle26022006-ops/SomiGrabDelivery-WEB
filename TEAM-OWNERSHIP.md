@@ -1,36 +1,21 @@
 # SOMI UI Team Ownership
 
-The frontend is split by role to reduce merge conflicts.
+Project uses PHP views with separated CSS/JavaScript by role. Keep each contributor inside their owned module to reduce Git conflicts.
 
-```text
-src/
-├── features/
-│   ├── customer/   # Customer UI
-│   │   └── CustomerApp.tsx
-│   ├── shipper/    # Shipper UI
-│   │   └── ShipperApp.tsx
-│   ├── admin/      # Admin UI
-│   │   └── AdminApp.tsx
-│   └── auth/       # Shared authentication/legal flow
-├── shared/         # Shared UI/domain/i18n/config
-└── App.tsx         # Thin router/orchestrator only
-```
+## Ownership map
 
-## Team rule
+- **Customer owner:** `app/Views/customer/**`, `public/assets/css/modules/customer.css`, customer-specific scripts only.
+- **Shipper owner:** `app/Views/shipper/**`, `public/assets/css/modules/shipper.css`, `public/assets/js/shipper.js`, `resources/ts/modules/shipper/**`.
+- **Admin owner:** `app/Views/admin/**`, `public/assets/css/modules/admin.css`, admin-specific scripts only.
+- **Integration owner:** `index.php`, `.htaccess`, `app/Views/shared/**`, `public/assets/css/app.css`, `public/assets/js/app.js`, `resources/ts/app.ts`, `tsconfig.json`, and `package.json` if added later.
 
-- Customer work: edit `src/features/customer/**`.
-- Shipper work: edit `src/features/shipper/**`.
-- Admin work: edit `src/features/admin/**`.
-- Shared components/i18n/domain: coordinate before editing.
-- Avoid editing `src/App.tsx` for normal role UI work.
-- Integration changes to `App.tsx` should be small and agreed by the team.
+## Rules
 
-## Suggested Git branches
+1. Do not edit another role's folder or module assets without coordinating with its owner.
+2. Keep role-specific CSS and JavaScript in the role's own files; do not add role-specific styles/handlers to shared files.
+3. Changes to routing, shared authentication, global layout, or shared styles require an integration-owner review.
+4. Avoid committing generated files or unrelated formatting changes. Review `git diff --name-only` before committing.
+5. Use one branch per module: `feature/admin-*`, `feature/shipper-*`, `feature/customer-*`.
+6. Merge through pull requests and test all three role entry points after integration.
 
-```text
-feature/customer-*
-feature/shipper-*
-feature/admin-*
-```
-
-This keeps most commits isolated to one feature folder and reduces conflict risk when three people work in parallel.
+This division reduces overlapping edits; it cannot guarantee zero conflicts if multiple branches edit the same integration file.

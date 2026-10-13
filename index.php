@@ -1,6 +1,23 @@
 <?php
 declare(strict_types=1);
 
+// Let PHP's built-in server serve real CSS/JS/image files directly when this
+// file is used as its router (php -S localhost:3000 index.php).
+if (PHP_SAPI === 'cli-server') {
+    $requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
+    if (is_string($requestPath) && $requestPath !== '/') {
+        $decodedPath = rawurldecode($requestPath);
+        $candidate = realpath(__DIR__ . DIRECTORY_SEPARATOR . ltrim($decodedPath, '/\\'));
+        $root = realpath(__DIR__);
+        if ($candidate !== false && $root !== false
+            && str_starts_with($candidate, $root . DIRECTORY_SEPARATOR)
+            && is_file($candidate)
+            && !str_ends_with(strtolower($candidate), '.php')) {
+            return false;
+        }
+    }
+}
+
 $page = $_GET['page'] ?? 'home';
 $allowedPages = ['home', 'how', 'customers', 'shippers', 'pricing', 'auth', 'customer', 'shipper', 'admin'];
 if (!in_array($page, $allowedPages, true)) {
@@ -8,8 +25,15 @@ if (!in_array($page, $allowedPages, true)) {
     $page = 'home';
 }
 $shipperView = $_GET['view'] ?? 'dashboard';
-$allowedShipperViews = ['dashboard','offers','detail','active','history','earnings','account','registration','chat','support','cancel','withdraw','report'];
+$allowedShipperViews = ['dashboard','offers','detail','active','history','earnings','account','registration','chat','support','cancel','withdraw','report','notifications'];
 if (!in_array($shipperView, $allowedShipperViews, true)) $shipperView = 'dashboard';
+$shipperViewPages = [
+    'dashboard' => 'dashboard', 'offers' => 'offers', 'detail' => 'active', 'active' => 'active',
+    'history' => 'history', 'earnings' => 'earnings', 'account' => 'account', 'registration' => 'account',
+    'chat' => 'active', 'support' => 'active', 'cancel' => 'active', 'withdraw' => 'earnings',
+    'report' => 'earnings', 'notifications' => 'notifications',
+];
+$shipperPage = $shipperViewPages[$shipperView];
 
 $publicPages = ['home','how','customers','shippers','pricing'];
 $pageTitles = [
@@ -40,11 +64,11 @@ function linkTo(string $page, array $params = []): string {
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="public/assets/css/app.css">
   <?php if (in_array($page, ['customer', 'shipper', 'admin'], true)): ?>
-  <link rel="stylesheet" href="public/assets/css/modules/<?= e($page) ?>.css">
+  <link rel="stylesheet" href="public/assets/css/modules/<?= e($page) ?>.css<?= $page === 'shipper' ? '?v=20261014-3' : '' ?>">
   <?php endif; ?>
   <script defer src="public/assets/js/app.js"></script>
 </head>
-<body data-page="<?= e($page) ?>">
+<body data-page="<?= e($page) ?>"<?php if ($page === 'shipper'): ?> data-shipper-view="<?= e($shipperView) ?>"<?php endif; ?>>
 <?php if (in_array($page, $publicPages, true)): ?>
   <?php require __DIR__ . '/app/Views/shared/public.php'; ?>
 <?php elseif ($page === 'auth'): ?>
@@ -56,5 +80,6 @@ function linkTo(string $page, array $params = []): string {
 <?php else: ?>
   <?php require __DIR__ . '/app/Views/admin/index.php'; ?>
 <?php endif; ?>
+<?php if ($page === 'shipper'): ?><script defer src="public/assets/js/shipper-navigation.js?v=20261014-6"></script><script defer src="public/assets/js/shipper.js?v=20261014-6"></script><?php endif; ?>
 </body>
 </html>

@@ -6,7 +6,7 @@
 - **CSS**: giao diện responsive và style riêng cho từng module.
 - **JavaScript thuần (Vanilla JS)**: tương tác trình duyệt.
 
-Dự án không sử dụng React, Vite hoặc TypeScript trong bản này. Không cần `npm install` hay build frontend.
+Dự án không cần framework frontend, `npm install` hay build frontend.
 
 ## Chạy bằng XAMPP
 1. Giải nén toàn bộ nội dung ZIP vào `C:\\xampp\\htdocs\\SOMI-Grab-Delivery`.

@@ -5,9 +5,9 @@ Project uses PHP views with separated CSS/JavaScript by role. Keep each contribu
 ## Ownership map
 
 - **Customer owner:** `app/Views/customer/**`, `public/assets/css/modules/customer.css`, customer-specific scripts only.
-- **Shipper owner:** `app/Views/shipper/**`, `public/assets/css/modules/shipper.css`, `public/assets/js/shipper.js`, `resources/ts/modules/shipper/**`.
+- **Shipper owner:** `app/Views/shipper/**`, `public/assets/css/modules/shipper.css`, `public/assets/js/shipper.js`.
 - **Admin owner:** `app/Views/admin/**`, `public/assets/css/modules/admin.css`, admin-specific scripts only.
-- **Integration owner:** `index.php`, `.htaccess`, `app/Views/shared/**`, `public/assets/css/app.css`, `public/assets/js/app.js`, `resources/ts/app.ts`, `tsconfig.json`, and `package.json` if added later.
+- **Integration owner:** `index.php`, `.htaccess`, `app/Views/shared/**`, `public/assets/css/app.css`, `public/assets/js/app.js`, and `package.json` if added later.
 
 ## Rules
 

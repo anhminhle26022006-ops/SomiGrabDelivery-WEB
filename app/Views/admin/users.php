@@ -17,40 +17,40 @@
             </div>
             <div class="sidebar-category">ADMIN CONSOLE</div>
             <nav class="sidebar-menu">
-                <a href="index.php" class="menu-item">
-                    <i class="fa-solid fa-house"></i> Dashboard
-                </a>
-                <a href="users.php" class="menu-item active">
-                    <i class="fa-solid fa-user-group"></i> Users
-                </a>
-                <a href="#" class="menu-item">
-                    <i class="fa-solid fa-users"></i> Customers
-                </a>
-                <a href="#" class="menu-item">
-                    <i class="fa-solid fa-motorcycle"></i> Shippers
-                </a>
-                <a href="#" class="menu-item">
-                    <i class="fa-solid fa-file-lines"></i> Orders
-                </a>
-                <a href="#" class="menu-item">
-                    <i class="fa-solid fa-triangle-exclamation"></i> Complaints <span class="badge red">4</span>
-                </a>
-                <a href="#" class="menu-item">
-                    <i class="fa-solid fa-scale-balanced"></i> Disputes
-                </a>
-                <a href="#" class="menu-item">
-                    <i class="fa-solid fa-wallet"></i> Payments
-                </a>
-                <a href="#" class="menu-item">
-                    <i class="fa-regular fa-star"></i> Reviews
-                </a>
-                <a href="#" class="menu-item">
-                    <i class="fa-regular fa-bell"></i> Notifications <span class="badge gray">3</span>
-                </a>
-                <a href="#" class="menu-item">
-                    <i class="fa-solid fa-chart-line"></i> Audit Logs
-                </a>
-            </nav>
+    <a href="index.php" class="menu-item">
+        <i class="fa-solid fa-house"></i> Dashboard
+    </a>
+    <a href="users.php" class="menu-item active">
+        <i class="fa-solid fa-user-group"></i> Users
+    </a>
+    <a href="customers.php" class="menu-item">
+        <i class="fa-solid fa-users"></i> Customers
+    </a>
+    <a href="shippers.php" class="menu-item">
+        <i class="fa-solid fa-motorcycle"></i> Shippers
+    </a>
+    <a href="orders.php" class="menu-item">
+        <i class="fa-solid fa-file-lines"></i> Orders
+    </a>
+    <a href="complaints.php" class="menu-item">
+        <i class="fa-solid fa-triangle-exclamation"></i> Complaints <span class="badge red">4</span>
+    </a>
+    <a href="disputes.php" class="menu-item">
+        <i class="fa-solid fa-scale-balanced"></i> Disputes
+    </a>
+    <a href="payments.php" class="menu-item">
+        <i class="fa-solid fa-wallet"></i> Payments
+    </a>
+    <a href="reviews.php" class="menu-item">
+        <i class="fa-regular fa-star"></i> Reviews
+    </a>
+    <a href="notifications.php" class="menu-item">
+        <i class="fa-regular fa-bell"></i> Notifications <span class="badge gray">3</span>
+    </a>
+    <a href="audit-logs.php" class="menu-item">
+        <i class="fa-solid fa-chart-line"></i> Audit Logs
+    </a>
+</nav>
             <div class="sidebar-footer">
                 <a href="#" class="menu-item logout">
                     <i class="fa-solid fa-right-from-bracket"></i> Log out

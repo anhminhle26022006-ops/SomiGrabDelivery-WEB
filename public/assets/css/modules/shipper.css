@@ -28,6 +28,54 @@ body[data-page="shipper"] .sidebtn:hover { background:#f3f7ff; color:#2463c9; }
 body[data-page="shipper"] .sidebtn.active { background:#eaf2ff; color:#2463c9; box-shadow:inset 3px 0 #3478e5; }
 body[data-page="shipper"] .sidebtn span:first-child { display:inline-grid; place-items:center; min-width:18px; }
 body[data-page="shipper"] .modalback.hidden { display:none!important; }
+body[data-page="shipper"] .modalback{position:fixed;inset:0;z-index:80;background:#10213b80;display:grid;place-items:center;padding:20px;overflow:auto}
+body[data-page="shipper"] .modal{width:min(100%,560px);max-height:min(88vh,820px);overflow:auto;background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:0 24px 70px #0b1f3d40}
+body[data-page="shipper"] .detailmodal{width:min(100%,800px)}
+body[data-page="shipper"] .modalhead{position:sticky;top:0;z-index:2;background:#fff;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:19px 22px;border-bottom:1px solid #edf1f6}
+body[data-page="shipper"] .modalhead h2{margin:3px 0;color:var(--navy);font-size:21px}
+body[data-page="shipper"] .modalbody{padding:20px 22px}
+body[data-page="shipper"] .recipient-summary{display:flex;align-items:center;gap:12px;padding:14px;background:#f5f8fd;border:1px solid var(--line);border-radius:14px}
+body[data-page="shipper"] .recipient-avatar{width:46px;height:46px;border-radius:50%;background:#dbeafe;color:#174ea6;display:grid;place-items:center;font-weight:850}
+body[data-page="shipper"] .recipient-summary b,body[data-page="shipper"] .recipient-summary span,body[data-page="shipper"] .recipient-summary small{display:block}
+body[data-page="shipper"] .recipient-summary span,body[data-page="shipper"] .recipient-summary small{font-size:12px;color:var(--muted);margin-top:3px}
+body[data-page="shipper"] .contact-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:14px 0}
+body[data-page="shipper"] .chatmessages{display:grid;gap:9px;max-height:270px;overflow:auto;padding:14px;background:#f7f9fc;border:1px solid #e8eef6;border-radius:14px}
+body[data-page="shipper"] .chat-date{text-align:center;color:var(--muted);font-size:11px;padding:2px}
+body[data-page="shipper"] .bubble{max-width:86%;justify-self:start;padding:10px 12px;border-radius:13px 13px 13px 4px;background:#fff;border:1px solid #e5ebf3;color:var(--ink);font-size:13px}
+body[data-page="shipper"] .bubble.theirs{background:#eef6ff;border-color:#dbeafe}
+body[data-page="shipper"] .bubble.mine{justify-self:end;background:#e8f2ff;border:1px solid #d7e8ff;border-radius:13px 13px 4px 13px}
+body[data-page="shipper"] .bubble small{display:block;color:var(--muted);font-size:10px;margin-bottom:4px}
+body[data-page="shipper"] .chatcompose{display:flex;gap:8px;margin-top:10px}
+body[data-page="shipper"] .chatcompose input{min-width:0;flex:1;border:1px solid var(--line);border-radius:10px;padding:10px 12px;font:inherit}
+body[data-page="shipper"] .demo-disclaimer{font-size:11px;margin:10px 0 0}
+body[data-page="shipper"] .detail-summary{display:flex;justify-content:space-between;gap:16px;align-items:flex-start;padding:0 0 16px;border-bottom:1px solid #edf1f6}
+body[data-page="shipper"] .detail-summary h3{margin:8px 0 3px;color:var(--navy);font-size:19px}
+body[data-page="shipper"] .detail-summary p{margin:0;color:var(--muted);font-size:12px}
+body[data-page="shipper"] .detail-earning{text-align:right;display:grid;gap:4px}
+body[data-page="shipper"] .detail-earning small,body[data-page="shipper"] .detail-earning span{font-size:11px;color:var(--muted)}
+body[data-page="shipper"] .detail-earning b{color:var(--navy);font-size:21px}
+body[data-page="shipper"] .detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:14px 0}
+body[data-page="shipper"] .detailbox{padding:14px;border:1px solid var(--line);border-radius:13px;min-width:0}
+body[data-page="shipper"] .detailbox h3{font-size:14px;color:var(--navy);margin:0 0 11px}
+body[data-page="shipper"] .detailbox b,body[data-page="shipper"] .detailbox span,body[data-page="shipper"] .detailbox a{display:block}
+body[data-page="shipper"] .detailbox span,body[data-page="shipper"] .detailbox p,body[data-page="shipper"] .detailbox a{font-size:12px;margin:5px 0;color:var(--muted)}
+body[data-page="shipper"] .detailbox a{color:var(--blue);text-decoration:none;font-weight:700}
+body[data-page="shipper"] .detailroute{grid-template-columns:18px 1fr;margin-bottom:14px}
+body[data-page="shipper"] .detailmap{height:190px;margin-bottom:8px}
+body[data-page="shipper"] .detail-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:15px}
+body[data-page="shipper"] .rejectbtn{color:#b42318;border-color:#f3c6c2;background:#fffafa}
+body[data-page="shipper"] .rejectbtn:hover{background:#fff0ee}
+body[data-page="shipper"] .feehint{display:block!important;font-size:10px!important;margin-top:4px;color:var(--muted)}
+body[data-page="shipper"] .supportpanel{margin-top:14px;padding:16px;border:1px solid #cfe0f5;border-radius:13px;background:#f7fbff}
+body[data-page="shipper"] .supportform{display:grid;gap:11px}
+body[data-page="shipper"] .supportform label{display:grid;gap:6px;font-size:12px;font-weight:750;color:var(--navy)}
+body[data-page="shipper"] .supportform select,body[data-page="shipper"] .supportform textarea{width:100%;border:1px solid var(--line);border-radius:10px;background:#fff;padding:10px 11px;color:var(--ink);font:inherit;font-weight:400}
+body[data-page="shipper"] .supportform textarea{resize:vertical}
+body[data-page="shipper"] .supportactions{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+body[data-page="shipper"] .supportactions span{font-size:11px}
+body[data-page="shipper"] .settlementnote{display:grid;gap:4px;margin-top:10px;padding:12px 13px;border-radius:11px;background:#f3f7fd;color:var(--navy);font-size:12px}
+body[data-page="shipper"] .settlementnote span{color:var(--muted);line-height:1.5}
+@media(max-width:640px){body[data-page="shipper"] .modalback{padding:10px;align-items:end}body[data-page="shipper"] .modal{max-height:92vh;border-radius:18px 18px 12px 12px}body[data-page="shipper"] .modalhead,body[data-page="shipper"] .modalbody{padding:16px}body[data-page="shipper"] .detail-grid{grid-template-columns:1fr}body[data-page="shipper"] .detail-summary{display:grid}body[data-page="shipper"] .detail-earning{text-align:left}body[data-page="shipper"] .detail-actions{justify-content:stretch}body[data-page="shipper"] .detail-actions button{flex:1}}
 @media(max-width:1100px) {
  body[data-page="shipper"] .layout { grid-template-columns:210px minmax(0,1fr); }
  body[data-page="shipper"] #sidebar { padding-inline:10px; }
@@ -53,3 +101,4 @@ body[data-page="shipper"] .modalback.hidden { display:none!important; }
  body[data-page="shipper"] .tablewrap { overflow-x:auto; }
 }
 @media(max-width:420px) { body[data-page="shipper"] main { padding:16px 10px 28px; } body[data-page="shipper"] .cards { grid-template-columns:1fr; } body[data-page="shipper"] .metricvalue { font-size:22px; } }
+.date-picker{position:relative;flex:0 0 auto}.date-menu{position:absolute;z-index:30;top:calc(100% + 8px);right:0;width:190px;padding:6px;border:1px solid var(--line);border-radius:13px;background:#fff;box-shadow:0 14px 34px #17345c20}.date-menu[hidden]{display:none!important}.date-menu button{width:100%;padding:10px 12px;border:0;border-radius:8px;background:#fff;text-align:left;color:var(--ink);font:inherit;font-size:13px;cursor:pointer}.date-menu button:hover,.date-menu button[aria-pressed="true"]{background:var(--blue2);color:var(--blue)}

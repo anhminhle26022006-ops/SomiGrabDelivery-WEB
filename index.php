@@ -24,6 +24,20 @@ if (!in_array($page, $allowedPages, true)) {
     http_response_code(404);
     $page = 'home';
 }
+if (in_array($page, ['customer', 'shipper', 'admin'], true)) {
+    session_set_cookie_params([
+        'httponly' => true,
+        'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+        'samesite' => 'Lax',
+        'path' => '/',
+    ]);
+    session_start();
+    $sessionRole = $_SESSION['somi_role'] ?? null;
+    if (!is_int($_SESSION['somi_user_id'] ?? null) || $sessionRole !== $page) {
+        header('Location: ?page=auth&next=' . rawurlencode($page), true, 303);
+        exit;
+    }
+}
 $shipperView = $_GET['view'] ?? 'dashboard';
 $allowedShipperViews = ['dashboard','offers','detail','active','history','earnings','account','registration','chat','support','cancel','withdraw','report','notifications'];
 if (!in_array($shipperView, $allowedShipperViews, true)) $shipperView = 'dashboard';
@@ -66,7 +80,7 @@ function linkTo(string $page, array $params = []): string {
   <?php if (in_array($page, ['customer', 'shipper', 'admin'], true)): ?>
   <link rel="stylesheet" href="public/assets/css/modules/<?= e($page) ?>.css<?= $page === 'shipper' ? '?v=20261014-3' : '' ?>">
   <?php endif; ?>
-  <script defer src="public/assets/js/app.js"></script>
+  <script defer src="public/assets/js/app.js?v=20261018-demootp1"></script>
 </head>
 <body data-page="<?= e($page) ?>"<?php if ($page === 'shipper'): ?> data-shipper-view="<?= e($shipperView) ?>"<?php endif; ?>>
 <?php if (in_array($page, $publicPages, true)): ?>

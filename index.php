@@ -76,7 +76,7 @@ function linkTo(string $page, array $params = []): string {
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="public/assets/css/app.css">
+  <link rel="stylesheet" href="public/assets/css/app.css?v=20261018-auth2">
   <?php if (in_array($page, ['customer', 'shipper', 'admin'], true)): ?>
   <link rel="stylesheet" href="public/assets/css/modules/<?= e($page) ?>.css<?= $page === 'shipper' ? '?v=20261014-3' : '' ?>">
   <?php endif; ?>

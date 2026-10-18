@@ -96,6 +96,18 @@
     "Enter a valid email address.": "Vui lòng nhập email hợp lệ.",
     "Password must be 8–72 characters.": "Mật khẩu phải dài 8–72 ký tự.",
     "Passwords do not match.": "Mật khẩu xác nhận không khớp.",
+    "Enter the email address on your SOMI account. If it matches an active account, we’ll email you a reset link valid for 30 minutes.": "Nhập email của tài khoản SOMI. Nếu email thuộc tài khoản đang hoạt động, hệ thống sẽ gửi liên kết đặt lại mật khẩu có hiệu lực trong 30 phút.",
+    "Send reset link": "Gửi liên kết đặt lại",
+    "Back to sign in": "Quay lại đăng nhập",
+    "Account security": "Bảo mật tài khoản",
+    "Choose a new password.": "Chọn mật khẩu mới.",
+    "Set a new password to regain access to your SOMI account.": "Tạo mật khẩu mới để truy cập lại tài khoản SOMI.",
+    "Reset your password": "Đặt lại mật khẩu",
+    "Enter a new password for your account.": "Nhập mật khẩu mới cho tài khoản.",
+    "New password": "Mật khẩu mới",
+    "Confirm new password": "Xác nhận mật khẩu mới",
+    "Save new password": "Lưu mật khẩu mới",
+    "Password updated. You can now sign in with your new password.": "Đã đổi mật khẩu. Bạn có thể đăng nhập bằng mật khẩu mới.",
     "Accept the Terms of Service and Privacy Policy to continue.": "Vui lòng đồng ý Điều khoản dịch vụ và Chính sách quyền riêng tư.",
     "Enter the six-digit phone code.": "Nhập mã xác minh điện thoại gồm 6 chữ số.",
     "Enter the six-digit email code.": "Nhập mã xác minh email gồm 6 chữ số.",
@@ -106,6 +118,11 @@
     "Phone code has expired. Request a new code.": "Mã điện thoại đã hết hạn. Hãy yêu cầu mã mới.",
     "Please wait before requesting another email code.": "Vui lòng chờ trước khi yêu cầu mã email mới.",
     "Please wait before requesting another phone code.": "Vui lòng chờ trước khi yêu cầu mã điện thoại mới.",
+    "A new email verification code was sent.": "Đã gửi mã xác minh email mới.",
+    "An email code was recently sent. Enter that code or wait briefly to request another.": "Mã email vừa được gửi. Hãy nhập mã đó hoặc chờ một lát để yêu cầu mã mới.",
+    "Could not send the email code right now. Use Resend code to try again.": "Chưa gửi được mã email. Hãy bấm Gửi lại mã để thử lại.",
+    "A phone code was recently generated. Wait briefly, then request another code.": "Mã điện thoại vừa được tạo. Hãy chờ một lát rồi yêu cầu mã mới.",
+    "Phone verification is required. Enter the demo code shown here.": "Cần xác minh số điện thoại. Nhập mã demo đang hiển thị ở đây.",
     "The login details are incorrect or the account is not active.": "Thông tin đăng nhập không đúng hoặc tài khoản chưa được kích hoạt.",
     "Email": "Email",
     "At least 8 characters": "Tối thiểu 8 ký tự",
@@ -650,7 +667,18 @@
         identifier: form.elements.identifier.value.trim(),
         password: form.elements.password.value,
         role
-      }).then(() => finishAuth(role))
+      }).then((result) => {
+        if (result.status === "PHONE_VERIFICATION_REQUIRED" || result.status === "EMAIL_VERIFICATION_REQUIRED") {
+          mode = "signup";
+          registrationRole = role;
+          step = result.status === "PHONE_VERIFICATION_REQUIRED" ? 4 : 5;
+          currentPhoneDemoCode = result.demo_code || "";
+          render();
+          showError(result.notice || (step === 4 ? "Phone verification is required. Enter the demo code shown here." : "A new email verification code was sent."));
+          return;
+        }
+        finishAuth(role);
+      })
         .catch((requestError) => showError(requestError.message))
         .finally(() => { submitButton.disabled = false; });
     });
@@ -682,8 +710,179 @@
       navigate(role === "shipper" || next === "shipper" ? "shipper" : "customer");
     }
     const forgot = $("[data-forgot]");
-    if (forgot) forgot.addEventListener("click", () => showError("Password reset is a frontend demo and is not connected to email or SMS."));
+    const requestForm = $("[data-password-request-form]");
+    if (forgot && requestForm) forgot.addEventListener("click", () => {
+      const vi = document.documentElement.lang === "vi";
+      form.hidden = true;
+      $(".auth-tabs")?.setAttribute("hidden", "");
+      requestForm.hidden = false;
+      $("[data-auth-title]").textContent = vi ? "Đặt lại mật khẩu" : "Reset your password";
+      $("[data-auth-subtitle]").textContent = vi ? "Nhận liên kết đặt lại qua email." : "Get a password reset link by email.";
+      const identifier = form.elements.identifier.value.trim();
+      requestForm.elements.email.value = identifier.includes("@") ? identifier : "";
+      requestForm.elements.email.focus();
+    });
+    const requestBack = $("[data-reset-request-back]");
+    if (requestBack) requestBack.addEventListener("click", () => {
+      requestForm.hidden = true;
+      form.hidden = false;
+      $(".auth-tabs")?.removeAttribute("hidden");
+      render();
+    });
+    if (requestForm) requestForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const requestError = $("[data-reset-request-error]");
+      const success = $("[data-reset-request-success]");
+      const button = $("[data-reset-request-submit]");
+      requestError.hidden = true;
+      success.hidden = true;
+      if (!requestForm.elements.email.checkValidity()) {
+        requestError.textContent = document.documentElement.lang === "vi" ? "Vui lòng nhập email hợp lệ." : "Enter a valid email address.";
+        requestError.hidden = false;
+        return;
+      }
+      button.disabled = true;
+      try {
+        await apiPost("request-password-reset.php", {
+          email: requestForm.elements.email.value.trim(),
+          language: document.documentElement.lang === "vi" ? "vi" : "en"
+        });
+        success.textContent = document.documentElement.lang === "vi"
+          ? "Nếu email thuộc tài khoản SOMI đang hoạt động, liên kết đặt lại sẽ được gửi trong giây lát. Hãy kiểm tra cả hộp thư rác."
+          : "If an active SOMI account uses that email, a reset link will arrive shortly. Check your inbox and spam folder.";
+        success.hidden = false;
+        requestForm.elements.email.value = "";
+      } catch (requestErrorValue) {
+        requestError.textContent = requestErrorValue.message;
+        requestError.hidden = false;
+      } finally {
+        button.disabled = false;
+      }
+    });
     render();
+  }
+
+  function setupPasswordReset() {
+    const form = $("[data-password-reset-form]");
+    if (!form) return;
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const error = $("[data-reset-error]");
+      const success = $("[data-reset-success]");
+      const button = $("[data-reset-submit]");
+      error.hidden = true;
+      success.hidden = true;
+      const password = form.elements.password.value;
+      if (password.length < 8 || password.length > 72) {
+        error.textContent = document.documentElement.lang === "vi" ? "Mật khẩu phải có từ 8 đến 72 ký tự." : "Password must be 8–72 characters.";
+        error.hidden = false;
+        return;
+      }
+      if (password !== form.elements.confirm_password.value) {
+        error.textContent = document.documentElement.lang === "vi" ? "Mật khẩu xác nhận không khớp." : "Passwords do not match.";
+        error.hidden = false;
+        return;
+      }
+      button.disabled = true;
+      try {
+        const response = await fetch("public/api/auth/complete-password-reset.php", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          body: JSON.stringify({ token: form.elements.token.value, password })
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.error || "The request could not be completed.");
+        form.elements.password.value = "";
+        form.elements.confirm_password.value = "";
+        form.elements.token.value = "";
+        success.hidden = false;
+      } catch (requestError) {
+        const vi = document.documentElement.lang === "vi";
+        error.textContent = vi && requestError.message.includes("invalid or has expired")
+          ? "Liên kết đặt lại không hợp lệ hoặc đã hết hạn. Hãy yêu cầu liên kết mới."
+          : requestError.message;
+        error.hidden = false;
+      } finally {
+        button.disabled = false;
+      }
+    });
+  }
+
+  function setupWorkspaceSwitch() {
+    const postSwitch = async (payload) => {
+      const response = await fetch("public/api/auth/switch-workspace.php", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || "The request could not be completed.");
+      return result;
+    };
+
+    $$("[data-workspace-switch]").forEach((button) => button.addEventListener("click", async () => {
+      button.disabled = true;
+      try {
+        const result = await postSwitch({ target: button.dataset.workspaceSwitch });
+        window.location.href = `?page=${encodeURIComponent(result.role)}`;
+      } catch (error) {
+        button.disabled = false;
+        window.alert(error.message);
+      }
+    }));
+
+    $$(`[data-shipper-application-form]`).forEach((form) => form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const error = $("[data-switch-error]", form);
+      const button = $("button[type='submit']", form);
+      error.hidden = true;
+      button.disabled = true;
+      try {
+        await postSwitch({
+          target: "SHIPPER",
+          vehicle_type: form.elements.vehicle_type.value.trim(),
+          vehicle_registration: form.elements.vehicle_registration.value.trim()
+        });
+        window.location.href = "?page=shipper";
+      } catch (requestError) {
+        error.textContent = requestError.message;
+        error.hidden = false;
+        button.disabled = false;
+      }
+    }));
+  }
+
+  function setupShipperReview() {
+    $$(`[data-shipper-review]`).forEach((button) => button.addEventListener("click", async () => {
+      const decision = button.dataset.shipperReview;
+      let note = "";
+      if (decision === "REJECTED") {
+        note = window.prompt("Reason for rejecting this application:")?.trim() || "";
+        if (!note) return;
+      } else if (!window.confirm("Approve this Shipper application?")) {
+        return;
+      }
+      const error = $(`[data-admin-review-error]`);
+      error.hidden = true;
+      button.disabled = true;
+      try {
+        const response = await fetch("public/api/admin/review-shipper.php", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          body: JSON.stringify({ shipper_id: button.dataset.shipperId, decision, note })
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.error || "The request could not be completed.");
+        window.location.reload();
+      } catch (requestError) {
+        error.textContent = requestError.message;
+        error.hidden = false;
+        button.disabled = false;
+      }
+    }));
   }
 
   const initialOrders = [
@@ -827,6 +1026,9 @@
     setupLanguage();
     setupPublicNavigation();
     setupAuth();
+    setupPasswordReset();
+    setupWorkspaceSwitch();
+    setupShipperReview();
     setupCustomer();
     setupShipper();
     setupAvatarMenu();

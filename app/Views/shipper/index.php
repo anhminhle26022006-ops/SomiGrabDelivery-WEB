@@ -6,6 +6,7 @@
   <div class="brand">SOMI <small>DELIVERY</small></div>
 
   <div class="top-actions">
+    <button type="button" class="outline" data-workspace-switch="CUSTOMER">Switch to Customer</button>
     <div class="language-picker shipper-language-picker" data-language-picker>
       <button class="language-trigger" type="button" aria-label="Choose language" aria-expanded="false" data-language-trigger><span class="language-globe" aria-hidden="true">◎</span><span data-language-current>EN</span><span class="language-chevron" aria-hidden="true">⌄</span></button>
       <div class="language-menu" data-language-menu hidden>

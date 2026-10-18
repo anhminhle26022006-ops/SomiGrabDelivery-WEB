@@ -64,6 +64,14 @@ usort($countryList, static fn(array $a, array $b): int => strcmp($a['name'], $b[
           <button class="button button-dark button-full" type="submit" data-auth-submit><span data-auth-submit-text>Sign in</span><span>↗</span></button>
           <p class="demo-note">New accounts must verify both their phone number and email address.</p>
         </form>
+        <form data-password-request-form novalidate hidden>
+          <p class="muted" data-reset-request-copy>Enter the email address on your SOMI account. If it matches an active account, we’ll email you a reset link valid for 30 minutes.</p>
+          <div class="field"><label for="resetRequestEmail">Email</label><input id="resetRequestEmail" name="email" type="email" autocomplete="email" placeholder="you@example.com" required></div>
+          <p class="form-error" data-reset-request-error role="alert" hidden></p>
+          <p class="demo-note" data-reset-request-success role="status" hidden></p>
+          <button class="button button-dark button-full" type="submit" data-reset-request-submit>Send reset link</button>
+          <p><button class="text-button" type="button" data-reset-request-back>Back to sign in</button></p>
+        </form>
       </div>
     </section>
   </section>

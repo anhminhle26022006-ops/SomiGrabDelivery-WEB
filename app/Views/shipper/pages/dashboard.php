@@ -1,10 +1,10 @@
 <?php // Shipper Dashboard page ?>
 <section id="page-dashboard" class="page<?= $shipperPage === 'dashboard' ? '' : ' hidden' ?>" aria-hidden="<?= $shipperPage === 'dashboard' ? 'false' : 'true' ?>">
-    <div class="pagehead"><div><div class="eyebrow">KHÔNG GIAN NGƯỜI GIAO</div><h1>Tổng quan</h1><p>Xem nhanh tình trạng hoạt động hôm nay của bạn.</p></div><button class="datebtn">▦ &nbsp; Hôm nay (12/10/2026)⌄</button></div>
+    <div class="pagehead"><div><div class="eyebrow">KHÔNG GIAN NGƯỜI GIAO</div><h1>Tổng quan</h1><p data-dashboard-description>Xem nhanh tình trạng hoạt động hôm nay của bạn.</p></div><div class="date-picker"><button class="datebtn" type="button" data-date-trigger aria-expanded="false">▦ &nbsp; <span data-date-label>Hôm nay</span> <span data-date-value></span>⌄</button><div class="date-menu" data-date-menu hidden><button type="button" data-date-range="today"><span class="shipper-copy-en">Today</span><span class="shipper-copy-vi">Hôm nay</span></button><button type="button" data-date-range="yesterday"><span class="shipper-copy-en">Yesterday</span><span class="shipper-copy-vi">Hôm qua</span></button><button type="button" data-date-range="week"><span class="shipper-copy-en">This week</span><span class="shipper-copy-vi">Tuần này</span></button><button type="button" data-date-range="month"><span class="shipper-copy-en">This month</span><span class="shipper-copy-vi">Tháng này</span></button></div></div></div>
     <div class="cards">
-      <div class="card metric"><div class="metricicon">▣</div><div><div class="metriclabel">Đơn hoàn thành hôm nay</div><div class="metricvalue">5</div><div class="trend">↑ 25% <span class="muted">so với hôm qua</span></div></div></div>
-      <div class="card metric"><div class="metricicon" style="background:#e4f8ed;color:#14a568">▱</div><div><div class="metriclabel">Thu nhập hôm nay</div><div class="metricvalue">₫320,000</div><div class="trend">↑ 12% <span class="muted">so với hôm qua</span></div></div></div>
-      <div class="card metric"><div class="metricicon" style="background:#f0eaff;color:#8657e8">◷</div><div><div class="metriclabel">Thời gian hoạt động</div><div class="metricvalue">4h 30m</div><div class="trend">↑ 10% <span class="muted">so với hôm qua</span></div></div></div>
+      <div class="card metric"><div class="metricicon">▣</div><div><div class="metriclabel" data-period-stat="deliveries">Đơn hoàn thành hôm nay</div><div class="metricvalue" data-period-value="deliveries">5</div><div class="trend" data-period-trend="deliveries">↑ 25% <span class="muted">so với hôm qua</span></div></div></div>
+      <div class="card metric"><div class="metricicon" style="background:#e4f8ed;color:#14a568">▱</div><div><div class="metriclabel" data-period-stat="earnings">Thu nhập hôm nay</div><div class="metricvalue" data-period-value="earnings">₫320,000</div><div class="trend" data-period-trend="earnings">↑ 12% <span class="muted">so với hôm qua</span></div></div></div>
+      <div class="card metric"><div class="metricicon" style="background:#f0eaff;color:#8657e8">◷</div><div><div class="metriclabel" data-period-stat="hours">Thời gian hoạt động</div><div class="metricvalue" data-period-value="hours">4h 30m</div><div class="trend" data-period-trend="hours">↑ 10% <span class="muted">so với hôm qua</span></div></div></div>
       <div class="card metric"><div class="metricicon" style="background:#fff0db;color:#e68a17">☆</div><div><div class="metriclabel">Đánh giá trung bình</div><div class="metricvalue">4.9 <span style="font-size:12px;font-weight:600">/ 5</span></div><div class="muted" style="font-size:11px">28 đánh giá</div></div></div>
     </div>
     <div class="dashboardgrid">
@@ -28,10 +28,10 @@
           <div id="overviewNotices"></div>
         </section>
         <section class="card">
-          <div class="sectiontitle"><div><h2>Thu nhập</h2><p>Tóm tắt thu nhập hôm nay.</p></div><button class="textlink" data-goto="earnings">Chi tiết →</button></div>
-          <div class="metricvalue">₫320,000</div><div class="trend">↑ 12% <span class="muted">so với hôm qua</span></div>
-          <div class="chart"><div class="barwrap"><div class="bar" style="height:35%"></div><span class="barlabel">9h</span></div><div class="barwrap"><div class="bar" style="height:55%"></div><span class="barlabel">11h</span></div><div class="barwrap"><div class="bar" style="height:43%"></div><span class="barlabel">13h</span></div><div class="barwrap"><div class="bar" style="height:85%"></div><span class="barlabel">15h</span></div><div class="barwrap"><div class="bar" style="height:62%"></div><span class="barlabel">17h</span></div></div>
-          <p class="muted" style="font-size:11px;margin-bottom:0">Biểu đồ tóm tắt · vào Thu nhập để xem chi tiết.</p>
+          <div class="sectiontitle"><div><h2 data-period-earnings-title>Thu nhập hôm nay</h2><p data-period-chart-title>Biến động thu nhập theo giờ.</p></div><button class="textlink" data-goto="earnings">Chi tiết →</button></div>
+          <div class="metricvalue" data-period-value="earnings">₫320,000</div><div class="trend" data-period-trend="earnings">↑ 12% <span class="muted">so với hôm qua</span></div>
+          <div class="chart" data-period-chart><div class="barwrap"><div class="bar" style="height:35%"></div><span class="barlabel">9h</span></div><div class="barwrap"><div class="bar" style="height:55%"></div><span class="barlabel">11h</span></div><div class="barwrap"><div class="bar" style="height:43%"></div><span class="barlabel">13h</span></div><div class="barwrap"><div class="bar" style="height:85%"></div><span class="barlabel">15h</span></div><div class="barwrap"><div class="bar" style="height:62%"></div><span class="barlabel">17h</span></div></div>
+          <p class="muted" data-period-chart-note style="font-size:11px;margin-bottom:0">Biểu đồ tóm tắt · vào Thu nhập để xem chi tiết.</p>
         </section>
       </div>
     </div>

@@ -17,40 +17,40 @@
             </div>
             <div class="sidebar-category">ADMIN CONSOLE</div>
             <nav class="sidebar-menu">
-                <a href="index.php" class="menu-item active"> 
-                    <i class="fa-solid fa-house"></i> Dashboard
-                </a>
-                <a href="users.php" class="menu-item">
-                    <i class="fa-solid fa-user-group"></i> Users
-                </a>
-                <a href="customers.php" class="menu-item">
-                    <i class="fa-solid fa-users"></i> Customers
-                </a>
-                <a href="shippers.php" class="menu-item">
-                    <i class="fa-solid fa-motorcycle"></i> Shippers
-                </a>
-                <a href="orders.php" class="menu-item">
-                    <i class="fa-solid fa-file-lines"></i> Orders
-                </a>
-                <a href="#" class="menu-item">
-                    <i class="fa-solid fa-triangle-exclamation"></i> Complaints <span class="badge red">4</span>
-                </a>
-                <a href="#" class="menu-item">
-                    <i class="fa-solid fa-scale-balanced"></i> Disputes
-                </a>
-                <a href="#" class="menu-item">
-                    <i class="fa-solid fa-wallet"></i> Payments
-                </a>
-                <a href="#" class="menu-item">
-                    <i class="fa-regular fa-star"></i> Reviews
-                </a>
-                <a href="#" class="menu-item">
-                    <i class="fa-regular fa-bell"></i> Notifications <span class="badge gray">3</span>
-                </a>
-                <a href="#" class="menu-item">
-                    <i class="fa-solid fa-chart-line"></i> Audit Logs
-                </a>
-            </nav>
+    <a href="index.php" class="menu-item active">
+        <i class="fa-solid fa-house"></i> Dashboard
+    </a>
+    <a href="users.php" class="menu-item">
+        <i class="fa-solid fa-user-group"></i> Users
+    </a>
+    <a href="customers.php" class="menu-item">
+        <i class="fa-solid fa-users"></i> Customers
+    </a>
+    <a href="shippers.php" class="menu-item">
+        <i class="fa-solid fa-motorcycle"></i> Shippers
+    </a>
+    <a href="orders.php" class="menu-item">
+        <i class="fa-solid fa-file-lines"></i> Orders
+    </a>
+    <a href="complaints.php" class="menu-item">
+        <i class="fa-solid fa-triangle-exclamation"></i> Complaints <span class="badge red">4</span>
+    </a>
+    <a href="disputes.php" class="menu-item">
+        <i class="fa-solid fa-scale-balanced"></i> Disputes
+    </a>
+    <a href="payments.php" class="menu-item">
+        <i class="fa-solid fa-wallet"></i> Payments
+    </a>
+    <a href="reviews.php" class="menu-item">
+        <i class="fa-regular fa-star"></i> Reviews
+    </a>
+    <a href="notifications.php" class="menu-item">
+        <i class="fa-regular fa-bell"></i> Notifications <span class="badge gray">3</span>
+    </a>
+    <a href="audit-logs.php" class="menu-item">
+        <i class="fa-solid fa-chart-line"></i> Audit Logs
+    </a>
+</nav>
             <div class="sidebar-footer">
                 <a href="#" class="menu-item logout">
                     <i class="fa-solid fa-right-from-bracket"></i> Log out
@@ -92,6 +92,19 @@
                     </div>
                     <p class="description">Here's the pulse of the Somi network today.</p>
                 </div>
+
+                <section class="card" style="margin-bottom:24px;padding:22px" aria-labelledby="shipperApplicationsTitle">
+                    <div class="title-row"><div><span class="subtitle">ACCOUNT ACCESS</span><h2 id="shipperApplicationsTitle">Shipper applications</h2></div><span class="status status-amber"><?= count($pendingShipperApplications) ?> pending</span></div>
+                    <p class="description">Review a user's identity document and vehicle details before enabling the Shipper workspace.</p>
+                    <?php if ($pendingShipperApplications): ?>
+                    <div style="overflow-x:auto"><table class="data-table"><thead><tr><th>USER</th><th>VEHICLE</th><th>IDENTITY REVIEW</th><th>ACTION</th></tr></thead><tbody>
+                    <?php foreach ($pendingShipperApplications as $application): ?>
+                      <tr><td><strong><?= e((string) $application['full_name']) ?></strong><br><small><?= e((string) $application['email']) ?> · #<?= (int) $application['user_id'] ?></small></td><td><?= e((string) $application['vehicle_type']) ?><br><small><?= e((string) $application['vehicle_registration']) ?></small></td><td><?= e((string) ($application['identity_review_status'] ?? 'MISSING')) ?></td><td><button class="button button-dark button-small" type="button" data-shipper-review="APPROVED" data-shipper-id="<?= (int) $application['user_id'] ?>">Approve</button> <button class="button button-light button-small" type="button" data-shipper-review="REJECTED" data-shipper-id="<?= (int) $application['user_id'] ?>">Reject</button></td></tr>
+                    <?php endforeach; ?>
+                    </tbody></table></div>
+                    <?php else: ?><p class="muted">There are no Shipper applications waiting for review.</p><?php endif; ?>
+                    <p class="form-error" data-admin-review-error role="alert" hidden></p>
+                </section>
 
                 <!-- Stats Grid 3x2 -->
                 <div class="stats-grid">

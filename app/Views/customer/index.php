@@ -1,23 +1,150 @@
-<header class="workspace-header"><a class="brand" href="?page=home"><strong>SOMI</strong><span>DELIVERY</span></a><nav><a class="active" href="?page=customer">Dashboard</a><a href="#orders">My Orders</a></nav><div class="header-actions"><span class="user-pill">◉ Customer</span><?php if ($hasShipperWorkspace): ?><button class="button button-light button-small" type="button" data-workspace-switch="SHIPPER">Switch to Shipper</button><?php endif; ?><button class="button button-dark button-small" type="button" data-signout>Sign out</button></div></header>
-<main class="workspace">
-  <div class="workspace-heading"><p class="eyebrow dark-eyebrow">CUSTOMER WORKSPACE</p><h1>Send a package</h1><p>Create an order, preview the fee, then send it to the matching network.</p></div>
+<?php
+/**
+ * Customer workspace shell.
+ * URL: ?page=customer&view=<view>[&code=SOMI-xxxx]
+ * Each view lives in app/Views/customer/pages/<view>.php and has a matching
+ * controller in public/assets/js/customer/pages/<view>.js.
+ * Text here is the Vietnamese source; i18n.js swaps it for English when the
+ * saved language (localStorage "somi-language", shared with the index page) is "en".
+ */
+$customerViews = [
+    'dashboard'     => ['Tổng quan', 'dashboard'],
+    'create'        => ['Gửi hàng', 'create'],
+    'orders'        => ['Đơn hàng', 'orders'],
+    'order'         => ['Chi tiết đơn', 'orders'],
+    'payment'       => ['Thanh toán', 'orders'],
+    'matching'      => ['Tìm shipper', 'orders'],
+    'tracking'      => ['Theo dõi đơn', 'orders'],
+    'review'        => ['Đánh giá shipper', 'orders'],
+    'report'        => ['Báo cáo sự cố', 'reports'],
+    'reports'       => ['Báo cáo của tôi', 'reports'],
+    'notifications' => ['Thông báo', 'notifications'],
+    'account'       => ['Tài khoản', 'account'],
+    'addresses'     => ['Sổ địa chỉ', 'account'],
+];
+$customerView = $_GET['view'] ?? 'dashboard';
+if (!array_key_exists($customerView, $customerViews)) {
+    $customerView = 'dashboard';
+}
+[$customerTitle, $customerSection] = $customerViews[$customerView];
+$asset = 'public/assets/js/customer/';
+$assetVersion = '20261018-2';
+
+$nav = [
+    'dashboard' => ['Tổng quan', 'home'],
+    'create'    => ['Gửi hàng', 'send'],
+    'orders'    => ['Đơn hàng', 'list'],
+    'reports'   => ['Báo cáo', 'report'],
+];
+$navIcon = [
+    'home' => '<path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/>',
+    'send' => '<path d="M4 12h12"/><path d="m11 6 6 6-6 6"/><path d="M20 5v14"/>',
+    'list' => '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
+    'report' => '<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M10 13h6M10 17h4"/>',
+    'bell' => '<path d="M18 9a6 6 0 0 0-12 0c0 6-2.5 7.5-2.5 7.5h17S18 15 18 9"/><path d="M10.5 20a1.7 1.7 0 0 0 3 0"/>',
+    'user' => '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+    'globe' => '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3"/>',
+];
+function customerIcon(string $paths, int $size = 20): string {
+    return '<svg class="c-icon" width="' . $size . '" height="' . $size . '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' . $paths . '</svg>';
+}
+?>
+<?php /* Bootstrap 5.3 (CDN) chỉ nạp cho trang Customer, sau đó nạp lại customer.css để màu và bố cục SOMI đè lên Bootstrap. */ ?>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+<link rel="stylesheet" href="public/assets/css/modules/customer.css?v=<?= $assetVersion ?>">
+<div class="c-app" data-customer-app>
+  <header class="navbar c-top">
+    <a class="navbar-brand c-brand" href="?page=customer&amp;view=dashboard" aria-label="SOMI, về trang tổng quan"><strong>SOMI</strong><span>DELIVERY</span></a>
+    <nav class="nav nav-pills c-nav" aria-label="Điều hướng khách hàng">
+      <?php foreach ($nav as $key => [$label, $iconKey]): ?>
+        <a href="?page=customer&amp;view=<?= e($key) ?>"<?= $key === 'create' ? ' data-send-link' : '' ?> class="nav-link<?= $customerSection === $key ? ' active' : '' ?>"<?= $customerSection === $key ? ' aria-current="page"' : '' ?>><?= e($label) ?></a>
+      <?php endforeach; ?>
+    </nav>
+    <div class="c-top-actions">
+      <div class="dropdown c-locale">
+        <button class="c-locale-btn" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" data-locale-btn aria-expanded="false" aria-label="Ngôn ngữ và tiền tệ">
+          <?= customerIcon($navIcon['globe'], 18) ?><span data-locale-current>VI · VND</span>
+        </button>
+        <div class="dropdown-menu dropdown-menu-end c-locale-menu" data-locale-menu>
+          <p class="c-locale-title">Ngôn ngữ</p>
+          <div class="btn-group w-100 c-locale-seg" role="group" aria-label="Ngôn ngữ">
+            <button type="button" class="btn" data-set-lang="vi">Tiếng Việt</button>
+            <button type="button" class="btn" data-set-lang="en">English</button>
+          </div>
+          <p class="c-locale-title">Tiền tệ</p>
+          <div class="btn-group w-100 c-locale-seg" role="group" aria-label="Tiền tệ">
+            <button type="button" class="btn" data-set-currency="VND">VND ₫</button>
+            <button type="button" class="btn" data-set-currency="USD">USD $</button>
+          </div>
+          <p class="c-locale-note">Tiền tệ áp dụng cho báo giá và đơn mới. Đơn đã tạo giữ nguyên tiền tệ lúc đặt.</p>
+        </div>
+      </div>
+      <a class="c-icon-btn c-bell<?= $customerSection === 'notifications' ? ' active' : '' ?>" href="?page=customer&amp;view=notifications" aria-label="Thông báo">
+        <?= customerIcon($navIcon['bell']) ?><span class="badge rounded-pill c-count" data-unread hidden>0</span>
+      </a>
+      <div class="dropdown c-account">
+        <button class="c-avatar-btn" type="button" data-bs-toggle="dropdown" data-c-avatar aria-expanded="false">
+          <span class="c-avatar" data-account-initials>NH</span>
+          <span class="c-avatar-name" data-account-name>Khách hàng</span>
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end c-menu" data-c-menu>
+          <li><a class="dropdown-item" href="?page=customer&amp;view=account">Tài khoản</a></li>
+          <li><a class="dropdown-item" href="?page=customer&amp;view=addresses">Sổ địa chỉ</a></li>
+          <li><a class="dropdown-item" href="?page=customer&amp;view=reports">Báo cáo của tôi</a></li>
+          <?php if ($hasShipperWorkspace): ?><li><button class="dropdown-item" type="button" data-workspace-switch="SHIPPER">Chuyển sang Shipper</button></li><?php endif; ?>
+          <li><hr class="dropdown-divider"></li>
+          <li><button class="dropdown-item text-danger" type="button" data-signout>Đăng xuất</button></li>
+        </ul>
+      </div>
+    </div>
+  </header>
+
+  <main class="c-main" id="c-main">
+    <div data-account-banner></div>
+    <?php if ($customerView === 'dashboard'): ?>
   <?php if ($hasShipperWorkspace): ?>
-  <section class="panel" style="margin-bottom:20px"><strong>Also a Shipper?</strong><p class="muted">Your account has a Shipper workspace.</p><button class="button button-light" type="button" data-workspace-switch="SHIPPER">Switch to Shipper workspace</button></section>
-  <?php else: ?>
-  <section class="panel" style="margin-bottom:20px"><div class="panel-heading"><div><p class="eyebrow dark-eyebrow">ONE SOMI ACCOUNT</p><h2>Become a Shipper</h2></div></div><p class="muted">Apply with your vehicle details. Your Shipper workspace will be available after Admin review.</p><form data-shipper-application-form><div class="form-two"><div class="field"><label for="switchVehicleType">Vehicle type</label><input id="switchVehicleType" name="vehicle_type" maxlength="80" required placeholder="Motorbike, bicycle, car"></div><div class="field"><label for="switchVehicleRegistration">Vehicle registration</label><input id="switchVehicleRegistration" name="vehicle_registration" maxlength="40" required placeholder="License plate or registration number"></div></div><p class="form-error" data-switch-error role="alert" hidden></p><button class="button button-dark" type="submit">Apply to become a Shipper</button></form></section>
-  <?php endif; ?>
-  <div class="workspace-grid">
-    <section class="panel order-panel"><div class="panel-heading"><div><p class="eyebrow dark-eyebrow">NEW DELIVERY</p><h2>Create delivery order</h2></div><span class="panel-symbol">↗</span></div>
-      <form data-order-form>
-        <div class="field"><label for="pickup">Pickup address</label><input id="pickup" name="pickup" required placeholder="Street, district, city"></div>
-        <div class="field"><label for="dropoff">Drop-off address</label><input id="dropoff" name="dropoff" required placeholder="Street, district, city"></div>
-        <div class="form-two"><div class="field"><label for="distance">Estimated distance (km)</label><input id="distance" name="distance" type="number" min="1" step="0.5" value="4" required></div><div class="field"><label for="weight">Package weight (kg)</label><input id="weight" name="weight" type="number" min="0.1" step="0.1" value="2" required></div></div>
-        <div class="field"><label for="service">Delivery service</label><select id="service" name="service"><option value="STANDARD">Standard delivery</option><option value="EXPRESS">Express delivery</option></select></div>
-        <div class="fee-preview"><span>Estimated delivery fee</span><strong data-fee>₫35,000</strong><small>Demo estimate: base fee ₫30,000 for first 3 km + ₫5,000 per additional km.</small></div>
-        <button class="button button-dark button-full" type="submit">Send delivery request <span>↗</span></button>
-      </form>
-    </section>
-    <aside class="side-stack"><article class="mini-feature"><span class="feature-icon">⌁</span><h3>Smart matching</h3><p>Offers are sent to nearby verified shippers.</p></article><article class="mini-feature"><span class="feature-icon">◎</span><h3>Live status</h3><p>Track the order from matching to completed.</p></article><article class="mini-feature"><span class="feature-icon">₫</span><h3>Transparent fee</h3><p>The estimated fee is shown before confirmation.</p></article></aside>
+  <div class="card card-body mb-3">
+    <strong>Also a Shipper?</strong>
+    <p class="text-muted mb-2">Your account has a Shipper workspace.</p>
+    <button class="btn btn-outline-dark" type="button" data-workspace-switch="SHIPPER">Switch to Shipper workspace</button>
   </div>
-  <section class="panel orders-panel" id="orders"><div class="panel-heading"><div><p class="eyebrow dark-eyebrow">DELIVERY ACTIVITY</p><h2>Recent orders</h2></div><span class="muted" data-order-count>2 orders</span></div><div class="table-wrap"><table><thead><tr><th>Order ID</th><th>Pickup</th><th>Drop-off</th><th>Fee</th><th>Status</th></tr></thead><tbody data-orders><tr><td>SOMI-240125</td><td>District 1</td><td>Binh Thanh</td><td>₫35,000</td><td><span class="status status-blue">IN TRANSIT</span></td></tr><tr><td>SOMI-240126</td><td>Phu Nhuan</td><td>District 3</td><td>₫42,000</td><td><span class="status status-amber">MATCHING</span></td></tr></tbody></table></div></section>
-</main>
+  <?php else: ?>
+  <div class="card card-body mb-3">
+    <h2 class="h5">Become a Shipper</h2>
+    <p class="text-muted">Apply with your vehicle details. Your Shipper workspace will be available after Admin review.</p>
+    <form data-shipper-application-form>
+      <div class="row g-2">
+        <div class="col-md-6"><label class="form-label" for="switchVehicleType">Vehicle type</label><input class="form-control" id="switchVehicleType" name="vehicle_type" maxlength="80" required placeholder="Motorbike, bicycle, car"></div>
+        <div class="col-md-6"><label class="form-label" for="switchVehicleRegistration">Vehicle registration</label><input class="form-control" id="switchVehicleRegistration" name="vehicle_registration" maxlength="40" required placeholder="License plate or registration number"></div>
+      </div>
+      <p class="text-danger small mt-2" data-switch-error role="alert" hidden></p>
+      <button class="btn btn-dark mt-2" type="submit">Apply to become a Shipper</button>
+    </form>
+  </div>
+  <?php endif; ?>
+<?php endif; ?>
+    <?php require __DIR__ . '/pages/' . $customerView . '.php'; ?>
+  </main>
+
+  <nav class="c-tabbar d-md-none" aria-label="Điều hướng nhanh">
+    <?php
+    $tabs = ['dashboard' => ['Tổng quan', 'home'], 'create' => ['Gửi hàng', 'send'], 'orders' => ['Đơn hàng', 'list'], 'notifications' => ['Thông báo', 'bell'], 'account' => ['Tài khoản', 'user']];
+    foreach ($tabs as $key => [$label, $iconKey]): ?>
+      <a href="?page=customer&amp;view=<?= e($key) ?>"<?= $key === 'create' ? ' data-send-link' : '' ?> class="<?= $customerSection === $key ? 'active' : '' ?>"<?= $customerSection === $key ? ' aria-current="page"' : '' ?>>
+        <?= customerIcon($navIcon[$iconKey], 21) ?><span><?= e($label) ?></span><?php if ($key === 'notifications'): ?><i class="badge rounded-pill c-count" data-unread hidden>0</i><?php endif; ?>
+      </a>
+    <?php endforeach; ?>
+  </nav>
+
+  <aside class="c-demo" data-demo>
+    <button type="button" class="c-demo-toggle" data-demo-toggle aria-expanded="false"><?= customerIcon('<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>', 18) ?><span>Mô phỏng demo</span></button>
+    <div class="c-demo-body" data-demo-body hidden></div>
+  </aside>
+</div>
+<script>document.body.dataset.cView = <?= json_encode($customerView) ?>; document.title = <?= json_encode($customerTitle . ' · SOMI') ?>;</script>
+<script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<script defer src="<?= $asset ?>lang/en.js?v=<?= $assetVersion ?>"></script>
+<script defer src="<?= $asset ?>i18n.js?v=<?= $assetVersion ?>"></script>
+<script defer src="<?= $asset ?>store.js?v=<?= $assetVersion ?>"></script>
+<script defer src="<?= $asset ?>ui.js?v=<?= $assetVersion ?>"></script>
+<script defer src="<?= $asset ?>pages/<?= e($customerView) ?>.js?v=<?= $assetVersion ?>"></script>

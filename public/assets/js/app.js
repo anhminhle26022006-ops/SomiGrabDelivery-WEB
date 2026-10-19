@@ -46,6 +46,14 @@
     "← Back to website": "← Quay lại trang chủ",
     "Sign in": "Đăng nhập",
     "Create account": "Tạo tài khoản",
+    "Choose a workspace": "Chọn không gian đăng nhập",
+    "Send and track deliveries": "Gửi và theo dõi đơn hàng",
+    "Manage delivery work": "Quản lý công việc giao hàng",
+    "Open admin console": "Mở bảng điều hành",
+    "Admin": "Quản trị viên",
+    "Admin access key": "Key quản trị",
+    "Enter your admin key": "Nhập key quản trị",
+    "Demo key:": "Key demo:",
     "Welcome back": "Chào mừng bạn quay trở lại",
     "Create your Somi account": "Tạo tài khoản Somi",
     "Enter your phone number or email to continue.": "Nhập số điện thoại hoặc email để tiếp tục.",
@@ -57,16 +65,65 @@
     "Password": "Mật khẩu",
     "Forgot password?": "Quên mật khẩu?",
     "Enter your password": "Nhập mật khẩu",
-    "STEP 1 OF 4": "BƯỚC 1/4",
+    "STEP 1 OF 5": "BƯỚC 1/5",
     "Full name": "Họ và tên",
     "Your full name": "Nhập họ và tên",
     "Phone number": "Số điện thoại",
-    "Verification code": "Mã xác minh",
-    "6-digit demo code": "Mã demo gồm 6 chữ số",
-    "Frontend demo: enter any 6 digits to continue.": "Bản demo: nhập bất kỳ 6 chữ số để tiếp tục.",
-    "CCCD / National ID number": "Số CCCD",
-    "12-digit CCCD number": "Nhập số CCCD gồm 12 chữ số",
-    "VNeID/eKYC is not connected in this frontend-only build.": "VNeID/eKYC chưa được tích hợp trong bản frontend này.",
+    "Phone number with country code": "Số điện thoại kèm mã quốc gia",
+    "Nationality": "Quốc tịch",
+    "Date of birth": "Ngày sinh",
+    "Gender": "Giới tính",
+    "Select": "Chọn",
+    "Male": "Nam",
+    "Female": "Nữ",
+    "Identity document type": "Loại giấy tờ định danh",
+    "National ID": "CCCD / Căn cước công dân",
+    "Passport": "Hộ chiếu",
+    "Other foreign identity document": "Giấy tờ định danh nước ngoài khác",
+    "Identity document number": "Số giấy tờ định danh",
+    "Letters and numbers": "Chữ và số",
+    "The number is encrypted before it is stored. Shipper documents require Admin review.": "Số giấy tờ được mã hóa trước khi lưu. Giấy tờ Shipper cần Admin duyệt.",
+    "Phone verification code": "Mã xác minh điện thoại",
+    "For the local demo, find the code in C:\\xampp\\apache\\logs\\error.log.": "Trong bản demo local, xem mã trong C:\\xampp\\apache\\logs\\error.log.",
+    "Email verification code": "Mã xác minh email",
+    "Check your inbox and spam folder. The code expires in 5 minutes.": "Kiểm tra hộp thư đến và thư rác. Mã hết hạn sau 5 phút.",
+    "New accounts must verify both their phone number and email address.": "Tài khoản mới cần xác minh cả số điện thoại và email.",
+    "Enter your full name.": "Vui lòng nhập họ tên.",
+    "Enter the phone number with country code, for example +84901234567.": "Nhập số điện thoại kèm mã quốc gia, ví dụ +84901234567.",
+    "Enter a valid date of birth.": "Vui lòng nhập ngày sinh hợp lệ.",
+    "Choose a gender.": "Vui lòng chọn giới tính.",
+    "Identity document number must contain 4–40 letters or digits.": "Số giấy tờ phải gồm 4–40 chữ cái hoặc chữ số.",
+    "Enter a valid email address.": "Vui lòng nhập email hợp lệ.",
+    "Password must be 8–72 characters.": "Mật khẩu phải dài 8–72 ký tự.",
+    "Passwords do not match.": "Mật khẩu xác nhận không khớp.",
+    "Enter the email address on your SOMI account. If it matches an active account, we’ll email you a reset link valid for 30 minutes.": "Nhập email của tài khoản SOMI. Nếu email thuộc tài khoản đang hoạt động, hệ thống sẽ gửi liên kết đặt lại mật khẩu có hiệu lực trong 30 phút.",
+    "Send reset link": "Gửi liên kết đặt lại",
+    "Back to sign in": "Quay lại đăng nhập",
+    "Account security": "Bảo mật tài khoản",
+    "Choose a new password.": "Chọn mật khẩu mới.",
+    "Set a new password to regain access to your SOMI account.": "Tạo mật khẩu mới để truy cập lại tài khoản SOMI.",
+    "Reset your password": "Đặt lại mật khẩu",
+    "Enter a new password for your account.": "Nhập mật khẩu mới cho tài khoản.",
+    "New password": "Mật khẩu mới",
+    "Confirm new password": "Xác nhận mật khẩu mới",
+    "Save new password": "Lưu mật khẩu mới",
+    "Password updated. You can now sign in with your new password.": "Đã đổi mật khẩu. Bạn có thể đăng nhập bằng mật khẩu mới.",
+    "Accept the Terms of Service and Privacy Policy to continue.": "Vui lòng đồng ý Điều khoản dịch vụ và Chính sách quyền riêng tư.",
+    "Enter the six-digit phone code.": "Nhập mã xác minh điện thoại gồm 6 chữ số.",
+    "Enter the six-digit email code.": "Nhập mã xác minh email gồm 6 chữ số.",
+    "Email or phone number is already registered.": "Email hoặc số điện thoại đã được đăng ký.",
+    "Email code is incorrect.": "Mã email không chính xác.",
+    "Phone code is incorrect.": "Mã điện thoại không chính xác.",
+    "Email code has expired. Request a new code.": "Mã email đã hết hạn. Hãy yêu cầu mã mới.",
+    "Phone code has expired. Request a new code.": "Mã điện thoại đã hết hạn. Hãy yêu cầu mã mới.",
+    "Please wait before requesting another email code.": "Vui lòng chờ trước khi yêu cầu mã email mới.",
+    "Please wait before requesting another phone code.": "Vui lòng chờ trước khi yêu cầu mã điện thoại mới.",
+    "A new email verification code was sent.": "Đã gửi mã xác minh email mới.",
+    "An email code was recently sent. Enter that code or wait briefly to request another.": "Mã email vừa được gửi. Hãy nhập mã đó hoặc chờ một lát để yêu cầu mã mới.",
+    "Could not send the email code right now. Use Resend code to try again.": "Chưa gửi được mã email. Hãy bấm Gửi lại mã để thử lại.",
+    "A phone code was recently generated. Wait briefly, then request another code.": "Mã điện thoại vừa được tạo. Hãy chờ một lát rồi yêu cầu mã mới.",
+    "Phone verification is required. Enter the demo code shown here.": "Cần xác minh số điện thoại. Nhập mã demo đang hiển thị ở đây.",
+    "The login details are incorrect or the account is not active.": "Thông tin đăng nhập không đúng hoặc tài khoản chưa được kích hoạt.",
     "Email": "Email",
     "At least 8 characters": "Tối thiểu 8 ký tự",
     "Confirm password": "Xác nhận mật khẩu",
@@ -75,7 +132,8 @@
     "Back": "Quay lại",
     "Continue →": "Tiếp tục →",
     "Create account →": "Tạo tài khoản →",
-    "Demo interface only. Authentication is not connected to a backend.": "Đây chỉ là giao diện demo. Xác thực chưa kết nối backend.",
+    "Verify phone →": "Xác minh điện thoại →",
+    "Verify email →": "Xác minh email →",
     "SHIPPER WORKSPACE": "KHÔNG GIAN NGƯỜI GIAO",
     "Dashboard": "Tổng quan",
     "Delivery offers": "Đơn giao phù hợp",
@@ -209,6 +267,8 @@
     "Passwords do not match.": "Mật khẩu xác nhận không khớp.",
     "Please accept the Terms of Service and Privacy Policy.": "Vui lòng đồng ý với Điều khoản dịch vụ và Chính sách quyền riêng tư.",
     "Enter your phone/email and password to continue.": "Vui lòng nhập số điện thoại/email và mật khẩu để tiếp tục.",
+    "Enter your admin access key.": "Vui lòng nhập key quản trị.",
+    "Invalid admin access key.": "Key quản trị không hợp lệ.",
     "Demo only: changes are not sent to a server.": "Bản demo: thay đổi chưa được gửi đến máy chủ.",
     "A MORE FLEXIBLE WAY TO DELIVER": "GIAO HÀNG LINH HOẠT HƠN",
     "Every delivery.": "Mỗi đơn hàng.",
@@ -308,6 +368,7 @@
     });
     const placeholders = {
       "Phone number or email": "Số điện thoại hoặc email",
+      "Enter your admin key": "Nhập key quản trị",
       "+84 90 123 4567 or you@example.com": "+84 90 123 4567 hoặc ban@example.com",
       "Enter your password": "Nhập mật khẩu", "Your full name": "Nhập họ và tên",
       "6-digit demo code": "Mã demo gồm 6 chữ số", "12-digit CCCD number": "Nhập số CCCD gồm 12 chữ số",
@@ -354,6 +415,7 @@
       localStorage.setItem("somi-language", language);
       document.documentElement.lang = language;
       translateVietnameseDocument();
+      document.dispatchEvent(new CustomEvent("somi:language-change", { detail: { language } }));
     };
     pickers.forEach((picker) => {
       const trigger = $("[data-language-trigger]", picker);
@@ -421,6 +483,30 @@
     const stepBack = $("[data-step-back]");
     let mode = "signin";
     let step = 1;
+    let registrationRole = "customer";
+    let currentPhoneDemoCode = "";
+
+    const renderPhoneDemoCode = () => {
+      const note = $("[data-phone-demo-code]");
+      if (!note) return;
+      const vi = document.documentElement.lang === "vi";
+      note.hidden = !currentPhoneDemoCode;
+      note.textContent = currentPhoneDemoCode
+        ? (vi ? `Mã OTP demo (không gửi SMS): ${currentPhoneDemoCode}` : `Demo OTP (no SMS sent): ${currentPhoneDemoCode}`)
+        : "";
+    };
+
+    const apiPost = async (path, payload = {}) => {
+      const response = await fetch(`public/api/auth/${path}`, {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || "The request could not be completed.");
+      return result;
+    };
 
     const showError = (message) => {
       error.textContent = document.documentElement.lang === "vi" ? (viText[message] || message) : message;
@@ -428,55 +514,375 @@
     };
     const render = () => {
       const signup = mode === "signup";
+      const role = $('input[name="role"]:checked', form)?.value || "customer";
+      const isAdmin = role === "admin";
       signinFields.hidden = signup;
-      signupFields.hidden = !signup;
+      signupFields.hidden = !signup || isAdmin;
       submitButton.hidden = signup;
+      const signupTab = $('[data-auth-mode="signup"]');
+      signupTab.hidden = isAdmin;
+      document.querySelector(".auth-shell")?.classList.toggle("auth-admin-mode", isAdmin);
       modeButtons.forEach((button) => button.classList.toggle("active", button.dataset.authMode === mode));
       const vi = document.documentElement.lang === "vi";
-      $("[data-auth-title]").textContent = vi
-        ? (signup ? "Tạo tài khoản Somi" : "Chào mừng bạn quay trở lại")
-        : (signup ? "Create your Somi account" : "Welcome back");
-      $("[data-auth-subtitle]").textContent = vi
-        ? (signup ? "Hoàn thành các bước demo để xem quy trình tạo tài khoản." : "Nhập số điện thoại hoặc email để tiếp tục.")
-        : (signup ? "Complete the demo steps to preview account setup." : "Enter your phone number or email to continue.");
-      $("[data-step-label]").textContent = vi ? `BƯỚC ${step}/4` : `STEP ${step} OF 4`;
-      $("[data-step-progress]").style.width = `${step * 25}%`;
+      $("[data-auth-title]").textContent = isAdmin
+        ? (vi ? "Đăng nhập Admin" : "Admin sign in")
+        : (vi ? (signup ? "Tạo tài khoản Somi" : "Chào mừng bạn quay trở lại") : (signup ? "Create your Somi account" : "Welcome back"));
+      $("[data-auth-subtitle]").textContent = isAdmin
+        ? (vi ? "Đăng nhập bằng tài khoản Admin được cấp." : "Sign in with an administrator account provisioned by the project owner.")
+        : (vi ? (signup ? "Hoàn thành các bước demo để xem quy trình tạo tài khoản." : "Nhập số điện thoại hoặc email để tiếp tục.") : (signup ? "Complete the demo steps to preview account setup." : "Enter your phone number or email to continue."));
+      const asideEyebrow = $("[data-auth-aside-eyebrow]");
+      const asideHeading = $("[data-auth-heading]");
+      const asideDescription = $("[data-auth-aside-description]");
+      const asideFooter = $("[data-auth-aside-footer]");
+      if (asideEyebrow) asideEyebrow.textContent = isAdmin ? (vi ? "KHÔNG GIAN QUẢN TRỊ" : "ADMIN WORKSPACE") : (vi ? "CHÀO MỪNG ĐẾN VỚI SOMI" : "Welcome to Somi");
+      if (asideHeading) asideHeading.textContent = isAdmin ? (vi ? "Vận hành SOMI an toàn." : "Secure access for Somi operations.") : (vi ? "Giao hàng phù hợp với nhịp sống của bạn." : "Delivery that fits your day.");
+      if (asideDescription) asideDescription.textContent = isAdmin ? (vi ? "Chỉ tài khoản Admin được cấp quyền mới vào được bảng điều hành." : "Only provisioned Admin accounts can access the operations console.") : (vi ? "Đăng nhập để gửi hàng hoặc quản lý công việc giao hàng cùng Somi." : "Sign in to send a package or manage your delivery work with Somi.");
+      if (asideFooter) asideFooter.textContent = isAdmin ? (vi ? "Chỉ dành cho quản trị viên được ủy quyền." : "Authorized administrators only.") : (vi ? "Đơn giản. Linh hoạt. Minh bạch." : "Simple. Flexible. Transparent.");
+      $("[data-auth-submit-text]").textContent = isAdmin ? (vi ? "Vào bảng điều hành" : "Open Admin Console") : (vi ? "Đăng nhập" : "Sign in");
+      $("[data-step-label]").textContent = vi ? `BƯỚC ${step}/5` : `STEP ${step} OF 5`;
+      $("[data-step-progress]").style.width = `${step * 20}%`;
       $$("[data-signup-step]").forEach((section) => { section.hidden = Number(section.dataset.signupStep) !== step; });
-      stepBack.hidden = step === 1;
-      stepNext.textContent = vi ? (step === 4 ? "Tạo tài khoản →" : "Tiếp tục →") : (step === 4 ? "Create account →" : "Continue →");
+      stepBack.hidden = step === 1 || step >= 4;
+      stepNext.textContent = step === 3 ? (vi ? "Tạo tài khoản →" : "Create account →")
+        : step === 4 ? (vi ? "Xác minh điện thoại →" : "Verify phone →")
+          : step === 5 ? (vi ? "Xác minh email →" : "Verify email →")
+            : (vi ? "Tiếp tục →" : "Continue →");
+      const countrySelect = form.elements.nationalityCode;
+      if (countrySelect) {
+        const displayNames = new Intl.DisplayNames([vi ? "vi" : "en"], { type: "region" });
+        [...countrySelect.options].forEach((option) => {
+          if (option.value) option.textContent = displayNames.of(option.value) || option.value;
+        });
+      }
+      if (form.elements.documentType && countrySelect) {
+        const vietnamese = countrySelect.value === "VN";
+        const nationalId = form.elements.documentType.querySelector('option[value="NATIONAL_ID"]');
+        nationalId.hidden = !vietnamese;
+        if (vietnamese) form.elements.documentType.value = "NATIONAL_ID";
+        else if (form.elements.documentType.value === "NATIONAL_ID") form.elements.documentType.value = "PASSPORT";
+      }
+      renderPhoneDemoCode();
       showError("");
     };
+    document.addEventListener("somi:language-change", render);
     modeButtons.forEach((button) => button.addEventListener("click", () => { mode = button.dataset.authMode; step = 1; render(); }));
+    form.elements.nationalityCode.addEventListener("change", render);
+    $$('input[name="role"]', form).forEach((input) => input.addEventListener("change", () => {
+      if (input.value === "admin") mode = "signin";
+      render();
+    }));
     stepBack.addEventListener("click", () => { step = Math.max(1, step - 1); render(); });
-    stepNext.addEventListener("click", () => {
-      const phone = form.elements.phone.value.trim();
-      const otp = form.elements.otp.value.trim();
-      const id = form.elements.nationalId.value.trim();
-      if (step === 1 && (phone.replace(/\D/g, "").length < 9 || phone.replace(/\D/g, "").length > 11)) return showError("Enter a valid phone number.");
-      if (step === 2 && !/^\d{6}$/.test(otp)) return showError("Enter a 6-digit demo verification code.");
-      if (step === 3 && !/^\d{12}$/.test(id)) return showError("Enter a valid 12-digit national ID number.");
-      if (step < 4) { step += 1; render(); return; }
-      if (form.elements.newPassword.value.length < 8) return showError("Password must be at least 8 characters.");
-      if (form.elements.newPassword.value !== form.elements.confirmPassword.value) return showError("Passwords do not match.");
-      if (!form.elements.terms.checked) return showError("Please accept the Terms of Service and Privacy Policy.");
-      finishAuth();
+    stepNext.addEventListener("click", async () => {
+      if (mode !== "signup") return;
+      showError("");
+      const nationality = form.elements.nationalityCode.value;
+      if (step === 1) {
+        const phone = form.elements.phone.value.trim();
+        if (!form.elements.fullName.value.trim()) return showError("Enter your full name.");
+        if (!/^\+[1-9]\d{7,14}$/.test(phone.replace(/[\s().-]+/g, ""))) return showError("Enter the phone number with country code, for example +84901234567.");
+        if (!form.elements.dateOfBirth.value || new Date(form.elements.dateOfBirth.value) > new Date()) return showError("Enter a valid date of birth.");
+        if (!form.elements.gender.value) return showError("Choose a gender.");
+        step += 1;
+        render();
+        return;
+      }
+      if (step === 2) {
+        if (!/^[A-Za-z0-9]{4,40}$/.test(form.elements.documentNumber.value.trim())) return showError("Identity document number must contain 4–40 letters or digits.");
+        step += 1;
+        render();
+        return;
+      }
+      if (step === 3) {
+        if (!form.elements.email.value.trim()) return showError("Enter a valid email address.");
+        if (form.elements.newPassword.value.length < 8 || form.elements.newPassword.value.length > 72) return showError("Password must be 8–72 characters.");
+        if (form.elements.newPassword.value !== form.elements.confirmPassword.value) return showError("Passwords do not match.");
+        if (!form.elements.terms.checked) return showError("Accept the Terms of Service and Privacy Policy to continue.");
+        stepNext.disabled = true;
+        try {
+          registrationRole = $('input[name="role"]:checked', form)?.value || "customer";
+          const registration = await apiPost("register.php", {
+            full_name: form.elements.fullName.value.trim(),
+            email: form.elements.email.value.trim(),
+            phone: form.elements.phone.value.trim(),
+            password: form.elements.newPassword.value,
+            nationality_code: nationality,
+            date_of_birth: form.elements.dateOfBirth.value,
+            gender: form.elements.gender.value,
+            app_language: document.documentElement.lang === "vi" ? "vi" : "en",
+            role: registrationRole,
+            document_type: form.elements.documentType.value,
+            document_country_code: nationality,
+            document_number: form.elements.documentNumber.value.trim(),
+            terms_accepted: form.elements.terms.checked
+          });
+          currentPhoneDemoCode = registration.demo_code || "";
+          step = 4;
+          render();
+        } catch (requestError) {
+          showError(requestError.message);
+        } finally {
+          stepNext.disabled = false;
+        }
+        return;
+      }
+      if (step === 4) {
+        if (!/^\d{6}$/.test(form.elements.phoneOtp.value.trim())) return showError("Enter the six-digit phone code.");
+        stepNext.disabled = true;
+        try {
+          await apiPost("verify-phone.php", { code: form.elements.phoneOtp.value.trim() });
+          step = 5;
+          render();
+          try {
+            await apiPost("send-email-code.php");
+          } catch (sendError) {
+            showError(sendError.message);
+          }
+        } catch (requestError) {
+          showError(requestError.message);
+        } finally {
+          stepNext.disabled = false;
+        }
+        return;
+      }
+      if (step === 5) {
+        if (!/^\d{6}$/.test(form.elements.emailOtp.value.trim())) return showError("Enter the six-digit email code.");
+        stepNext.disabled = true;
+        try {
+          await apiPost("verify-email-code.php", { code: form.elements.emailOtp.value.trim() });
+          finishAuth(registrationRole);
+        } catch (requestError) {
+          showError(requestError.message);
+        } finally {
+          stepNext.disabled = false;
+        }
+      }
     });
     form.addEventListener("submit", (event) => {
       event.preventDefault();
       if (mode === "signup") return;
-      if (!form.elements.identifier.value.trim() || !form.elements.password.value) return showError("Enter your phone/email and password to continue.");
-      finishAuth();
-    });
-    function finishAuth() {
       const role = $('input[name="role"]:checked', form)?.value || "customer";
+      if (!form.elements.identifier.value.trim() || !form.elements.password.value) return showError("Enter your phone/email and password to continue.");
+      submitButton.disabled = true;
+      apiPost("login.php", {
+        identifier: form.elements.identifier.value.trim(),
+        password: form.elements.password.value,
+        role
+      }).then((result) => {
+        if (result.status === "PHONE_VERIFICATION_REQUIRED" || result.status === "EMAIL_VERIFICATION_REQUIRED") {
+          mode = "signup";
+          registrationRole = role;
+          step = result.status === "PHONE_VERIFICATION_REQUIRED" ? 4 : 5;
+          currentPhoneDemoCode = result.demo_code || "";
+          render();
+          showError(result.notice || (step === 4 ? "Phone verification is required. Enter the demo code shown here." : "A new email verification code was sent."));
+          return;
+        }
+        finishAuth(role);
+      })
+        .catch((requestError) => showError(requestError.message))
+        .finally(() => { submitButton.disabled = false; });
+    });
+    const resendPhone = $(`[data-resend-phone]`);
+    const resendEmail = $(`[data-resend-email]`);
+    if (resendPhone) resendPhone.addEventListener("click", async () => {
+      resendPhone.disabled = true;
+      try {
+        const result = await apiPost("resend-phone-code.php");
+        currentPhoneDemoCode = result.demo_code || "";
+        renderPhoneDemoCode();
+        showError(document.documentElement.lang === "vi" ? "Đã tạo mã demo mới; hệ thống chưa gửi SMS." : "A new demo code was created; no SMS was sent.");
+      } catch (requestError) { showError(requestError.message); }
+      finally { resendPhone.disabled = false; }
+    });
+    if (resendEmail) resendEmail.addEventListener("click", async () => {
+      resendEmail.disabled = true;
+      try {
+        await apiPost("send-email-code.php");
+        showError(document.documentElement.lang === "vi" ? "Đã gửi mã email mới." : "A new email code was sent.");
+      } catch (requestError) { showError(requestError.message); }
+      finally { resendEmail.disabled = false; }
+    });
+    function finishAuth(role = $('input[name="role"]:checked', form)?.value || "customer") {
       localStorage.setItem("somi-demo-role", role);
+      if (role === "admin") { navigate("admin"); return; }
       const params = new URLSearchParams(window.location.search);
       const next = params.get("next");
       navigate(role === "shipper" || next === "shipper" ? "shipper" : "customer");
     }
     const forgot = $("[data-forgot]");
-    if (forgot) forgot.addEventListener("click", () => showError("Password reset is a frontend demo and is not connected to email or SMS."));
+    const requestForm = $("[data-password-request-form]");
+    if (forgot && requestForm) forgot.addEventListener("click", () => {
+      const vi = document.documentElement.lang === "vi";
+      form.hidden = true;
+      $(".auth-tabs")?.setAttribute("hidden", "");
+      requestForm.hidden = false;
+      $("[data-auth-title]").textContent = vi ? "Đặt lại mật khẩu" : "Reset your password";
+      $("[data-auth-subtitle]").textContent = vi ? "Nhận liên kết đặt lại qua email." : "Get a password reset link by email.";
+      const identifier = form.elements.identifier.value.trim();
+      requestForm.elements.email.value = identifier.includes("@") ? identifier : "";
+      requestForm.elements.email.focus();
+    });
+    const requestBack = $("[data-reset-request-back]");
+    if (requestBack) requestBack.addEventListener("click", () => {
+      requestForm.hidden = true;
+      form.hidden = false;
+      $(".auth-tabs")?.removeAttribute("hidden");
+      render();
+    });
+    if (requestForm) requestForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const requestError = $("[data-reset-request-error]");
+      const success = $("[data-reset-request-success]");
+      const button = $("[data-reset-request-submit]");
+      requestError.hidden = true;
+      success.hidden = true;
+      if (!requestForm.elements.email.checkValidity()) {
+        requestError.textContent = document.documentElement.lang === "vi" ? "Vui lòng nhập email hợp lệ." : "Enter a valid email address.";
+        requestError.hidden = false;
+        return;
+      }
+      button.disabled = true;
+      try {
+        await apiPost("request-password-reset.php", {
+          email: requestForm.elements.email.value.trim(),
+          language: document.documentElement.lang === "vi" ? "vi" : "en"
+        });
+        success.textContent = document.documentElement.lang === "vi"
+          ? "Nếu email thuộc tài khoản SOMI đang hoạt động, liên kết đặt lại sẽ được gửi trong giây lát. Hãy kiểm tra cả hộp thư rác."
+          : "If an active SOMI account uses that email, a reset link will arrive shortly. Check your inbox and spam folder.";
+        success.hidden = false;
+        requestForm.elements.email.value = "";
+      } catch (requestErrorValue) {
+        requestError.textContent = requestErrorValue.message;
+        requestError.hidden = false;
+      } finally {
+        button.disabled = false;
+      }
+    });
     render();
+  }
+
+  function setupPasswordReset() {
+    const form = $("[data-password-reset-form]");
+    if (!form) return;
+    form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const error = $("[data-reset-error]");
+      const success = $("[data-reset-success]");
+      const button = $("[data-reset-submit]");
+      error.hidden = true;
+      success.hidden = true;
+      const password = form.elements.password.value;
+      if (password.length < 8 || password.length > 72) {
+        error.textContent = document.documentElement.lang === "vi" ? "Mật khẩu phải có từ 8 đến 72 ký tự." : "Password must be 8–72 characters.";
+        error.hidden = false;
+        return;
+      }
+      if (password !== form.elements.confirm_password.value) {
+        error.textContent = document.documentElement.lang === "vi" ? "Mật khẩu xác nhận không khớp." : "Passwords do not match.";
+        error.hidden = false;
+        return;
+      }
+      button.disabled = true;
+      try {
+        const response = await fetch("public/api/auth/complete-password-reset.php", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          body: JSON.stringify({ token: form.elements.token.value, password })
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.error || "The request could not be completed.");
+        form.elements.password.value = "";
+        form.elements.confirm_password.value = "";
+        form.elements.token.value = "";
+        success.hidden = false;
+      } catch (requestError) {
+        const vi = document.documentElement.lang === "vi";
+        error.textContent = vi && requestError.message.includes("invalid or has expired")
+          ? "Liên kết đặt lại không hợp lệ hoặc đã hết hạn. Hãy yêu cầu liên kết mới."
+          : requestError.message;
+        error.hidden = false;
+      } finally {
+        button.disabled = false;
+      }
+    });
+  }
+
+  function setupWorkspaceSwitch() {
+    const postSwitch = async (payload) => {
+      const response = await fetch("public/api/auth/switch-workspace.php", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || "The request could not be completed.");
+      return result;
+    };
+
+    $$("[data-workspace-switch]").forEach((button) => button.addEventListener("click", async () => {
+      button.disabled = true;
+      try {
+        const result = await postSwitch({ target: button.dataset.workspaceSwitch });
+        window.location.href = `?page=${encodeURIComponent(result.role)}`;
+      } catch (error) {
+        button.disabled = false;
+        window.alert(error.message);
+      }
+    }));
+
+    $$(`[data-shipper-application-form]`).forEach((form) => form.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const error = $("[data-switch-error]", form);
+      const button = $("button[type='submit']", form);
+      error.hidden = true;
+      button.disabled = true;
+      try {
+        await postSwitch({
+          target: "SHIPPER",
+          vehicle_type: form.elements.vehicle_type.value.trim(),
+          vehicle_registration: form.elements.vehicle_registration.value.trim()
+        });
+        window.location.href = "?page=shipper";
+      } catch (requestError) {
+        error.textContent = requestError.message;
+        error.hidden = false;
+        button.disabled = false;
+      }
+    }));
+  }
+
+  function setupShipperReview() {
+    $$(`[data-shipper-review]`).forEach((button) => button.addEventListener("click", async () => {
+      const decision = button.dataset.shipperReview;
+      let note = "";
+      if (decision === "REJECTED") {
+        note = window.prompt("Reason for rejecting this application:")?.trim() || "";
+        if (!note) return;
+      } else if (!window.confirm("Approve this Shipper application?")) {
+        return;
+      }
+      const error = $(`[data-admin-review-error]`);
+      error.hidden = true;
+      button.disabled = true;
+      try {
+        const response = await fetch("public/api/admin/review-shipper.php", {
+          method: "POST",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          body: JSON.stringify({ shipper_id: button.dataset.shipperId, decision, note })
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(result.error || "The request could not be completed.");
+        window.location.reload();
+      } catch (requestError) {
+        error.textContent = requestError.message;
+        error.hidden = false;
+        button.disabled = false;
+      }
+    }));
   }
 
   const initialOrders = [
@@ -620,6 +1026,9 @@
     setupLanguage();
     setupPublicNavigation();
     setupAuth();
+    setupPasswordReset();
+    setupWorkspaceSwitch();
+    setupShipperReview();
     setupCustomer();
     setupShipper();
     setupAvatarMenu();

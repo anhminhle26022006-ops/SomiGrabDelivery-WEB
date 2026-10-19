@@ -17,40 +17,40 @@
             </div>
             <div class="sidebar-category">ADMIN CONSOLE</div>
             <nav class="sidebar-menu">
-                <a href="index.php" class="menu-item">
-                    <i class="fa-solid fa-house"></i> Dashboard
-                </a>
-                <a href="users.php" class="menu-item">
-                    <i class="fa-solid fa-user-group"></i> Users
-                </a>
-                <a href="customers.php" class="menu-item">
-                    <i class="fa-solid fa-users"></i> Customers
-                </a>
-                <a href="shippers.php" class="menu-item">
-                    <i class="fa-solid fa-motorcycle"></i> Shippers
-                </a>
-                <a href="orders.php" class="menu-item">
-                    <i class="fa-solid fa-file-lines"></i> Orders
-                </a>
-                <a href="complaints.php" class="menu-item active">
-                    <i class="fa-solid fa-triangle-exclamation"></i> Complaints <span class="badge red">4</span>
-                </a>
-                <a href="#" class="menu-item">
-                    <i class="fa-solid fa-scale-balanced"></i> Disputes
-                </a>
-                <a href="#" class="menu-item">
-                    <i class="fa-solid fa-wallet"></i> Payments
-                </a>
-                <a href="#" class="menu-item">
-                    <i class="fa-regular fa-star"></i> Reviews
-                </a>
-                <a href="#" class="menu-item">
-                    <i class="fa-regular fa-bell"></i> Notifications <span class="badge gray">3</span>
-                </a>
-                <a href="#" class="menu-item">
-                    <i class="fa-solid fa-chart-line"></i> Audit Logs
-                </a>
-            </nav>
+    <a href="index.php" class="menu-item">
+        <i class="fa-solid fa-house"></i> Dashboard
+    </a>
+    <a href="users.php" class="menu-item">
+        <i class="fa-solid fa-user-group"></i> Users
+    </a>
+    <a href="customers.php" class="menu-item">
+        <i class="fa-solid fa-users"></i> Customers
+    </a>
+    <a href="shippers.php" class="menu-item">
+        <i class="fa-solid fa-motorcycle"></i> Shippers
+    </a>
+    <a href="orders.php" class="menu-item">
+        <i class="fa-solid fa-file-lines"></i> Orders
+    </a>
+    <a href="complaints.php" class="menu-item active">
+        <i class="fa-solid fa-triangle-exclamation"></i> Complaints <span class="badge red">4</span>
+    </a>
+    <a href="disputes.php" class="menu-item">
+        <i class="fa-solid fa-scale-balanced"></i> Disputes
+    </a>
+    <a href="payments.php" class="menu-item">
+        <i class="fa-solid fa-wallet"></i> Payments
+    </a>
+    <a href="reviews.php" class="menu-item">
+        <i class="fa-regular fa-star"></i> Reviews
+    </a>
+    <a href="notifications.php" class="menu-item">
+        <i class="fa-regular fa-bell"></i> Notifications <span class="badge gray">3</span>
+    </a>
+    <a href="audit-logs.php" class="menu-item">
+        <i class="fa-solid fa-chart-line"></i> Audit Logs
+    </a>
+</nav>
             <div class="sidebar-footer">
                 <a href="#" class="menu-item logout">
                     <i class="fa-solid fa-right-from-bracket"></i> Log out
@@ -85,7 +85,7 @@
                         <h2 style="font-size: 28px; font-weight: 800; letter-spacing: -0.5px;">Complaint management</h2>
                         <button class="btn-export" style="padding: 10px 24px;">Export</button>
                     </div>
-                    <p class="description" style="margin-top: 4px;">Review, investigate, and resolve reports fairly[cite: 20].</p>
+                    <p class="description" style="margin-top: 4px;">Review, investigate, and resolve reports fairly.</p>
                 </div>
 
                 <!-- Filter Tabs & Search Bar -->
@@ -135,59 +135,59 @@
                         </thead>
                         <tbody id="complaintTableBody">
                             <tr data-status="open">
-                                <td class="user-id-text">RP-1042[cite: 20]</td>
-                                <td class="date-text font-bold text-dark">#SM-2481[cite: 20]</td>
+                                <td class="user-id-text">RP-1042</td>
+                                <td class="date-text font-bold text-dark">#SM-2481</td>
                                 <td>
                                     <div class="reporter-cell">
                                         <div class="mini-avatar">AK</div>
-                                        <span>Avery Kim[cite: 20]</span>
+                                        <span>Avery Kim</span>
                                     </div>
                                 </td>
-                                <td><span class="main-text">Damaged Package[cite: 20]</span></td>
-                                <td class="date-text">Jun 16, 2025[cite: 20]</td>
-                                <td><span class="status-badge open"><span class="dot"></span> Open[cite: 20]</span></td>
+                                <td><span class="main-text">Damaged Package</span></td>
+                                <td class="date-text">Jun 16, 2025</td>
+                                <td><span class="status-badge open"><span class="dot"></span> Open</span></td>
                                 <td style="text-align: right;"><i class="fa-solid fa-arrow-right" style="color: #94a3b8; font-size: 13px; cursor: pointer;"></i></td>
                             </tr>
                             <tr data-status="reviewing">
-                                <td class="user-id-text">RP-1041[cite: 20]</td>
-                                <td class="date-text font-bold text-dark">#SM-2479[cite: 20]</td>
+                                <td class="user-id-text">RP-1041</td>
+                                <td class="date-text font-bold text-dark">#SM-2479</td>
                                 <td>
                                     <div class="reporter-cell">
                                         <div class="mini-avatar" style="background-color: #e0f2fe; color: #0369a1;">MT</div>
-                                        <span>Minh Tran[cite: 20]</span>
+                                        <span>Minh Tran</span>
                                     </div>
                                 </td>
-                                <td><span class="main-text">Payment Problem[cite: 20]</span></td>
-                                <td class="date-text">Jun 16, 2025[cite: 20]</td>
-                                <td><span class="status-badge reviewing"><span class="dot"></span> Reviewing[cite: 20]</span></td>
+                                <td><span class="main-text">Payment Problem</span></td>
+                                <td class="date-text">Jun 16, 2025</td>
+                                <td><span class="status-badge reviewing"><span class="dot"></span> Reviewing</span></td>
                                 <td style="text-align: right;"><i class="fa-solid fa-arrow-right" style="color: #94a3b8; font-size: 13px; cursor: pointer;"></i></td>
                             </tr>
                             <tr data-status="resolved">
-                                <td class="user-id-text">RP-1040[cite: 20]</td>
-                                <td class="date-text font-bold text-dark">#SM-2472[cite: 20]</td>
+                                <td class="user-id-text">RP-1040</td>
+                                <td class="date-text font-bold text-dark">#SM-2472</td>
                                 <td>
                                     <div class="reporter-cell">
                                         <div class="mini-avatar" style="background-color: #fce7f3; color: #db2777;">NP</div>
-                                        <span>Nina Park[cite: 20]</span>
+                                        <span>Nina Park</span>
                                     </div>
                                 </td>
-                                <td><span class="main-text">Wrong Address[cite: 20]</span></td>
-                                <td class="date-text">Jun 16, 2025[cite: 20]</td>
-                                <td><span class="status-badge resolved"><span class="dot"></span> Resolved[cite: 20]</span></td>
+                                <td><span class="main-text">Wrong Address</span></td>
+                                <td class="date-text">Jun 16, 2025</td>
+                                <td><span class="status-badge resolved"><span class="dot"></span> Resolved</span></td>
                                 <td style="text-align: right;"><i class="fa-solid fa-arrow-right" style="color: #94a3b8; font-size: 13px; cursor: pointer;"></i></td>
                             </tr>
                             <tr data-status="rejected">
-                                <td class="user-id-text">RP-1039[cite: 20]</td>
-                                <td class="date-text font-bold text-dark">#SM-2466[cite: 20]</td>
+                                <td class="user-id-text">RP-1039</td>
+                                <td class="date-text font-bold text-dark">#SM-2466</td>
                                 <td>
                                     <div class="reporter-cell">
                                         <div class="mini-avatar" style="background-color: #f1f5f9; color: #475569;">JB</div>
-                                        <span>Jordan Bell[cite: 20]</span>
+                                        <span>Jordan Bell</span>
                                     </div>
                                 </td>
-                                <td><span class="main-text">Delivery Problem[cite: 20]</span></td>
-                                <td class="date-text">Jun 16, 2025[cite: 20]</td>
-                                <td><span class="status-badge rejected"><span class="dot"></span> Rejected[cite: 20]</span></td>
+                                <td><span class="main-text">Delivery Problem</span></td>
+                                <td class="date-text">Jun 16, 2025</td>
+                                <td><span class="status-badge rejected"><span class="dot"></span> Rejected</span></td>
                                 <td style="text-align: right;"><i class="fa-solid fa-arrow-right" style="color: #94a3b8; font-size: 13px; cursor: pointer;"></i></td>
                             </tr>
                         </tbody>

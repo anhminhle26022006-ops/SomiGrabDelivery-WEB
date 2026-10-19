@@ -91,6 +91,7 @@ function customerIcon(string $paths, int $size = 20): string {
           <li><a class="dropdown-item" href="?page=customer&amp;view=account">Tài khoản</a></li>
           <li><a class="dropdown-item" href="?page=customer&amp;view=addresses">Sổ địa chỉ</a></li>
           <li><a class="dropdown-item" href="?page=customer&amp;view=reports">Báo cáo của tôi</a></li>
+          <?php if ($hasShipperWorkspace): ?><li><button class="dropdown-item" type="button" data-workspace-switch="SHIPPER">Chuyển sang Shipper</button></li><?php endif; ?>
           <li><hr class="dropdown-divider"></li>
           <li><button class="dropdown-item text-danger" type="button" data-signout>Đăng xuất</button></li>
         </ul>
@@ -100,6 +101,28 @@ function customerIcon(string $paths, int $size = 20): string {
 
   <main class="c-main" id="c-main">
     <div data-account-banner></div>
+    <?php if ($customerView === 'dashboard'): ?>
+  <?php if ($hasShipperWorkspace): ?>
+  <div class="card card-body mb-3">
+    <strong>Also a Shipper?</strong>
+    <p class="text-muted mb-2">Your account has a Shipper workspace.</p>
+    <button class="btn btn-outline-dark" type="button" data-workspace-switch="SHIPPER">Switch to Shipper workspace</button>
+  </div>
+  <?php else: ?>
+  <div class="card card-body mb-3">
+    <h2 class="h5">Become a Shipper</h2>
+    <p class="text-muted">Apply with your vehicle details. Your Shipper workspace will be available after Admin review.</p>
+    <form data-shipper-application-form>
+      <div class="row g-2">
+        <div class="col-md-6"><label class="form-label" for="switchVehicleType">Vehicle type</label><input class="form-control" id="switchVehicleType" name="vehicle_type" maxlength="80" required placeholder="Motorbike, bicycle, car"></div>
+        <div class="col-md-6"><label class="form-label" for="switchVehicleRegistration">Vehicle registration</label><input class="form-control" id="switchVehicleRegistration" name="vehicle_registration" maxlength="40" required placeholder="License plate or registration number"></div>
+      </div>
+      <p class="text-danger small mt-2" data-switch-error role="alert" hidden></p>
+      <button class="btn btn-dark mt-2" type="submit">Apply to become a Shipper</button>
+    </form>
+  </div>
+  <?php endif; ?>
+<?php endif; ?>
     <?php require __DIR__ . '/pages/' . $customerView . '.php'; ?>
   </main>
 

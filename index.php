@@ -20,6 +20,7 @@ if (in_array($requestPath, ['/admin', '/admin/'], true)) {
     $_GET['page'] = 'admin';
 }
 require_once __DIR__ . '/app/Services/SessionGuard.php';
+require_once __DIR__ . '/app/Services/RequestOrigin.php';
 $page = is_string($_GET['page'] ?? null) ? $_GET['page'] : 'home';
 $allowedPages = ['home', 'how', 'customers', 'shippers', 'pricing', 'auth', 'reset-password', 'customer', 'shipper', 'admin'];
 if (!in_array($page, $allowedPages, true)) {
@@ -35,7 +36,7 @@ $pendingShipperApplications = [];
 if (in_array($page, ['customer', 'shipper', 'admin'], true)) {
     session_set_cookie_params([
         'httponly' => true,
-        'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+        'secure' => somi_session_is_secure(),
         'samesite' => 'Lax',
         'path' => '/',
     ]);

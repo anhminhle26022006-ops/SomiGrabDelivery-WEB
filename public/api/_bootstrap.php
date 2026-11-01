@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../../app/Config/database.php';
+require_once __DIR__ . '/../../app/Services/RequestOrigin.php';
 
 function somi_api_start_session(): void
 {
@@ -10,7 +11,7 @@ function somi_api_start_session(): void
     }
     session_set_cookie_params([
         'httponly' => true,
-        'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+        'secure' => somi_session_is_secure(),
         'samesite' => 'Lax',
         'path' => '/',
     ]);
@@ -36,12 +37,8 @@ function somi_api_require_post(): void
         somi_api_json(415, ['error' => 'Content-Type must be application/json.']);
     }
     $origin = $_SERVER['HTTP_ORIGIN'] ?? null;
-    if ($origin !== null) {
-        $scheme = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http';
-        $expected = $scheme . '://' . ($_SERVER['HTTP_HOST'] ?? '');
-        if (strcasecmp($origin, $expected) !== 0) {
-            somi_api_json(403, ['error' => 'Cross-origin requests are not allowed.']);
-        }
+    if ($origin !== null && !somi_origin_allowed($origin)) {
+        somi_api_json(403, ['error' => 'Cross-origin requests are not allowed.']);
     }
 
 }

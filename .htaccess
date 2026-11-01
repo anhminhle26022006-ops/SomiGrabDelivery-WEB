@@ -1,4 +1,9 @@
 Options -Indexes
 DirectoryIndex index.php
 RewriteEngine On
+RewriteRule ^(?:app|database|resources|demoUI|tests|docs|\.git)(?:/|$) - [F,L,NC]
+RewriteRule \.(?:sql|pdf|env|ini|log|md)$ - [F,L,NC]
+RewriteRule ^Dockerfile$ - [F,L]
+RewriteRule ^public/api/_ - [F,L]
+
 RewriteRule ^admin/?$ index.php?page=admin [L,QSA]

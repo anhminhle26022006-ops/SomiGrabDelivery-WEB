@@ -33,7 +33,7 @@ function somi_db(): PDO
     }
 
     $dsn = sprintf(
-        'pgsql:host=%s;port=%s;dbname=%s;sslmode=%s',
+        'pgsql:host=%s;port=%s;dbname=%s;sslmode=%s;connect_timeout=8',
         $config['SOMI_DB_HOST'],
         $config['SOMI_DB_PORT'],
         $config['SOMI_DB_NAME'],

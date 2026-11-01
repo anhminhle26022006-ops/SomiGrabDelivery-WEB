@@ -36,7 +36,17 @@ try {
         somi_api_json(401, ['error' => 'The login details are incorrect or the account is not active.']);
     }
 
+    if (!in_array($user['account_status'], ['ACTIVE', 'PENDING_VERIFICATION'], true)) {
+        somi_api_json(401, ['error' => 'The account is not active.']);
+    }
+    if ($user['account_status'] === 'ACTIVE') {
+        $lastLogin = somi_db()->prepare('UPDATE users SET last_login_at = now(), updated_at = now() WHERE user_id = :user_id');
+        $lastLogin->execute(['user_id' => $user['user_id']]);
+    }
     session_regenerate_id(true);
+    $_SESSION = [];
+    $_SESSION['somi_authenticated_at'] = time();
+    $_SESSION['somi_last_activity'] = time();
     $_SESSION['somi_user_id'] = (int) $user['user_id'];
     $_SESSION['somi_role'] = strtolower($roleCode);
 
@@ -90,8 +100,6 @@ try {
         somi_api_json(401, ['error' => 'The login details are incorrect or the account is not active.']);
     }
 
-    $lastLogin = somi_db()->prepare('UPDATE users SET last_login_at = now(), updated_at = now() WHERE user_id = :user_id');
-    $lastLogin->execute(['user_id' => $user['user_id']]);
     somi_api_json(200, ['status' => 'SIGNED_IN', 'role' => strtolower($roleCode)]);
 } catch (Throwable $error) {
     somi_api_handle_error($error);

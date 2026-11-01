@@ -32,13 +32,32 @@ function somi_api_require_post(): void
         header('Allow: POST');
         somi_api_json(405, ['error' => 'Method not allowed.']);
     }
+    if (stripos($_SERVER['CONTENT_TYPE'] ?? '', 'application/json') !== 0) {
+        somi_api_json(415, ['error' => 'Content-Type must be application/json.']);
+    }
+    $origin = $_SERVER['HTTP_ORIGIN'] ?? null;
+    if ($origin !== null) {
+        $scheme = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http';
+        $expected = $scheme . '://' . ($_SERVER['HTTP_HOST'] ?? '');
+        if (strcasecmp($origin, $expected) !== 0) {
+            somi_api_json(403, ['error' => 'Cross-origin requests are not allowed.']);
+        }
+    }
+
 }
 
 function somi_api_input(): array
 {
-    $input = json_decode((string) file_get_contents('php://input'), true);
-    if (!is_array($input)) {
+    if (stripos($_SERVER['CONTENT_TYPE'] ?? '', 'application/json') !== 0) {
+        somi_api_json(415, ['error' => 'Content-Type must be application/json.']);
+    }
+    $body = (string) file_get_contents('php://input');
+    $input = json_decode($body, true);
+    if (!is_array($input) || !str_starts_with(ltrim($body), '{')) {
         somi_api_json(400, ['error' => 'Request body must be valid JSON.']);
+    }
+    foreach ($input as $value) {
+        if (is_array($value)) somi_api_json(422, ['error' => 'Fields must contain scalar values.']);
     }
     return $input;
 }
@@ -57,7 +76,7 @@ function somi_api_handle_error(Throwable $error): void
     if ($error instanceof PDOException && $error->getCode() === '23505') {
         somi_api_json(409, ['error' => 'Email or phone number is already registered.']);
     }
-    if ($error instanceof InvalidArgumentException || $error instanceof RuntimeException) {
+    if ($error instanceof InvalidArgumentException || ($error instanceof RuntimeException && !$error instanceof PDOException && !preg_match('/environment|configured|SOMI_|RESEND_|Resend|SQLSTATE/i', $error->getMessage()))) {
         somi_api_json(422, ['error' => $error->getMessage()]);
     }
     error_log('[SOMI API ERROR] ' . $error->getMessage());
@@ -65,3 +84,6 @@ function somi_api_handle_error(Throwable $error): void
 }
 
 somi_api_start_session();
+if (($_SERVER['HTTP_SEC_FETCH_SITE'] ?? '') === 'cross-site') {
+    somi_api_json(403, ['error' => 'Cross-site requests are not allowed.']);
+}

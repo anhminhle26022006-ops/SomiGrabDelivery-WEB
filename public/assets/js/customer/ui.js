@@ -230,7 +230,7 @@ function createSomiUI() {
   }
 
   /* ---------- Loading / error wrapper ---------- */
-  // Bootstrap placeholders while data "loads" (the demo waits a moment like an API call would).
+  // Show a placeholder for one event-loop turn; local data needs no simulated network delay.
   function skeleton(lines = 3) {
     return `<div class="placeholder-glow c-skeleton" aria-busy="true" aria-label="${t("Đang tải")}">${Array.from({ length: lines }, () => '<span class="placeholder col-12"></span>').join("")}</div>`;
   }
@@ -244,7 +244,7 @@ function createSomiUI() {
         return;
       }
       render(container);
-    }, 380);
+    }, 0);
   }
 
   /* ---------- Bootstrap components (JS loaded from the CDN in index.php) ----------

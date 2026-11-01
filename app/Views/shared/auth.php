@@ -60,6 +60,7 @@ usort($countryList, static fn(array $a, array $b): int => strcmp($a['name'], $b[
             </div>
             <div class="signup-controls"><button type="button" class="button button-light" data-step-back hidden>Back</button><button type="button" class="button button-dark" data-step-next>Continue <span>→</span></button></div>
           </div>
+          <p class="demo-note" data-auth-status role="status" aria-live="polite" hidden></p>
           <p class="form-error" data-form-error role="alert" hidden></p>
           <button class="button button-dark button-full" type="submit" data-auth-submit><span data-auth-submit-text>Sign in</span><span>↗</span></button>
           <p class="demo-note">New accounts must verify both their phone number and email address.</p>

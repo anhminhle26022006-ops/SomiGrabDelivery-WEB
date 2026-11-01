@@ -9,6 +9,24 @@
     window.location.href = `?${query.toString()}`;
   };
 
+  async function requestJson(url, payload = {}) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 30000);
+    try {
+      const response = await fetch(url, {
+        method: "POST", credentials: "same-origin", signal: controller.signal,
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify(payload)
+      });
+      const result = await response.json().catch(() => null);
+      if (!response.ok || !result) throw new Error(result?.error || "The request could not be completed. Please try again.");
+      return result;
+    } catch (error) {
+      if (error.name === "AbortError") throw new Error("The request timed out. Check your connection and try again.");
+      throw error;
+    } finally { clearTimeout(timer); }
+  }
+
   const translations = {
     en: {
       signin: "Sign in", send: "Send a Package", become: "Become a Shipper",
@@ -388,7 +406,8 @@
   function setupLanguage() {
     const pickers = $$("[data-language-picker]");
     const options = $$("[data-language-option]");
-    const saved = localStorage.getItem("somi-language") || "en";
+    let saved = "en";
+    try { saved = localStorage.getItem("somi-language") || "en"; } catch { /* Keep default language when storage is unavailable. */ }
     const apply = (language) => {
       const copy = translations[language] || translations.en;
       $$("[data-i18n]").forEach((element) => {
@@ -412,7 +431,7 @@
         });
         if (trigger) trigger.setAttribute("aria-expanded", String(menu && !menu.hidden));
       });
-      localStorage.setItem("somi-language", language);
+      try { localStorage.setItem("somi-language", language); } catch { /* Language still updates in memory. */ }
       document.documentElement.lang = language;
       translateVietnameseDocument();
       document.dispatchEvent(new CustomEvent("somi:language-change", { detail: { language } }));
@@ -496,16 +515,23 @@
         : "";
     };
 
+    let authPending = false;
     const apiPost = async (path, payload = {}) => {
-      const response = await fetch(`public/api/auth/${path}`, {
-        method: "POST",
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json", "Accept": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(result.error || "The request could not be completed.");
-      return result;
+      if (authPending) throw new Error("A request is already in progress.");
+      authPending = true;
+      const controls = [...new Set([...form.querySelectorAll("button,input,select"), ...modeButtons])];
+      const previous = controls.map(control => control.disabled);
+      controls.forEach(control => { control.disabled = true; });
+      const status = document.querySelector("[data-auth-status]");
+      form.setAttribute("aria-busy", "true");
+      if (status) { status.hidden = false; status.textContent = document.documentElement.lang === "vi" ? "Đang xử lý, vui lòng chờ…" : "Processing, please wait…"; }
+      try { return await requestJson(`public/api/auth/${path}`, payload); }
+      finally {
+        controls.forEach((control, index) => { control.disabled = previous[index]; });
+        authPending = false;
+        form.removeAttribute("aria-busy");
+        if (status) status.hidden = true;
+      }
     };
 
     const showError = (message) => {
@@ -573,7 +599,7 @@
     }));
     stepBack.addEventListener("click", () => { step = Math.max(1, step - 1); render(); });
     stepNext.addEventListener("click", async () => {
-      if (mode !== "signup") return;
+      if (mode !== "signup" || authPending) return;
       showError("");
       const nationality = form.elements.nationalityCode.value;
       if (step === 1) {
@@ -648,8 +674,8 @@
         if (!/^\d{6}$/.test(form.elements.emailOtp.value.trim())) return showError("Enter the six-digit email code.");
         stepNext.disabled = true;
         try {
-          await apiPost("verify-email-code.php", { code: form.elements.emailOtp.value.trim() });
-          finishAuth(registrationRole);
+          const verified = await apiPost("verify-email-code.php", { code: form.elements.emailOtp.value.trim() });
+          finishAuth(verified.role || registrationRole);
         } catch (requestError) {
           showError(requestError.message);
         } finally {
@@ -659,7 +685,8 @@
     });
     form.addEventListener("submit", (event) => {
       event.preventDefault();
-      if (mode === "signup") return;
+      if (mode === "signup" || authPending) return;
+      showError("");
       const role = $('input[name="role"]:checked', form)?.value || "customer";
       if (!form.elements.identifier.value.trim() || !form.elements.password.value) return showError("Enter your phone/email and password to continue.");
       submitButton.disabled = true;
@@ -677,7 +704,8 @@
           showError(result.notice || (step === 4 ? "Phone verification is required. Enter the demo code shown here." : "A new email verification code was sent."));
           return;
         }
-        finishAuth(role);
+        if (result.status !== "SIGNED_IN") throw new Error("Unexpected sign-in response. Please try again.");
+        finishAuth(result.role);
       })
         .catch((requestError) => showError(requestError.message))
         .finally(() => { submitButton.disabled = false; });
@@ -703,11 +731,9 @@
       finally { resendEmail.disabled = false; }
     });
     function finishAuth(role = $('input[name="role"]:checked', form)?.value || "customer") {
-      localStorage.setItem("somi-demo-role", role);
-      if (role === "admin") { navigate("admin"); return; }
-      const params = new URLSearchParams(window.location.search);
-      const next = params.get("next");
-      navigate(role === "shipper" || next === "shipper" ? "shipper" : "customer");
+      if (!["customer", "shipper", "admin"].includes(role)) throw new Error("Invalid workspace response.");
+      try { localStorage.setItem("somi-demo-role", role); } catch { /* Session auth does not depend on browser storage. */ }
+      navigate(role);
     }
     const forgot = $("[data-forgot]");
     const requestForm = $("[data-password-request-form]");
@@ -810,25 +836,18 @@
   }
 
   function setupWorkspaceSwitch() {
-    const postSwitch = async (payload) => {
-      const response = await fetch("public/api/auth/switch-workspace.php", {
-        method: "POST",
-        credentials: "same-origin",
-        headers: { "Content-Type": "application/json", "Accept": "application/json" },
-        body: JSON.stringify(payload)
-      });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(result.error || "The request could not be completed.");
-      return result;
-    };
+    const postSwitch = payload => requestJson("public/api/auth/switch-workspace.php", payload);
 
     $$("[data-workspace-switch]").forEach((button) => button.addEventListener("click", async () => {
+      if (button.disabled) return;
       button.disabled = true;
+      button.setAttribute("aria-busy", "true");
       try {
         const result = await postSwitch({ target: button.dataset.workspaceSwitch });
         window.location.href = `?page=${encodeURIComponent(result.role)}`;
       } catch (error) {
         button.disabled = false;
+        button.removeAttribute("aria-busy");
         window.alert(error.message);
       }
     }));
@@ -1016,9 +1035,23 @@
       const feedback = $("[data-form-feedback]", form);
       if (feedback) feedback.textContent = "Demo only: changes are not sent to a server.";
     }));
-    $$("[data-signout]").forEach((button) => button.addEventListener("click", () => {
-      localStorage.removeItem("somi-demo-role");
-      navigate("home");
+    let signingOut = false;
+    $$("[data-signout]").forEach((button) => button.addEventListener("click", async (event) => {
+      event.preventDefault();
+      if (signingOut) return;
+      signingOut = true;
+      button.disabled = true;
+      button.setAttribute("aria-busy", "true");
+      try {
+        await requestJson("public/api/auth/logout.php");
+        try { localStorage.removeItem("somi-demo-role"); } catch { /* Session is already cleared server-side. */ }
+        navigate("home");
+      } catch (error) {
+        signingOut = false;
+        button.disabled = false;
+        button.removeAttribute("aria-busy");
+        window.alert(error.message);
+      }
     }));
   }
 

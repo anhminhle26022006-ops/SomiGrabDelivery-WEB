@@ -12,6 +12,10 @@ if (!in_array($target, ['CUSTOMER', 'SHIPPER'], true)) {
 }
 
 try {
+    require_once __DIR__ . '/../../../app/Services/SessionGuard.php';
+    if (!somi_require_active_session()) somi_api_json(401, ['error' => 'Please sign in again.']);
+    require_once __DIR__ . '/../../../app/Services/SessionGuard.php';
+    if (!somi_require_active_session()) somi_api_json(401, ['error' => 'Please sign in again.']);
     $db = somi_db();
     $db->beginTransaction();
 

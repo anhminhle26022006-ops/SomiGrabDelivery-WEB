@@ -1,24 +1,27 @@
 <?php
 declare(strict_types=1);
 
-// Let PHP's built-in server serve real CSS/JS/image files directly when this
-// file is used as its router (php -S localhost:3000 index.php).
-if (PHP_SAPI === 'cli-server') {
-    $requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
-    if (is_string($requestPath) && $requestPath !== '/') {
-        $decodedPath = rawurldecode($requestPath);
-        $candidate = realpath(__DIR__ . DIRECTORY_SEPARATOR . ltrim($decodedPath, '/\\'));
-        $root = realpath(__DIR__);
-        if ($candidate !== false && $root !== false
-            && str_starts_with($candidate, $root . DIRECTORY_SEPARATOR)
-            && is_file($candidate)
-            && !str_ends_with(strtolower($candidate), '.php')) {
-            return false;
-        }
+// Only public assets and explicit API endpoints may bypass the front controller.
+$requestPath = rawurldecode((string) parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH));
+if (PHP_SAPI === 'cli-server' && $requestPath !== '/') {
+    $candidate = realpath(__DIR__ . '/' . ltrim($requestPath, '/'));
+    $publicRoot = realpath(__DIR__ . '/public');
+    if ($candidate !== false && $publicRoot !== false
+        && str_starts_with($candidate, $publicRoot . DIRECTORY_SEPARATOR) && is_file($candidate)
+        && !str_starts_with(basename($candidate), '_')) {
+        return false;
+    }
+    if (!in_array($requestPath, ['/admin', '/admin/', '/index.php'], true)) {
+        http_response_code(404);
+        exit('Not found');
     }
 }
-
-$page = $_GET['page'] ?? 'home';
+if (in_array($requestPath, ['/admin', '/admin/'], true)) {
+    $_GET['page'] = 'admin';
+}
+require_once __DIR__ . '/app/Services/SessionGuard.php';
+require_once __DIR__ . '/app/Services/RequestOrigin.php';
+$page = is_string($_GET['page'] ?? null) ? $_GET['page'] : 'home';
 $allowedPages = ['home', 'how', 'customers', 'shippers', 'pricing', 'auth', 'reset-password', 'customer', 'shipper', 'admin'];
 if (!in_array($page, $allowedPages, true)) {
     http_response_code(404);
@@ -33,7 +36,7 @@ $pendingShipperApplications = [];
 if (in_array($page, ['customer', 'shipper', 'admin'], true)) {
     session_set_cookie_params([
         'httponly' => true,
-        'secure' => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+        'secure' => somi_session_is_secure(),
         'samesite' => 'Lax',
         'path' => '/',
     ]);
@@ -44,12 +47,14 @@ if (in_array($page, ['customer', 'shipper', 'admin'], true)) {
         header('Location: ?page=auth&next=' . rawurlencode($page), true, 303);
         exit;
     }
-    require_once __DIR__ . '/app/Config/database.php';
-    $roleQuery = somi_db()->prepare(
-        'SELECT r.role_code FROM user_roles ur JOIN roles r ON r.role_id = ur.role_id WHERE ur.user_id = :user_id'
-    );
-    $roleQuery->execute(['user_id' => $sessionUserId]);
-    $userRoleCodes = $roleQuery->fetchAll(PDO::FETCH_COLUMN);
+    header('Cache-Control: no-store');
+    try {
+    $sessionUser = null;
+    if (!somi_require_active_session($sessionUser)) {
+        header('Location: ?page=auth', true, 303);
+        exit;
+    }
+    $userRoleCodes = json_decode($sessionUser['roles'], true, 512, JSON_THROW_ON_ERROR);
     $hasCustomerWorkspace = in_array('CUSTOMER', $userRoleCodes, true);
     $hasShipperWorkspace = in_array('SHIPPER', $userRoleCodes, true);
     if (!in_array($sessionRole, $userRoleCodes, true) || $sessionRole !== strtoupper($page)) {
@@ -57,14 +62,9 @@ if (in_array($page, ['customer', 'shipper', 'admin'], true)) {
         exit;
     }
     if ($page === 'shipper') {
-        $statusQuery = somi_db()->prepare('SELECT verification_status FROM shipper_profiles WHERE user_id = :user_id');
-        $statusQuery->execute(['user_id' => $sessionUserId]);
-        $shipperVerificationStatus = $statusQuery->fetchColumn() ?: null;
-        $identityQuery = somi_db()->prepare('SELECT review_status, rejection_reason FROM user_identity_documents WHERE user_id = :user_id');
-        $identityQuery->execute(['user_id' => $sessionUserId]);
-        $identityReview = $identityQuery->fetch();
-        $shipperIdentityReviewStatus = $identityReview['review_status'] ?? null;
-        $shipperRejectionReason = $identityReview['rejection_reason'] ?? null;
+        $shipperVerificationStatus = $sessionUser['verification_status'];
+        $shipperIdentityReviewStatus = $sessionUser['review_status'];
+        $shipperRejectionReason = $sessionUser['rejection_reason'];
     }
     if ($page === 'admin') {
         $pendingQuery = somi_db()->query(
@@ -78,8 +78,14 @@ if (in_array($page, ['customer', 'shipper', 'admin'], true)) {
         );
         $pendingShipperApplications = $pendingQuery->fetchAll();
     }
+    } catch (Throwable $error) {
+        error_log('[SOMI workspace] ' . get_class($error));
+        http_response_code(503);
+        exit('Workspace temporarily unavailable. Please try again later.');
+    }
+    session_write_close();
 }
-$shipperView = $_GET['view'] ?? 'dashboard';
+$shipperView = is_string($_GET['view'] ?? null) ? $_GET['view'] : 'dashboard';
 $allowedShipperViews = ['dashboard','offers','detail','active','history','earnings','account','registration','chat','support','cancel','withdraw','report','notifications'];
 if (!in_array($shipperView, $allowedShipperViews, true)) $shipperView = 'dashboard';
 $shipperViewPages = [
@@ -90,6 +96,8 @@ $shipperViewPages = [
 ];
 $shipperPage = $shipperViewPages[$shipperView];
 
+$adminView = $_GET['view'] ?? 'index';
+if (!is_string($adminView) || !in_array($adminView, ['index','users','customers','shippers','orders','complaints','disputes','payments','reviews','notifications','audit-logs'], true)) $adminView = 'index';
 $publicPages = ['home','how','customers','shippers','pricing'];
 $pageTitles = [
     'home' => 'SOMI — Delivery on Your Time',
@@ -111,6 +119,7 @@ function linkTo(string $page, array $params = []): string {
 <!doctype html>
 <html lang="en">
 <head>
+  <base href="<?= e(rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/index.php')), '/') . '/') ?>">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#14284b">
@@ -121,6 +130,11 @@ function linkTo(string $page, array $params = []): string {
   <link rel="stylesheet" href="public/assets/css/app.css?v=20261018-auth2">
   <?php if (in_array($page, ['customer', 'shipper', 'admin'], true)): ?>
   <link rel="stylesheet" href="public/assets/css/modules/<?= e($page) ?>.css<?= $page === 'shipper' ? '?v=20261014-3' : '' ?>">
+  <?php endif; ?>
+  <?php if ($page === 'admin'): ?>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script defer src="public/assets/js/admin.js"></script>
   <?php endif; ?>
   <script defer src="public/assets/js/app.js?v=20261018-passwordreset1"></script>
 </head>
@@ -140,7 +154,7 @@ function linkTo(string $page, array $params = []): string {
     <?php require __DIR__ . '/app/Views/shipper/index.php'; ?>
   <?php endif; ?>
 <?php else: ?>
-  <?php require __DIR__ . '/app/Views/admin/index.php'; ?>
+  <?php require __DIR__ . '/app/Views/admin/' . $adminView . '.php'; ?>
 <?php endif; ?>
 <?php if ($page === 'shipper'): ?><script defer src="public/assets/js/shipper-navigation.js?v=20261014-6"></script><script defer src="public/assets/js/shipper.js?v=20261014-6"></script><?php endif; ?>
 </body>

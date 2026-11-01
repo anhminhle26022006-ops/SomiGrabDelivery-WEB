@@ -1339,3 +1339,30 @@ body {
     color: #991b1b;
 }
 .status-badge.blocked .dot { background-color: #991b1b; }
+/* Keep the existing layout within tablet/mobile viewports. */
+body[data-page="admin"] .main-content { min-width:0; }
+body[data-page="admin"] .stats-grid,
+body[data-page="admin"] .stats-grid-3 { grid-template-columns:repeat(3,minmax(0,1fr)); }
+body[data-page="admin"] .content-row { grid-template-columns:minmax(0,2fr) minmax(0,1fr); }
+body[data-page="admin"] .card { min-width:0; overflow-x:auto; }
+@media(max-width:1100px) {
+ body[data-page="admin"] .content-row { grid-template-columns:minmax(0,1fr); }
+ body[data-page="admin"] .stats-grid,
+ body[data-page="admin"] .stats-grid-3 { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}
+@media(max-width:760px) {
+ body[data-page="admin"] .app-container { display:block; }
+ body[data-page="admin"] .sidebar { position:static; width:100%; height:auto; }
+ body[data-page="admin"] .sidebar-brand { padding:16px; }
+ body[data-page="admin"] .sidebar-menu { display:flex; overflow-x:auto; gap:4px; }
+ body[data-page="admin"] .sidebar-menu .menu-item { flex-shrink:0; white-space:nowrap; }
+ body[data-page="admin"] .sidebar-footer { padding:4px 12px; }
+ body[data-page="admin"] .main-content { margin-left:0; }
+ body[data-page="admin"] .top-header { padding:12px 16px; height:auto; min-height:64px; flex-wrap:wrap; gap:12px; }
+ body[data-page="admin"] .stats-grid,
+ body[data-page="admin"] .stats-grid-3 { grid-template-columns:minmax(0,1fr); }
+ body[data-page="admin"] .search-sort-row { flex-wrap:wrap; }
+ body[data-page="admin"] .filter-tabs { overflow-x:auto; }
+ body[data-page="admin"] .tab-btn { flex-shrink:0; }
+ body[data-page="admin"] .card-header { gap:12px; flex-wrap:wrap; }
+}

@@ -83,9 +83,7 @@ final class PhoneVerificationService
             return true;
         }
 
-        // Make local development usable without a separate environment setting.
-        $host = strtolower(explode(':', (string) ($_SERVER['HTTP_HOST'] ?? ''))[0]);
-        return in_array($host, ['localhost', '127.0.0.1', '::1'], true);
+        return false;
     }
 
     public static function verifyCode(int $userId, string $code): void

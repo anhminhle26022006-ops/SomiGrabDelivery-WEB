@@ -1,14 +1,4 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SOMI Delivery - Audit Logs Management</title>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../../../public/assets/css/modules/admin.css">
-</head>
-<body>
+
     <div class="app-container">
         <!-- Sidebar -->
         <aside class="sidebar">
@@ -17,42 +7,42 @@
             </div>
             <div class="sidebar-category">ADMIN CONSOLE</div>
             <nav class="sidebar-menu">
-    <a href="index.php" class="menu-item">
+    <a href="?page=admin&amp;view=index" class="menu-item">
         <i class="fa-solid fa-house"></i> Dashboard
     </a>
-    <a href="users.php" class="menu-item">
+    <a href="?page=admin&amp;view=users" class="menu-item">
         <i class="fa-solid fa-user-group"></i> Users
     </a>
-    <a href="customers.php" class="menu-item">
+    <a href="?page=admin&amp;view=customers" class="menu-item">
         <i class="fa-solid fa-users"></i> Customers
     </a>
-    <a href="shippers.php" class="menu-item">
+    <a href="?page=admin&amp;view=shippers" class="menu-item">
         <i class="fa-solid fa-motorcycle"></i> Shippers
     </a>
-    <a href="orders.php" class="menu-item">
+    <a href="?page=admin&amp;view=orders" class="menu-item">
         <i class="fa-solid fa-file-lines"></i> Orders
     </a>
-    <a href="complaints.php" class="menu-item">
+    <a href="?page=admin&amp;view=complaints" class="menu-item">
         <i class="fa-solid fa-triangle-exclamation"></i> Complaints <span class="badge red">4</span>
     </a>
-    <a href="disputes.php" class="menu-item">
+    <a href="?page=admin&amp;view=disputes" class="menu-item">
         <i class="fa-solid fa-scale-balanced"></i> Disputes
     </a>
-    <a href="payments.php" class="menu-item">
+    <a href="?page=admin&amp;view=payments" class="menu-item">
         <i class="fa-solid fa-wallet"></i> Payments
     </a>
-    <a href="reviews.php" class="menu-item">
+    <a href="?page=admin&amp;view=reviews" class="menu-item">
         <i class="fa-regular fa-star"></i> Reviews
     </a>
-    <a href="notifications.php" class="menu-item">
+    <a href="?page=admin&amp;view=notifications" class="menu-item">
         <i class="fa-regular fa-bell"></i> Notifications <span class="badge gray">3</span>
     </a>
-    <a href="audit-logs.php" class="menu-item active">
+    <a href="?page=admin&amp;view=audit-logs" class="menu-item active">
         <i class="fa-solid fa-chart-line"></i> Audit Logs
     </a>
 </nav>
             <div class="sidebar-footer">
-                <a href="#" class="menu-item logout">
+                <a href="#" class="menu-item logout" data-signout>
                     <i class="fa-solid fa-right-from-bracket"></i> Log out
                 </a>
             </div>
@@ -205,7 +195,3 @@
             </div>
         </main>
     </div>
-
-    <script src="../../../public/assets/js/modules/audit-logs.js"></script>
-</body>
-</html>

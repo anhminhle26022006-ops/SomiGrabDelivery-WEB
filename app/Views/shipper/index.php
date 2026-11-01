@@ -24,7 +24,7 @@
         <button data-profile-action="account">👤 Tài khoản & hồ sơ</button>
         <button data-profile-action="support">🎧 <span class="shipper-copy-en">Support center</span><span class="shipper-copy-vi">Trung tâm hỗ trợ</span></button>
         <button data-profile-action="policy">📄 <span class="shipper-copy-en">Policies & terms</span><span class="shipper-copy-vi">Chính sách &amp; điều khoản</span></button>
-        <button class="danger" data-profile-action="logout">↪ <span class="shipper-copy-en">Sign out</span><span class="shipper-copy-vi">Đăng xuất</span></button>
+        <button class="danger" data-signout>↪ <span class="shipper-copy-en">Sign out</span><span class="shipper-copy-vi">Đăng xuất</span></button>
       </div>
     </div>
   </div>

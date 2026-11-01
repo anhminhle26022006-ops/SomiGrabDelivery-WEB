@@ -110,6 +110,9 @@ try {
 
     $db->commit();
     session_regenerate_id(true);
+    $_SESSION = [];
+    $_SESSION['somi_authenticated_at'] = time();
+    $_SESSION['somi_last_activity'] = time();
     $_SESSION['somi_user_id'] = $userId;
     $_SESSION['somi_role'] = strtolower($roleCode);
 

@@ -1,0 +1,47 @@
+[
+  {
+    "role": "admin",
+    "status": 200,
+    "elapsed_ms": 1525
+  },
+  {
+    "role": "admin",
+    "status": 200,
+    "elapsed_ms": 1467
+  },
+  {
+    "role": "admin",
+    "status": 200,
+    "elapsed_ms": 1369
+  },
+  {
+    "role": "customer",
+    "status": 200,
+    "elapsed_ms": 993
+  },
+  {
+    "role": "customer",
+    "status": 200,
+    "elapsed_ms": 2129
+  },
+  {
+    "role": "customer",
+    "status": 200,
+    "elapsed_ms": 1184
+  },
+  {
+    "role": "shipper",
+    "status": 200,
+    "elapsed_ms": 1093
+  },
+  {
+    "role": "shipper",
+    "status": 200,
+    "elapsed_ms": 1064
+  },
+  {
+    "role": "shipper",
+    "status": 200,
+    "elapsed_ms": 1126
+  }
+]

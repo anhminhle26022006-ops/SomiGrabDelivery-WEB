@@ -1,0 +1,198 @@
+[
+  {
+    "path": "/?page=home",
+    "method": "GET",
+    "expected": 200,
+    "actual": 200,
+    "result": "PASS"
+  },
+  {
+    "path": "/?page=how",
+    "method": "GET",
+    "expected": 200,
+    "actual": 200,
+    "result": "PASS"
+  },
+  {
+    "path": "/?page=customers",
+    "method": "GET",
+    "expected": 200,
+    "actual": 200,
+    "result": "PASS"
+  },
+  {
+    "path": "/?page=shippers",
+    "method": "GET",
+    "expected": 200,
+    "actual": 200,
+    "result": "PASS"
+  },
+  {
+    "path": "/?page=pricing",
+    "method": "GET",
+    "expected": 200,
+    "actual": 200,
+    "result": "PASS"
+  },
+  {
+    "path": "/?page=auth",
+    "method": "GET",
+    "expected": 200,
+    "actual": 200,
+    "result": "PASS"
+  },
+  {
+    "path": "/?page=reset-password",
+    "method": "GET",
+    "expected": 200,
+    "actual": 200,
+    "result": "PASS"
+  },
+  {
+    "path": "/?page=customer",
+    "method": "GET",
+    "expected": 303,
+    "actual": 303,
+    "result": "PASS"
+  },
+  {
+    "path": "/?page=shipper",
+    "method": "GET",
+    "expected": 303,
+    "actual": 303,
+    "result": "PASS"
+  },
+  {
+    "path": "/?page=admin",
+    "method": "GET",
+    "expected": 303,
+    "actual": 303,
+    "result": "PASS"
+  },
+  {
+    "path": "/admin",
+    "method": "GET",
+    "expected": 303,
+    "actual": 303,
+    "result": "PASS"
+  },
+  {
+    "path": "/admin/",
+    "method": "GET",
+    "expected": 303,
+    "actual": 303,
+    "result": "PASS"
+  },
+  {
+    "path": "/?page=unknown",
+    "method": "GET",
+    "expected": 404,
+    "actual": 404,
+    "result": "PASS"
+  },
+  {
+    "path": "/database/SOMI_database.sql",
+    "method": "GET",
+    "expected": 404,
+    "actual": 404,
+    "result": "PASS"
+  },
+  {
+    "path": "/app/Views/admin/users.php",
+    "method": "GET",
+    "expected": 404,
+    "actual": 404,
+    "result": "PASS"
+  },
+  {
+    "path": "/.git/config",
+    "method": "GET",
+    "expected": 404,
+    "actual": 404,
+    "result": "PASS"
+  },
+  {
+    "path": "/README.md",
+    "method": "GET",
+    "expected": 404,
+    "actual": 404,
+    "result": "PASS"
+  },
+  {
+    "path": "/public/api/_bootstrap.php",
+    "method": "GET",
+    "expected": 404,
+    "actual": 404,
+    "result": "PASS"
+  },
+  {
+    "path": "/missing",
+    "method": "GET",
+    "expected": 404,
+    "actual": 404,
+    "result": "PASS"
+  },
+  {
+    "path": "/public/assets/js/app.js",
+    "method": "GET",
+    "expected": 200,
+    "actual": 200,
+    "result": "PASS"
+  },
+  {
+    "path": "/public/api/auth/login.php",
+    "method": "GET",
+    "expected": 405,
+    "actual": 405,
+    "result": "PASS"
+  },
+  {
+    "path": "/public/api/auth/login.php",
+    "method": "POST",
+    "expected": 415,
+    "actual": 415,
+    "result": "PASS"
+  },
+  {
+    "path": "/public/api/auth/login.php",
+    "method": "POST",
+    "expected": 400,
+    "actual": 400,
+    "result": "PASS"
+  },
+  {
+    "path": "/public/api/auth/login.php",
+    "method": "POST",
+    "expected": 422,
+    "actual": 422,
+    "result": "PASS"
+  },
+  {
+    "path": "/public/api/auth/switch-workspace.php",
+    "method": "POST",
+    "expected": 401,
+    "actual": 401,
+    "result": "PASS"
+  },
+  {
+    "path": "/public/api/admin/review-shipper.php",
+    "method": "POST",
+    "expected": 401,
+    "actual": 401,
+    "result": "PASS"
+  },
+  {
+    "path": "/public/api/auth/logout.php",
+    "method": "POST",
+    "expected": 403,
+    "actual": 403,
+    "result": "PASS"
+  },
+  {
+    "path": "/public/api/auth/logout.php",
+    "method": "POST",
+    "expected": 200,
+    "actual": 200,
+    "result": "PASS"
+  }
+]

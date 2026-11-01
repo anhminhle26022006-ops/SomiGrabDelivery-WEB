@@ -21,7 +21,7 @@ function createSomiStore() {
   const I18N = window.SomiI18n;
   const { t, msg } = I18N;
 
-  const STORAGE_KEY = "somi-customer-v2";
+  const STORAGE_KEY = `somi-customer-v2:${document.body.dataset.userId}`;
   const DATA_VERSION = 2;
   const MAX_WEIGHT_KG = 30;
   const MAX_QUANTITY = 20;

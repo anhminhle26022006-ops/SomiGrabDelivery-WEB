@@ -23,7 +23,7 @@ $customerViews = [
     'addresses'     => ['Sổ địa chỉ', 'account'],
 ];
 $customerView = $_GET['view'] ?? 'dashboard';
-if (!array_key_exists($customerView, $customerViews)) {
+if (!is_string($customerView) || !array_key_exists($customerView, $customerViews)) {
     $customerView = 'dashboard';
 }
 [$customerTitle, $customerSection] = $customerViews[$customerView];
@@ -141,7 +141,7 @@ function customerIcon(string $paths, int $size = 20): string {
     <div class="c-demo-body" data-demo-body hidden></div>
   </aside>
 </div>
-<script>document.body.dataset.cView = <?= json_encode($customerView) ?>; document.title = <?= json_encode($customerTitle . ' · SOMI') ?>;</script>
+<script>document.body.dataset.userId = <?= json_encode((string) $sessionUserId) ?>; document.body.dataset.cView = <?= json_encode($customerView) ?>; document.title = <?= json_encode($customerTitle . ' · SOMI') ?>;</script>
 <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 <script defer src="<?= $asset ?>lang/en.js?v=<?= $assetVersion ?>"></script>
 <script defer src="<?= $asset ?>i18n.js?v=<?= $assetVersion ?>"></script>

@@ -1,0 +1,4 @@
+.git
+tests/.runtime
+**/__pycache__
+**/*.pyc

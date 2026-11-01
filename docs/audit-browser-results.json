@@ -1,0 +1,152 @@
+{
+  "results": [
+    {
+      "page": "home",
+      "width": 1440,
+      "scroll": 1425,
+      "title": "SOMI — Delivery on Your Time",
+      "result": "PASS"
+    },
+    {
+      "page": "how",
+      "width": 1440,
+      "scroll": 1440,
+      "title": "How It Works — SOMI",
+      "result": "PASS"
+    },
+    {
+      "page": "customers",
+      "width": 1440,
+      "scroll": 1425,
+      "title": "For Customers — SOMI",
+      "result": "PASS"
+    },
+    {
+      "page": "shippers",
+      "width": 1440,
+      "scroll": 1425,
+      "title": "For Shippers — SOMI",
+      "result": "PASS"
+    },
+    {
+      "page": "pricing",
+      "width": 1440,
+      "scroll": 1425,
+      "title": "Pricing — SOMI",
+      "result": "PASS"
+    },
+    {
+      "page": "auth",
+      "width": 1440,
+      "scroll": 1440,
+      "title": "Sign in — SOMI",
+      "result": "PASS"
+    },
+    {
+      "page": "reset-password",
+      "width": 1440,
+      "scroll": 1440,
+      "title": "Reset password — SOMI",
+      "result": "PASS"
+    },
+    {
+      "page": "home",
+      "width": 768,
+      "scroll": 753,
+      "title": "SOMI — Delivery on Your Time",
+      "result": "PASS"
+    },
+    {
+      "page": "how",
+      "width": 768,
+      "scroll": 768,
+      "title": "How It Works — SOMI",
+      "result": "PASS"
+    },
+    {
+      "page": "customers",
+      "width": 768,
+      "scroll": 753,
+      "title": "For Customers — SOMI",
+      "result": "PASS"
+    },
+    {
+      "page": "shippers",
+      "width": 768,
+      "scroll": 753,
+      "title": "For Shippers — SOMI",
+      "result": "PASS"
+    },
+    {
+      "page": "pricing",
+      "width": 768,
+      "scroll": 753,
+      "title": "Pricing — SOMI",
+      "result": "PASS"
+    },
+    {
+      "page": "auth",
+      "width": 768,
+      "scroll": 768,
+      "title": "Sign in — SOMI",
+      "result": "PASS"
+    },
+    {
+      "page": "reset-password",
+      "width": 768,
+      "scroll": 768,
+      "title": "Reset password — SOMI",
+      "result": "PASS"
+    },
+    {
+      "page": "home",
+      "width": 375,
+      "scroll": 375,
+      "title": "SOMI — Delivery on Your Time",
+      "result": "PASS"
+    },
+    {
+      "page": "how",
+      "width": 375,
+      "scroll": 375,
+      "title": "How It Works — SOMI",
+      "result": "PASS"
+    },
+    {
+      "page": "customers",
+      "width": 375,
+      "scroll": 375,
+      "title": "For Customers — SOMI",
+      "result": "PASS"
+    },
+    {
+      "page": "shippers",
+      "width": 375,
+      "scroll": 375,
+      "title": "For Shippers — SOMI",
+      "result": "PASS"
+    },
+    {
+      "page": "pricing",
+      "width": 375,
+      "scroll": 375,
+      "title": "Pricing — SOMI",
+      "result": "PASS"
+    },
+    {
+      "page": "auth",
+      "width": 375,
+      "scroll": 375,
+      "title": "Sign in — SOMI",
+      "result": "PASS"
+    },
+    {
+      "page": "reset-password",
+      "width": 375,
+      "scroll": 375,
+      "title": "Reset password — SOMI",
+      "result": "PASS"
+    }
+  ],
+  "runtimeExceptions": []
+}

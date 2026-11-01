@@ -102,3 +102,9 @@ body[data-page="shipper"] .settlementnote span{color:var(--muted);line-height:1.
 }
 @media(max-width:420px) { body[data-page="shipper"] main { padding:16px 10px 28px; } body[data-page="shipper"] .cards { grid-template-columns:1fr; } body[data-page="shipper"] .metricvalue { font-size:22px; } }
 .date-picker{position:relative;flex:0 0 auto}.date-menu{position:absolute;z-index:30;top:calc(100% + 8px);right:0;width:190px;padding:6px;border:1px solid var(--line);border-radius:13px;background:#fff;box-shadow:0 14px 34px #17345c20}.date-menu[hidden]{display:none!important}.date-menu button{width:100%;padding:10px 12px;border:0;border-radius:8px;background:#fff;text-align:left;color:var(--ink);font:inherit;font-size:13px;cursor:pointer}.date-menu button:hover,.date-menu button[aria-pressed="true"]{background:var(--blue2);color:var(--blue)}
+
+@media(max-width:420px) {
+ body[data-page="shipper"] .topbar { gap:8px; padding-inline:10px; }
+ body[data-page="shipper"] .top-actions { gap:8px; }
+ body[data-page="shipper"] .top-actions > [data-workspace-switch] { padding-inline:8px; font-size:11px; }
+}

@@ -30,7 +30,7 @@ function toast(s){let el=document.getElementById('toast');el.textContent=s;el.st
 function demoAction(s){toast(s+' — thao tác minh họa trong demo HTML.')}
 function showSupport(){document.getElementById('supportPanel').classList.remove('hidden');document.getElementById('supportPanel').scrollIntoView({behavior:'smooth',block:'nearest'});}
 function openProfile(){document.getElementById('profileDropdown').classList.add('open');document.getElementById('profileBtn').setAttribute('aria-expanded','true')}
-document.querySelectorAll('#sidebar [data-page]').forEach(b=>b.addEventListener('click',()=>go(b.dataset.page)));
+// Sidebar navigation is handled once by shipper-navigation.js.
 // Header branding/navigation may also carry data-page; do not let it hide every view.
 document.getElementById('bellBtn')?.addEventListener('click',()=>go('notifications'));
 document.getElementById('chatForm')?.addEventListener('submit',e=>{e.preventDefault();const input=document.getElementById('chatInput');const text=input.value.trim();if(!text)return;const bubble=document.createElement('div');bubble.className='bubble mine';bubble.textContent=text;document.getElementById('chatMessages').appendChild(bubble);input.value='';document.getElementById('chatMessages').scrollTop=document.getElementById('chatMessages').scrollHeight;toast('Tin nhắn được thêm vào khung chat demo.');});

@@ -43,7 +43,7 @@ function somi_api_require_post(): void
 
 }
 
-function somi_api_input(): array
+function somi_api_input(bool $allowNested = false): array
 {
     if (stripos($_SERVER['CONTENT_TYPE'] ?? '', 'application/json') !== 0) {
         somi_api_json(415, ['error' => 'Content-Type must be application/json.']);
@@ -54,7 +54,7 @@ function somi_api_input(): array
         somi_api_json(400, ['error' => 'Request body must be valid JSON.']);
     }
     foreach ($input as $value) {
-        if (is_array($value)) somi_api_json(422, ['error' => 'Fields must contain scalar values.']);
+        if (!$allowNested && is_array($value)) somi_api_json(422, ['error' => 'Fields must contain scalar values.']);
     }
     return $input;
 }

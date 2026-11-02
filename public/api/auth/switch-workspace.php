@@ -14,8 +14,6 @@ if (!in_array($target, ['CUSTOMER', 'SHIPPER'], true)) {
 try {
     require_once __DIR__ . '/../../../app/Services/SessionGuard.php';
     if (!somi_require_active_session()) somi_api_json(401, ['error' => 'Please sign in again.']);
-    require_once __DIR__ . '/../../../app/Services/SessionGuard.php';
-    if (!somi_require_active_session()) somi_api_json(401, ['error' => 'Please sign in again.']);
     $db = somi_db();
     $db->beginTransaction();
 
@@ -40,8 +38,8 @@ try {
         $grant->execute(['user_id' => $userId, 'role_id' => $roleId]);
         $profile = $db->prepare('INSERT INTO customer_profiles (user_id) VALUES (:user_id) ON CONFLICT (user_id) DO NOTHING');
         $profile->execute(['user_id' => $userId]);
-        $_SESSION['somi_role'] = 'customer';
         $db->commit();
+        $_SESSION['somi_role'] = 'customer';
         somi_api_json(200, ['status' => 'WORKSPACE_READY', 'role' => 'customer']);
     }
 
@@ -54,8 +52,8 @@ try {
              ON CONFLICT (user_id, role_id) DO NOTHING'
         );
         $grantExisting->execute(['user_id' => $userId, 'role_id' => $roleId]);
-        $_SESSION['somi_role'] = 'shipper';
         $db->commit();
+        $_SESSION['somi_role'] = 'shipper';
         somi_api_json(200, ['status' => 'WORKSPACE_READY', 'role' => 'shipper', 'verification_status' => $existingShipperStatus]);
     }
 
@@ -107,8 +105,8 @@ try {
     $statusQuery = $db->prepare('SELECT verification_status FROM shipper_profiles WHERE user_id = :user_id');
     $statusQuery->execute(['user_id' => $userId]);
     $verificationStatus = (string) $statusQuery->fetchColumn();
-    $_SESSION['somi_role'] = 'shipper';
     $db->commit();
+    $_SESSION['somi_role'] = 'shipper';
     somi_api_json(200, ['status' => 'SHIPPER_APPLICATION_SAVED', 'role' => 'shipper', 'verification_status' => $verificationStatus]);
 } catch (Throwable $error) {
     if (isset($db) && $db instanceof PDO && $db->inTransaction()) {

@@ -97,7 +97,7 @@ $shipperViewPages = [
 $shipperPage = $shipperViewPages[$shipperView];
 
 $adminView = $_GET['view'] ?? 'index';
-if (!is_string($adminView) || !in_array($adminView, ['index','users','customers','shippers','orders','complaints','disputes','payments','reviews','notifications','audit-logs'], true)) $adminView = 'index';
+if (!is_string($adminView) || !in_array($adminView, ['index','users','customers','shippers','orders','complaints','disputes','payments','reviews','notifications','audit-logs','backend'], true)) $adminView = 'index';
 $publicPages = ['home','how','customers','shippers','pricing'];
 $pageTitles = [
     'home' => 'SOMI — Delivery on Your Time',
@@ -127,7 +127,7 @@ function linkTo(string $page, array $params = []): string {
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="public/assets/css/app.css?v=20261018-auth2">
+  <link rel="stylesheet" href="public/assets/css/app.css?v=20261102-navigation1">
   <?php if (in_array($page, ['customer', 'shipper', 'admin'], true)): ?>
   <link rel="stylesheet" href="public/assets/css/modules/<?= e($page) ?>.css<?= $page === 'shipper' ? '?v=20261014-3' : '' ?>">
   <?php endif; ?>
@@ -136,7 +136,7 @@ function linkTo(string $page, array $params = []): string {
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script defer src="public/assets/js/admin.js"></script>
   <?php endif; ?>
-  <script defer src="public/assets/js/app.js?v=20261018-passwordreset1"></script>
+  <script defer src="public/assets/js/app.js?v=20261102-navigation1"></script>
 </head>
 <body data-page="<?= e($page) ?>"<?php if ($page === 'shipper'): ?> data-shipper-view="<?= e($shipperView) ?>"<?php endif; ?>>
 <?php if (in_array($page, $publicPages, true)): ?>

@@ -15,16 +15,18 @@ if ($identifier === '' || $password === '' || !in_array($roleCode, ['CUSTOMER', 
 }
 
 try {
+    $db = somi_db();
+    $db->beginTransaction();
     $emailIdentifier = strtolower($identifier);
     $phoneIdentifier = preg_replace('/[\s().-]+/', '', $identifier);
-    $query = somi_db()->prepare(
+    $query = $db->prepare(
         "SELECT u.user_id, u.password_hash, u.account_status,
                 u.phone_verified_at, u.email_verified_at
          FROM users u
          JOIN user_roles ur ON ur.user_id = u.user_id
          JOIN roles r ON r.role_id = ur.role_id AND r.role_code = :role_code
          WHERE lower(u.email) = :email OR u.phone = :phone
-         LIMIT 1"
+         LIMIT 1 FOR UPDATE OF u"
     );
     $query->execute([
         'role_code' => $roleCode,
@@ -33,19 +35,23 @@ try {
     ]);
     $user = $query->fetch();
     if (!$user || !password_verify($password, (string) $user['password_hash'])) {
+        $db->rollBack();
         somi_api_json(401, ['error' => 'The login details are incorrect or the account is not active.']);
     }
 
     if (!in_array($user['account_status'], ['ACTIVE', 'PENDING_VERIFICATION'], true)) {
+        $db->rollBack();
         somi_api_json(401, ['error' => 'The account is not active.']);
     }
     if ($user['account_status'] === 'ACTIVE') {
-        $lastLogin = somi_db()->prepare('UPDATE users SET last_login_at = now(), updated_at = now() WHERE user_id = :user_id');
+        $lastLogin = $db->prepare('UPDATE users SET last_login_at = now(), updated_at = now() WHERE user_id = :user_id');
         $lastLogin->execute(['user_id' => $user['user_id']]);
     }
+    $authenticatedAt = (float) $db->query('SELECT EXTRACT(EPOCH FROM clock_timestamp())')->fetchColumn();
+    $db->commit();
     session_regenerate_id(true);
     $_SESSION = [];
-    $_SESSION['somi_authenticated_at'] = time();
+    $_SESSION['somi_authenticated_at'] = $authenticatedAt;
     $_SESSION['somi_last_activity'] = time();
     $_SESSION['somi_user_id'] = (int) $user['user_id'];
     $_SESSION['somi_role'] = strtolower($roleCode);
@@ -102,5 +108,6 @@ try {
 
     somi_api_json(200, ['status' => 'SIGNED_IN', 'role' => strtolower($roleCode)]);
 } catch (Throwable $error) {
+    if (isset($db) && $db->inTransaction()) $db->rollBack();
     somi_api_handle_error($error);
 }

@@ -1,0 +1,30 @@
+[
+    {
+        "test": "cancel waits for competing order lock and rejects accepted assignment",
+        "result": "PASS"
+    },
+    {
+        "test": "assignment wins without cancellation history",
+        "result": "PASS"
+    },
+    {
+        "test": "two concurrent cancellations both succeed idempotently",
+        "result": "PASS"
+    },
+    {
+        "test": "concurrent cancellation creates exactly one history row",
+        "result": "PASS"
+    },
+    {
+        "test": "matching contract rejects order cancelled before assignment",
+        "result": "PASS"
+    },
+    {
+        "test": "two valid reset tokens race without deadlock, exactly one wins",
+        "result": "PASS"
+    },
+    {
+        "test": "reset race consumes all outstanding tokens",
+        "result": "PASS"
+    }
+]

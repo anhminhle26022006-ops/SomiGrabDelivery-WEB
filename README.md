@@ -1,7 +1,7 @@
 # SOMI Grab Delivery — Complete Frontend Demo
 
 ## Stack thống nhất
-- **PHP 8+**: render trang và điều hướng theo `?page=...`.
+- **PHP 8.3+**: render trang và điều hướng theo `?page=...` (Docker: 8.3; local đã kiểm thử: 8.4).
 - **HTML**: cấu trúc giao diện.
 - **CSS**: giao diện responsive và style riêng cho từng module.
 - **JavaScript thuần (Vanilla JS)**: tương tác trình duyệt.
@@ -43,4 +43,12 @@ Truy cập `http://localhost:3000/`. Router cho phép PHP built-in server phục
 - `public/assets/js/shipper-navigation.js`: điều hướng Shipper, hỗ trợ URL `view` và nút back/forward của trình duyệt.
 
 ## Phạm vi
-Đây là demo frontend. Đăng nhập, OTP, eKYC, thanh toán, lưu trữ chat, phân quyền Admin và theo dõi giao hàng chưa kết nối backend/database. Các thao tác demo không đại diện cho giao dịch thực.
+Authentication dùng PHP Session và PostgreSQL thật. SMS hiện chỉ có chế độ demo; email cần cấu hình nhà cung cấp. Customer và Admin có màn hình dữ liệu thật tại `?page=customer&view=backend` và `?page=admin&view=backend`; các màn hình demo cũ vẫn dùng dữ liệu cục bộ và chưa được thay thế toàn bộ.
+
+Báo giá/tạo đơn thật đang bị chặn do chưa thống nhất chính sách giá, nguồn khoảng cách/thời tiết và tiền tệ. Matching, giao nhận, thanh toán và refund thuộc Người 2/3; không coi dữ liệu mô phỏng là giao dịch thật.
+
+## Backend và kiểm thử Người 1
+
+Xem [hướng dẫn backend](docs/PERSON1_BACKEND.md), [tiến độ](docs/PERSON1_PROGRESS.md), [API](docs/PERSON1_API_CONTRACT.md) và [hợp đồng tích hợp](docs/PERSON1_INTEGRATION.md).
+
+Biến môi trường được mô tả trong `.env.example`; app đọc process environment, không tự nạp file `.env`. Trên Windows, chạy `./scripts/serve.ps1` để nạp cấu hình User và bật PostgreSQL/mbstring cho PHP.

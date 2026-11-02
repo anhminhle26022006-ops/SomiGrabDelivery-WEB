@@ -1,4 +1,5 @@
 -- SOMI proposed PostgreSQL schema.
+-- Historical reference only. Use SOMI_database.sql + scripts/migrate.php as the canonical installation path.
 -- Business design: database/DESIGN.md. This is not wired to the PHP demo yet.
 -- Apply only after backend implementation and the remaining operational policies are approved.
 

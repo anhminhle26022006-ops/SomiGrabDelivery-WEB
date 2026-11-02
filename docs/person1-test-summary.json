@@ -1,0 +1,19 @@
+{
+  "services": {
+    "checks": 34,
+    "failures": 0
+  },
+  "http": {
+    "checks": 58,
+    "failures": 0
+  },
+  "concurrency": {
+    "checks": 7,
+    "failures": 0
+  },
+  "assertions": {
+    "checks": 13,
+    "failures": 0
+  },
+  "total": 112
+}

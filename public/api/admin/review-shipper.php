@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-require_once __DIR__ . '/../_bootstrap.php';
+require_once __DIR__ . '/../_person1.php';
 
 somi_api_require_post();
 $adminId = somi_api_current_user_id();
@@ -12,18 +12,16 @@ $input = somi_api_input();
 $shipperId = filter_var($input['shipper_id'] ?? null, FILTER_VALIDATE_INT);
 $decision = strtoupper(trim((string) ($input['decision'] ?? '')));
 $note = trim((string) ($input['note'] ?? ''));
-if (!$shipperId || !in_array($decision, ['APPROVED', 'REJECTED'], true)) {
+if (!$shipperId || $shipperId < 1 || !in_array($decision, ['APPROVED', 'REJECTED', 'NEEDS_INFO'], true)) {
     somi_api_json(422, ['error' => 'Choose a valid Shipper application and decision.']);
 }
-if ($decision === 'REJECTED' && $note === '') {
+if ($decision !== 'APPROVED' && $note === '') {
     somi_api_json(422, ['error' => 'Add a short reason when rejecting an application.']);
 }
+if (mb_strlen($note) > 1000) somi_api_json(422, ['error' => 'Review note must be at most 1000 characters.']);
 
 try {
-    require_once __DIR__ . '/../../../app/Services/SessionGuard.php';
-    if (!somi_require_active_session()) somi_api_json(401, ['error' => 'Please sign in again.']);
-    require_once __DIR__ . '/../../../app/Services/SessionGuard.php';
-    if (!somi_require_active_session()) somi_api_json(401, ['error' => 'Please sign in again.']);
+    person1_identity('ADMIN', 'shipper.verify');
     $db = somi_db();
     $adminCheck = $db->prepare(
         "SELECT 1 FROM user_roles ur JOIN roles r ON r.role_id = ur.role_id
@@ -35,14 +33,21 @@ try {
     }
 
     $db->beginTransaction();
+    // Workspace applications lock the user before identity/profile rows too.
+    $lockUser = $db->prepare('SELECT user_id FROM users WHERE user_id = :id FOR UPDATE');
+    $lockUser->execute(['id' => $shipperId]);
     $profile = $db->prepare(
         "SELECT verification_status FROM shipper_profiles WHERE user_id = :user_id FOR UPDATE"
     );
     $profile->execute(['user_id' => $shipperId]);
     $oldStatus = $profile->fetchColumn();
     if (!in_array($oldStatus, ['PENDING', 'NEEDS_INFO'], true)) {
-        throw new RuntimeException('This application is no longer waiting for review.');
+        throw new ApiProblem(409, 'This application is no longer waiting for review.', 'REVIEW_STATE_CONFLICT');
     }
+
+    $identityLock = $db->prepare('SELECT identity_document_id FROM user_identity_documents WHERE user_id = :id FOR UPDATE');
+    $identityLock->execute(['id' => $shipperId]);
+    if (!$identityLock->fetchColumn()) throw new ApiProblem(409, 'An identity document is required for review.', 'IDENTITY_REQUIRED');
 
     $approved = $decision === 'APPROVED';
     if ($approved) {
@@ -53,10 +58,10 @@ try {
         $updateProfile->execute(['admin_id' => $adminId, 'user_id' => $shipperId]);
     } else {
         $updateProfile = $db->prepare(
-            "UPDATE shipper_profiles SET verification_status = 'REJECTED', availability = FALSE,
+            "UPDATE shipper_profiles SET verification_status = :decision, availability = FALSE,
              approved_at = NULL, approved_by = NULL, updated_at = now() WHERE user_id = :user_id"
         );
-        $updateProfile->execute(['user_id' => $shipperId]);
+        $updateProfile->execute(['user_id' => $shipperId, 'decision' => $decision]);
     }
 
     $updateIdentity = $db->prepare(
@@ -90,5 +95,5 @@ try {
     if (isset($db) && $db instanceof PDO && $db->inTransaction()) {
         $db->rollBack();
     }
-    somi_api_handle_error($error);
+    person1_error($error);
 }

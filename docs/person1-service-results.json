@@ -1,0 +1,138 @@
+[
+    {
+        "test": "address stored in PostgreSQL",
+        "result": "PASS"
+    },
+    {
+        "test": "one default address",
+        "result": "PASS"
+    },
+    {
+        "test": "cross-owner edit hidden",
+        "result": "PASS"
+    },
+    {
+        "test": "cross-owner archive hidden",
+        "result": "PASS"
+    },
+    {
+        "test": "coordinate range validation",
+        "result": "PASS"
+    },
+    {
+        "test": "boolean rejects string",
+        "result": "PASS"
+    },
+    {
+        "test": "address update persisted",
+        "result": "PASS"
+    },
+    {
+        "test": "owner lists order",
+        "result": "PASS"
+    },
+    {
+        "test": "other cannot list order",
+        "result": "PASS"
+    },
+    {
+        "test": "cross-owner order hidden",
+        "result": "PASS"
+    },
+    {
+        "test": "used address cannot be deleted",
+        "result": "PASS"
+    },
+    {
+        "test": "order address snapshot survives edit",
+        "result": "PASS"
+    },
+    {
+        "test": "assigned cancellation rejected",
+        "result": "PASS"
+    },
+    {
+        "test": "paid cancellation blocked without refund",
+        "result": "PASS"
+    },
+    {
+        "test": "unassigned unpaid cancellation",
+        "result": "PASS"
+    },
+    {
+        "test": "cancel idempotent single history",
+        "result": "PASS"
+    },
+    {
+        "test": "cancel preserves price snapshot",
+        "result": "PASS"
+    },
+    {
+        "test": "archive disappears from list",
+        "result": "PASS"
+    },
+    {
+        "test": "suspend history and audit atomic",
+        "result": "PASS"
+    },
+    {
+        "test": "admin self status denied",
+        "result": "PASS"
+    },
+    {
+        "test": "profile pending cannot be activated by status API",
+        "result": "PASS"
+    },
+    {
+        "test": "pricing configuration explicit values",
+        "result": "PASS"
+    },
+    {
+        "test": "minor money rejects float",
+        "result": "PASS"
+    },
+    {
+        "test": "minor money rejects negative",
+        "result": "PASS"
+    },
+    {
+        "test": "pricing rejects invented keys",
+        "result": "PASS"
+    },
+    {
+        "test": "password reset consumes token",
+        "result": "PASS"
+    },
+    {
+        "test": "reset token replay rejected",
+        "result": "PASS"
+    },
+    {
+        "test": "reset marks password timestamp",
+        "result": "PASS"
+    },
+    {
+        "test": "phone wrong attempts persist and stop at five",
+        "result": "PASS"
+    },
+    {
+        "test": "phone lock rejects correct code after limit",
+        "result": "PASS"
+    },
+    {
+        "test": "phone verification updates timestamp",
+        "result": "PASS"
+    },
+    {
+        "test": "phone replay rejected",
+        "result": "PASS"
+    },
+    {
+        "test": "email and phone verification activate account",
+        "result": "PASS"
+    },
+    {
+        "test": "email replay rejected",
+        "result": "PASS"
+    }
+]

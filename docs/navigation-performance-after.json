@@ -1,0 +1,38 @@
+[
+  {
+    "role": "admin",
+    "http": 200,
+    "ms": 1160,
+    "bytes": 15983
+  },
+  {
+    "role": "admin",
+    "http": 200,
+    "ms": 938,
+    "bytes": 15983
+  },
+  {
+    "role": "customer",
+    "http": 200,
+    "ms": 854,
+    "bytes": 9870
+  },
+  {
+    "role": "customer",
+    "http": 200,
+    "ms": 953,
+    "bytes": 9870
+  },
+  {
+    "role": "shipper",
+    "http": 200,
+    "ms": 864,
+    "bytes": 83408
+  },
+  {
+    "role": "shipper",
+    "http": 200,
+    "ms": 904,
+    "bytes": 83408
+  }
+]

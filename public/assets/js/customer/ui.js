@@ -477,7 +477,7 @@ function createSomiUI() {
     if (!btn) return;
     $("[data-locale-current]", btn).textContent = `${I18N.LANGUAGES[I18N.lang].short} · ${I18N.currency}`;
     $$("[data-fx-note]").forEach((el) => {
-      el.textContent = t`Bảng giá USD tham chiếu tỷ giá 1 USD = ${money(S.USD_RATE, "VND")}. USD chỉ thanh toán bằng thẻ quốc tế.`;
+      el.textContent = t('Bảng giá USD độc lập, không quy đổi từ VND.');
     });
     // Header menu and the Account page share the same buttons.
     $$("[data-set-lang]").forEach((b) => {

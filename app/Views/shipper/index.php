@@ -44,7 +44,9 @@
   </div>
 </aside>
 <main>
-  <?php require __DIR__ . '/pages/' . $shipperPage . '.php'; ?>
+  <?php foreach (['dashboard', 'offers', 'active', 'history', 'earnings', 'account', 'notifications'] as $section): ?>
+    <?php require __DIR__ . '/pages/' . $section . '.php'; ?>
+  <?php endforeach; ?>
 </main>
 </div>
 <div id="contactModal" class="modalback hidden" role="dialog" aria-modal="true" aria-labelledby="contactTitle">

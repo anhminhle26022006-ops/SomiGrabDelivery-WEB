@@ -184,10 +184,10 @@
     const d = readAddress("delivery");
     const pkg = readPackage();
     const q = S.quote(p, d, { ...pkg, weightKg: pkg.weightKg || 0 }, CURRENCY);
-    const fxNote = CURRENCY === "USD" ? `<p class="c-fx-note">${t`Bảng giá USD. Tham khảo: 1 USD = ${U.money(S.USD_RATE, "VND")}.`}</p>` : "";
+    const fxNote = CURRENCY === "USD" ? `<p class="c-fx-note">${t('Bảng giá USD độc lập, không quy đổi từ VND.')}</p>` : "";
     const panel = $("[data-quote]");
     if (!q.ready) {
-      panel.innerHTML = `<h2>${t("Phí giao hàng")}</h2><div class="c-quote-total"><small>${t("Ước tính")}</small><strong>— ${I18N.CURRENCIES[CURRENCY].symbol}</strong></div><p class="c-quote-empty">${t("Chọn khu vực cho điểm lấy và điểm giao để SOMI tính quãng đường và phí.")}</p>${fxNote}`;
+      panel.innerHTML = `<h2>${t("Phí giao hàng")}</h2><div class="c-quote-total"><small>${t("Ước tính")}</small><strong>— ${I18N.CURRENCIES[CURRENCY].symbol}</strong></div><p class="c-quote-empty">${t(q.outsideServiceArea ? 'Tuyến giao phải dưới 40 km trong khu vực hỗ trợ.' : q.invalidWeight ? 'Khối lượng hàng phải lớn hơn 0 và không quá 30 kg.' : 'Chọn khu vực cho điểm lấy và điểm giao để SOMI tính quãng đường và phí.')}</p>${fxNote}`;
     } else {
       panel.innerHTML = `<h2>${t("Phí giao hàng")}</h2>
         <div class="c-quote-total"><small>${t("Ước tính")}</small><strong>${money(q.deliveryFee)}</strong></div>

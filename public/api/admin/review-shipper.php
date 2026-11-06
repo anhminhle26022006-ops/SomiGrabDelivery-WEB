@@ -22,8 +22,6 @@ if ($decision === 'REJECTED' && $note === '') {
 try {
     require_once __DIR__ . '/../../../app/Services/SessionGuard.php';
     if (!somi_require_active_session()) somi_api_json(401, ['error' => 'Please sign in again.']);
-    require_once __DIR__ . '/../../../app/Services/SessionGuard.php';
-    if (!somi_require_active_session()) somi_api_json(401, ['error' => 'Please sign in again.']);
     $db = somi_db();
     $adminCheck = $db->prepare(
         "SELECT 1 FROM user_roles ur JOIN roles r ON r.role_id = ur.role_id

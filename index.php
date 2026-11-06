@@ -33,6 +33,8 @@ $shipperVerificationStatus = null;
 $shipperIdentityReviewStatus = null;
 $shipperRejectionReason = null;
 $pendingShipperApplications = [];
+$adminView = $_GET['view'] ?? 'index';
+if (!is_string($adminView) || !in_array($adminView, ['index','users','customers','shippers','orders','complaints','disputes','payments','reviews','notifications','audit-logs'], true)) $adminView = 'index';
 if (in_array($page, ['customer', 'shipper', 'admin'], true)) {
     session_set_cookie_params([
         'httponly' => true,
@@ -66,7 +68,7 @@ if (in_array($page, ['customer', 'shipper', 'admin'], true)) {
         $shipperIdentityReviewStatus = $sessionUser['review_status'];
         $shipperRejectionReason = $sessionUser['rejection_reason'];
     }
-    if ($page === 'admin') {
+    if ($page === 'admin' && $adminView === 'index') {
         $pendingQuery = somi_db()->query(
             "SELECT sp.user_id, u.full_name, u.email, sp.vehicle_type, sp.vehicle_registration,
                     sp.verification_status, uid.review_status AS identity_review_status
@@ -96,8 +98,6 @@ $shipperViewPages = [
 ];
 $shipperPage = $shipperViewPages[$shipperView];
 
-$adminView = $_GET['view'] ?? 'index';
-if (!is_string($adminView) || !in_array($adminView, ['index','users','customers','shippers','orders','complaints','disputes','payments','reviews','notifications','audit-logs'], true)) $adminView = 'index';
 $publicPages = ['home','how','customers','shippers','pricing'];
 $pageTitles = [
     'home' => 'SOMI — Delivery on Your Time',
@@ -112,6 +112,9 @@ $pageTitles = [
     'admin' => 'Admin Dashboard — SOMI',
 ];
 function e(string $value): string { return htmlspecialchars($value, ENT_QUOTES, 'UTF-8'); }
+function assetUrl(string $path): string {
+    return $path . '?v=' . (string) filemtime(__DIR__ . '/' . $path);
+}
 function linkTo(string $page, array $params = []): string {
     return '?' . http_build_query(array_merge(['page' => $page], $params));
 }
@@ -127,16 +130,20 @@ function linkTo(string $page, array $params = []): string {
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="public/assets/css/app.css?v=20261018-auth2">
-  <?php if (in_array($page, ['customer', 'shipper', 'admin'], true)): ?>
-  <link rel="stylesheet" href="public/assets/css/modules/<?= e($page) ?>.css<?= $page === 'shipper' ? '?v=20261014-3' : '' ?>">
+  <link rel="stylesheet" href="<?= e(assetUrl('public/assets/css/app.css')) ?>">
+  <?php if (in_array($page, ['shipper', 'admin'], true)): ?>
+  <link rel="stylesheet" href="<?= e(assetUrl('public/assets/css/modules/' . $page . '.css')) ?>">
   <?php endif; ?>
   <?php if ($page === 'admin'): ?>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script defer src="public/assets/js/admin.js"></script>
+  <script defer src="<?= e(assetUrl('public/assets/js/admin.js')) ?>"></script>
   <?php endif; ?>
-  <script defer src="public/assets/js/app.js?v=20261018-passwordreset1"></script>
+  <script defer src="<?= e(assetUrl('public/assets/js/app.js')) ?>"></script>
+  <?php if (in_array($page, ['pricing', 'customer'], true)): ?>
+  <script type="application/json" id="approved-pricing-config"><?= json_encode(require __DIR__ . '/app/Config/delivery-pricing.php', JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT) ?></script>
+  <script defer src="<?= e(assetUrl('public/assets/js/delivery-price.js')) ?>"></script>
+  <?php endif; ?>
 </head>
 <body data-page="<?= e($page) ?>"<?php if ($page === 'shipper'): ?> data-shipper-view="<?= e($shipperView) ?>"<?php endif; ?>>
 <?php if (in_array($page, $publicPages, true)): ?>
@@ -156,6 +163,6 @@ function linkTo(string $page, array $params = []): string {
 <?php else: ?>
   <?php require __DIR__ . '/app/Views/admin/' . $adminView . '.php'; ?>
 <?php endif; ?>
-<?php if ($page === 'shipper'): ?><script defer src="public/assets/js/shipper-navigation.js?v=20261014-6"></script><script defer src="public/assets/js/shipper.js?v=20261014-6"></script><?php endif; ?>
+<?php if ($page === 'shipper'): ?><script defer src="<?= e(assetUrl('public/assets/js/shipper-navigation.js')) ?>"></script><script defer src="<?= e(assetUrl('public/assets/js/shipper.js')) ?>"></script><?php endif; ?>
 </body>
 </html>

@@ -28,7 +28,6 @@ if (!is_string($customerView) || !array_key_exists($customerView, $customerViews
 }
 [$customerTitle, $customerSection] = $customerViews[$customerView];
 $asset = 'public/assets/js/customer/';
-$assetVersion = '20261018-2';
 
 $nav = [
     'dashboard' => ['Tổng quan', 'home'],
@@ -51,7 +50,7 @@ function customerIcon(string $paths, int $size = 20): string {
 ?>
 <?php /* Bootstrap 5.3 (CDN) chỉ nạp cho trang Customer, sau đó nạp lại customer.css để màu và bố cục SOMI đè lên Bootstrap. */ ?>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-<link rel="stylesheet" href="public/assets/css/modules/customer.css?v=<?= $assetVersion ?>">
+<link rel="stylesheet" href="<?= e(assetUrl('public/assets/css/modules/customer.css')) ?>">
 <div class="c-app" data-customer-app>
   <header class="navbar c-top">
     <a class="navbar-brand c-brand" href="?page=customer&amp;view=dashboard" aria-label="SOMI, về trang tổng quan"><strong>SOMI</strong><span>DELIVERY</span></a>
@@ -143,8 +142,8 @@ function customerIcon(string $paths, int $size = 20): string {
 </div>
 <script>document.body.dataset.userId = <?= json_encode((string) $sessionUserId) ?>; document.body.dataset.cView = <?= json_encode($customerView) ?>; document.title = <?= json_encode($customerTitle . ' · SOMI') ?>;</script>
 <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
-<script defer src="<?= $asset ?>lang/en.js?v=<?= $assetVersion ?>"></script>
-<script defer src="<?= $asset ?>i18n.js?v=<?= $assetVersion ?>"></script>
-<script defer src="<?= $asset ?>store.js?v=<?= $assetVersion ?>"></script>
-<script defer src="<?= $asset ?>ui.js?v=<?= $assetVersion ?>"></script>
-<script defer src="<?= $asset ?>pages/<?= e($customerView) ?>.js?v=<?= $assetVersion ?>"></script>
+<script defer src="<?= e(assetUrl($asset . 'lang/en.js')) ?>"></script>
+<script defer src="<?= e(assetUrl($asset . 'i18n.js')) ?>"></script>
+<script defer src="<?= e(assetUrl($asset . 'store.js')) ?>"></script>
+<script defer src="<?= e(assetUrl($asset . 'ui.js')) ?>"></script>
+<script defer src="<?= e(assetUrl($asset . 'pages/' . $customerView . '.js')) ?>"></script>

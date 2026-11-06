@@ -1,4 +1,4 @@
-# SOMI Grab Delivery — Complete Frontend Demo
+# SOMI Grab Delivery
 
 ## Stack thống nhất
 - **PHP 8+**: render trang và điều hướng theo `?page=...`.
@@ -43,4 +43,20 @@ Truy cập `http://localhost:3000/`. Router cho phép PHP built-in server phục
 - `public/assets/js/shipper-navigation.js`: điều hướng Shipper, hỗ trợ URL `view` và nút back/forward của trình duyệt.
 
 ## Phạm vi
-Đây là demo frontend. Đăng nhập, OTP, eKYC, thanh toán, lưu trữ chat, phân quyền Admin và theo dõi giao hàng chưa kết nối backend/database. Các thao tác demo không đại diện cho giao dịch thực.
+Project có backend tài khoản/session, email verification/reset và duyệt hồ sơ Shipper dùng PostgreSQL. OTP điện thoại hiện chỉ có chế độ demo cấu hình rõ ràng, chưa có SMS provider thật.
+
+Backend Customer đã bổ sung API địa chỉ, danh mục kiện hàng, báo giá, tạo/xem/hủy đơn, lịch sử trạng thái và integration events cho payment/matching. Hướng dẫn migration, cấu hình provider/giá, request/response và hợp đồng trạng thái nằm trong [docs/DELIVERY-API.md](docs/DELIVERY-API.md). Cấu hình mẫu: [docs/runtime.env.example](docs/runtime.env.example); PHP không tự nạp file này. API báo giá yêu cầu nguồn quãng đường/thời tiết tin cậy và chính sách đã cấu hình, không dùng giá demo.
+
+Bảng giá được duyệt ngày 05/11/2026, phạm vi TP. Hồ Chí Minh, tuyến dưới 40 km và hàng lớn hơn 0 đến 30 kg. Công thức hiện tại: `(cơ bản + km vượt mức + kg vượt mức) × giờ × thời tiết`, làm tròn lên một lần. Cơ bản 20.000đ/99 cent gồm 3 km và 3 kg; mỗi km vượt mức 4.000đ/20 cent; mỗi kg vượt mức 2.500đ/10 cent. Xem [cấu hình đã duyệt](docs/DISTANCE-WEIGHT-PRICING-PROPOSAL.md). Trang Pricing có đầy đủ VI/EN và công cụ minh họa có trọng lượng; Customer demo dùng cùng cấu hình. Migration runner phát hành policy có version/audit và chạy lại an toàn. Provider trực tiếp cần GOOGLE_MAPS_API_KEY bật Routes/Geocoding và OPEN_METEO_API_KEY; chưa có key sẽ không giả lập báo giá thật.
+
+Giao diện Customer/Shipper/Admin còn có dữ liệu demo và chưa nối các API đơn hàng mới. Payment/refund/payout, matching/giao nhận, chat/ticket và workers chưa hoàn thành; các thao tác demo không đại diện cho giao dịch thực.
+
+## Kiểm thử backend Customer
+
+Yêu cầu PHP có PDO PostgreSQL, mbstring, cURL và BCMath. Chạy:
+
+```bash
+php tests/customer_orders.php
+```
+
+Bộ kiểm thử dùng PostgreSQL TEMP tables và rollback toàn bộ, không thay dữ liệu nghiệp vụ trong schema ứng dụng. Không cần áp dụng migration thật để chạy bộ kiểm thử này.

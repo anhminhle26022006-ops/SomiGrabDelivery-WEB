@@ -71,7 +71,11 @@ final class OrderQuoteService
         $weather = $q->fetch();
         if (!$weather) $this->unconfigured();
         $total = self::total($subtotal, (string) $time['multiplier'], (string) $weather['multiplier']);
+        $feeQuery=$this->db->prepare('SELECT after_status,fee_minor FROM cancellation_fee_rules WHERE pricing_policy_id=?');
+        $feeQuery->execute([$policy['pricing_policy_id']]);$cancellationFees=[];
+        foreach($feeQuery->fetchAll() as $fee){if(bccomp((string)$fee['fee_minor'],$total)>0) $this->unconfigured();$cancellationFees[$fee['after_status']]=(string)$fee['fee_minor'];}
         $snapshot = [
+            'cancellation_fees' => $cancellationFees,
             'pickup' => $pickup, 'delivery' => $delivery, 'parcel' => $parcel, 'customer_note' => $note,
             'currency_code' => $currency, 'app_language' => $language,
             'pricing_policy_id' => $policy['pricing_policy_id'], 'pricing_policy_version' => $policy['config_version'],

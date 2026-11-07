@@ -2,19 +2,18 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../Config/database.php';
+require_once __DIR__ . '/SmsProvider.php';
 
-/** Demo phone OTP service. Real SMS delivery requires an SMS provider. */
+/** Phone OTP: explicit local demo or a configured provider adapter. */
 final class PhoneVerificationService
 {
     private const CODE_TTL_MINUTES = 5;
     private const RESEND_COOLDOWN_SECONDS = 60;
     private const MAX_ATTEMPTS = 5;
 
-    public static function sendCode(int $userId): string
+    public static function sendCode(int $userId): ?string
     {
-        if (!self::demoModeEnabled()) {
-            throw new RuntimeException('SMS delivery is not configured. Enable demo OTP mode or connect an SMS provider.');
-        }
+        $demo=self::demoModeEnabled();$provider=new BridgeSmsProvider();if(!$demo)$provider->assertConfigured();
 
         $db = somi_db();
         $db->beginTransaction();
@@ -55,6 +54,7 @@ final class PhoneVerificationService
             $invalidate->execute(['user_id' => $userId]);
 
             $code = (string) random_int(100000, 999999);
+            $codeHash = password_hash($code, PASSWORD_DEFAULT);
             $insert = $db->prepare(
                 "INSERT INTO phone_verifications (user_id, phone, code_hash, purpose, expires_at)
                  VALUES (:user_id, :phone, :code_hash, 'VERIFY_PHONE',
@@ -63,12 +63,16 @@ final class PhoneVerificationService
             $insert->execute([
                 'user_id' => $userId,
                 'phone' => $user['phone'],
-                'code_hash' => password_hash($code, PASSWORD_DEFAULT),
+                'code_hash' => $codeHash,
                 'ttl_minutes' => self::CODE_TTL_MINUTES,
             ]);
 
             $db->commit();
-            return $code;
+            if(!$demo){
+                try{$provider->send((string)$user['phone'],$code,'phone-verification:'.$userId.':'.hash('sha256',$code));}
+                catch(Throwable $deliveryError){$db->prepare("UPDATE phone_verifications SET consumed_at=now() WHERE user_id=? AND code_hash=? AND consumed_at IS NULL")->execute([$userId,$codeHash]);throw $deliveryError;}
+            }
+            return $demo?$code:null;
         } catch (Throwable $error) {
             if ($db->inTransaction()) {
                 $db->rollBack();
@@ -85,6 +89,10 @@ final class PhoneVerificationService
 
         return false;
     }
+    public static function assertDeliveryConfigured(): void
+    {
+        if(!self::demoModeEnabled())(new BridgeSmsProvider())->assertConfigured();
+    }
 
     public static function verifyCode(int $userId, string $code): void
     {
@@ -95,6 +103,7 @@ final class PhoneVerificationService
         $db = somi_db();
         $db->beginTransaction();
         try {
+            $userLock=$db->prepare("SELECT account_status FROM users WHERE user_id=? FOR UPDATE");$userLock->execute([$userId]);if(!in_array($userLock->fetchColumn(),['ACTIVE','PENDING_VERIFICATION'],true))throw new RuntimeException('The account is not active.');
             $query = $db->prepare(
                 "SELECT verification_id, code_hash, expires_at, attempt_count
                  FROM phone_verifications

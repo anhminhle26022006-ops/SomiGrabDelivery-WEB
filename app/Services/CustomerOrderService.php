@@ -109,8 +109,10 @@ final class CustomerOrderService
         $q = $this->db->prepare("SELECT 1 FROM order_assignments WHERE order_id = :id AND assignment_status = 'ACTIVE'");
         $q->execute(['id' => $id]);
         if ($q->fetchColumn()) throw new DeliveryApiError(409, 'ORDER_NOT_CANCELLABLE', 'Order already has an active assignment.');
-        $q = $this->db->prepare("UPDATE orders SET status = 'CANCELLED', cancellation_fee_minor = 0, cancelled_at = now(), closed_at = now(), updated_at = now() WHERE order_id = :id");
-        $q->execute(['id' => $id]);
+        $snapshot=json_decode($order['pricing_snapshot'],true,512,JSON_THROW_ON_ERROR);
+        $fee=(string)($snapshot['cancellation_fees'][$order['status']]??'0');
+        $q = $this->db->prepare("UPDATE orders SET status = 'CANCELLED', cancellation_fee_minor = :fee, cancelled_at = now(), closed_at = now(), updated_at = now() WHERE order_id = :id");
+        $q->execute(['id' => $id,'fee'=>$fee]);
         $q = $this->db->prepare("UPDATE order_match_offers SET status = 'CANCELLED', responded_at = now() WHERE order_id = :id AND status = 'PENDING'");
         $q->execute(['id' => $id]);
         $q = $this->db->prepare('SELECT status FROM payments WHERE order_id = :id FOR UPDATE');
@@ -119,7 +121,7 @@ final class CustomerOrderService
         $paid = $order['paid_at'] !== null || $paymentStatus === 'PAID';
         OrderLifecycleService::history($this->db, $id, $order['status'], 'CANCELLED', $customerId, 'CUSTOMER', $reason);
         OrderLifecycleService::event($this->db, $order, 'OrderCancelled', 'cancelled:' . $id, ['reason' => 'CUSTOMER_CANCELLATION', 'refund_required_hint' => $paid]);
-        if ($paid) OrderLifecycleService::event($this->db, $order, 'RefundRequested', 'refund:cancel:' . $id, ['reason' => 'CUSTOMER_CANCELLATION', 'deducted_fee_minor' => '0']);
+        if ($paid) OrderLifecycleService::event($this->db, $order, 'RefundRequested', 'refund:cancel:' . $id, ['reason' => 'CUSTOMER_CANCELLATION', 'deducted_fee_minor' => $fee]);
         return $this->detail($customerId, $id);
     }
 }

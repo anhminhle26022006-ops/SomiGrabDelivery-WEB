@@ -1,5 +1,7 @@
 # HTTPS reverse proxy / Origin fix
 
+> **Tài liệu lịch sử:** kết luận, phân công và trạng thái repository dưới đây thuộc ngày kiểm tra ghi trong báo cáo. Xem [scope hiện hành 06/11/2026](BACKEND-SCOPE.md), [API/giá hiện hành](DELIVERY-API.md). Giữ nguyên bằng chứng kiểm thử quá khứ; không dùng báo cáo này để giao việc hiện tại.
+
 The earlier POST guard compared the browser Origin with PHP's transport scheme. Behind HTTPS termination PHP can receive HTTP while the browser is on HTTPS, incorrectly rejecting a same-origin login with 403.
 
 `RequestOrigin.php` now normalizes exact origins, including default ports. The API accepts the direct request origin or the public URL from SOMI_APP_URL / RENDER_EXTERNAL_URL. Where no public URL is available, the HTTP-to-HTTPS proxy case requires an identical authority and browser Fetch Metadata `Sec-Fetch-Site: same-origin`. Host suffixes, foreign ports, opaque origins and malformed origins remain rejected. Arbitrary X-Forwarded-* headers are not trusted. JSON-only POST and the cross-site Fetch Metadata guard remain enabled.

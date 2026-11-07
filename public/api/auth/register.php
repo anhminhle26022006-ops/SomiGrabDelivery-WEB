@@ -64,6 +64,7 @@ if (($input['terms_accepted'] ?? false) !== true) {
 }
 
 try {
+    PhoneVerificationService::assertDeliveryConfigured();
     $db = somi_db();
     $db->beginTransaction();
 
@@ -116,10 +117,11 @@ try {
     $_SESSION['somi_user_id'] = $userId;
     $_SESSION['somi_role'] = strtolower($roleCode);
 
-    $phoneCode = PhoneVerificationService::sendCode($userId);
+    try{$phoneCode=PhoneVerificationService::sendCode($userId);}
+    catch(Throwable $deliveryError){somi_api_json(201,['status'=>'PHONE_VERIFICATION_REQUIRED','delivery_mode'=>'SMS','demo_code'=>null,'notice'=>'Account created. SMS could not be delivered; request another code later.']);}
     somi_api_json(201, [
         'status' => 'PHONE_VERIFICATION_REQUIRED',
-        'delivery_mode' => 'DEMO',
+        'delivery_mode' => $phoneCode===null?'SMS':'DEMO',
         'demo_code' => $phoneCode,
     ]);
 } catch (Throwable $error) {

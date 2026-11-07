@@ -1,6 +1,6 @@
-# Cấu hình báo giá — ĐÃ DUYỆT 05/11/2026
+# Lưu trữ — bảng giá band đã được thay thế
 
-Người dùng đã duyệt toàn bộ phương án ngày 05/11/2026 và chốt phạm vi **TP. Hồ Chí Minh**. Migration và bảng giá đã được áp dụng vào database cấu hình của project; hai policy VND/USD version 1 đang active. Chạy lại migration không tạo thêm policy. Nội dung bên dưới lưu lại bản đề xuất đã được duyệt. Không tự đăng ký/mua dịch vụ; kết nối provider thật còn cần GOOGLE_MAPS_API_KEY (Routes + Geocoding) và OPEN_METEO_API_KEY trong môi trường.
+> **Không phải cấu hình hiện hành.** Bảng band dưới đây chỉ lưu lịch sử. Giá hiện hành tính quãng đường và trọng lượng, dưới 40 km/tối đa 30 kg: [công thức đã duyệt](DISTANCE-WEIGHT-PRICING-PROPOSAL.md). [Scope hiện hành](BACKEND-SCOPE.md). Các mô tả triển khai và giới hạn 20 km dưới đây thuộc bản phát hành cũ.
 
 ## Phương án đề xuất v1
 

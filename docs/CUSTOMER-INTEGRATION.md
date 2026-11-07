@@ -60,3 +60,13 @@ DELETE địa chỉ là archive; snapshot đơn không đổi. API dùng order_i
 6. Kiểm thử sở hữu địa chỉ/quote/đơn, chuyển tài khoản, currency response, quote hết hạn, gửi lặp, lỗi provider và late payment sau hủy; chạy đầu cuối ba vai trò sau tích hợp.
 
 Kịch bản và các quyết định demo cũ lưu ở [CUSTOMER-DEMO-LEGACY.md](archive/CUSTOMER-DEMO-LEGACY.md); không dùng làm chính sách tiền/state/endpoint hiện hành.
+
+## Customer layout restoration — 07/11/2026
+
+The PHP page templates and Customer CSS use `aae675c` as the layout baseline. The Customer shell renders those templates directly; `server.js` binds API data to their existing hooks. It no longer replaces the whole page with generic forms/tables. Dashboard columns, order cards/search/date/status filters, the four-step create form, account panels and the payment chooser/summary layout remain in place.
+
+The technical `backend` tab is removed from Customer navigation. An existing `view=backend` link resolves to the real Account page. Admin's backend console remains unchanged. The live Customer views do not load the demo store or local mutation controllers.
+
+Server quote ID, revision invalidation, expiry and a stable creation key control order submission. Total weight includes all parcels. Scheduled pickup is disabled until supported by the backend. New inline addresses require real coordinates; saved addresses retain their server coordinates. No demo distance, GPS, payment success, matching assignment or refund success is fabricated. Address CRUD, profile update/password/nationality requests, payment checkout and cancellation call the existing authenticated APIs. Reports/notifications outside the Person 1 API scope remain legacy views.
+
+Validation: nine restored PHP templates match the `aae675c` baseline; 47 browser fixture checks cover VI/EN, original layout hooks, order filters, quote expiry/revision, stable retry keys and SePay checkout binding. 38 read-only HTTP checks and 85 TEMP-table order checks pass. Desktop/mobile screenshots were reviewed; no payment-provider requests or persistent test business writes were made.

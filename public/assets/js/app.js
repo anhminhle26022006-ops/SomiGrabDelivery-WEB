@@ -136,7 +136,7 @@
     "Phone code has expired. Request a new code.": "Mã điện thoại đã hết hạn. Hãy yêu cầu mã mới.",
     "Please wait before requesting another email code.": "Vui lòng chờ trước khi yêu cầu mã email mới.",
     "Please wait before requesting another phone code.": "Vui lòng chờ trước khi yêu cầu mã điện thoại mới.",
-    "A new email verification code was sent.": "Đã gửi mã xác minh email mới.",
+    "A new email verification code was queued.": "Đã xếp hàng gửi mã xác minh email mới.",
     "An email code was recently sent. Enter that code or wait briefly to request another.": "Mã email vừa được gửi. Hãy nhập mã đó hoặc chờ một lát để yêu cầu mã mới.",
     "Could not send the email code right now. Use Resend code to try again.": "Chưa gửi được mã email. Hãy bấm Gửi lại mã để thử lại.",
     "A phone code was recently generated. Wait briefly, then request another code.": "Mã điện thoại vừa được tạo. Hãy chờ một lát rồi yêu cầu mã mới.",
@@ -710,7 +710,7 @@
           step = result.status === "PHONE_VERIFICATION_REQUIRED" ? 4 : 5;
           currentPhoneDemoCode = result.demo_code || "";
           render();
-          showError(result.notice || (step === 4 ? "Phone verification is required. Enter the demo code shown here." : "A new email verification code was sent."));
+          showError(result.notice || (step === 4 ? "Phone verification is required. Enter the demo code shown here." : "A new email verification code was queued."));
           return;
         }
         if (result.status !== "SIGNED_IN") throw new Error("Unexpected sign-in response. Please try again.");
@@ -735,7 +735,7 @@
       resendEmail.disabled = true;
       try {
         await apiPost("send-email-code.php");
-        showError(document.documentElement.lang === "vi" ? "Đã gửi mã email mới." : "A new email code was sent.");
+        showError(document.documentElement.lang === "vi" ? "Đã xếp hàng gửi mã email mới." : "A new email code was queued.");
       } catch (requestError) { showError(requestError.message); }
       finally { resendEmail.disabled = false; }
     });

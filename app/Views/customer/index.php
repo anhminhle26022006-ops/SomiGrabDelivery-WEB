@@ -27,6 +27,7 @@ if (!is_string($customerView) || !array_key_exists($customerView, $customerViews
     $customerView = 'dashboard';
 }
 [$customerTitle, $customerSection] = $customerViews[$customerView];
+$liveCustomerView = in_array($customerView, ['dashboard','create','orders','order','payment','account','matching','tracking'], true);
 $asset = 'public/assets/js/customer/';
 
 $nav = [
@@ -122,7 +123,9 @@ function customerIcon(string $paths, int $size = 20): string {
   </div>
   <?php endif; ?>
 <?php endif; ?>
-    <?php require __DIR__ . '/pages/' . $customerView . '.php'; ?>
+    <?php if ($liveCustomerView): ?>
+      <section data-customer-server aria-live="polite"><p role="status">Đang tải / Loading…</p></section>
+    <?php else: require __DIR__ . '/pages/' . $customerView . '.php'; endif; ?>
   </main>
 
   <nav class="c-tabbar d-md-none" aria-label="Điều hướng nhanh">
@@ -135,7 +138,7 @@ function customerIcon(string $paths, int $size = 20): string {
     <?php endforeach; ?>
   </nav>
 
-  <aside class="c-demo" data-demo>
+  <aside class="c-demo" data-demo <?= $liveCustomerView ? 'hidden' : '' ?>>
     <button type="button" class="c-demo-toggle" data-demo-toggle aria-expanded="false"><?= customerIcon('<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>', 18) ?><span>Mô phỏng demo</span></button>
     <div class="c-demo-body" data-demo-body hidden></div>
   </aside>
@@ -144,6 +147,10 @@ function customerIcon(string $paths, int $size = 20): string {
 <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
 <script defer src="<?= e(assetUrl($asset . 'lang/en.js')) ?>"></script>
 <script defer src="<?= e(assetUrl($asset . 'i18n.js')) ?>"></script>
+<?php if ($liveCustomerView): ?>
+<script defer src="<?= e(assetUrl($asset . 'server.js')) ?>"></script>
+<?php else: ?>
 <script defer src="<?= e(assetUrl($asset . 'store.js')) ?>"></script>
 <script defer src="<?= e(assetUrl($asset . 'ui.js')) ?>"></script>
 <script defer src="<?= e(assetUrl($asset . 'pages/' . $customerView . '.js')) ?>"></script>
+<?php endif; ?>

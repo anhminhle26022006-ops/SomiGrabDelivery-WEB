@@ -408,6 +408,7 @@
     let saved = "en";
     try { saved = localStorage.getItem("somi-language") || "en"; } catch { /* Keep default language when storage is unavailable. */ }
     const apply = (language) => {
+      language = language === "vi" ? "vi" : "en";
       const copy = translations[language] || translations.en;
       $$("[data-i18n]").forEach((element) => {
         const key = element.dataset.i18n;
@@ -424,6 +425,9 @@
         const trigger = $("[data-language-trigger]", picker);
         const menu = $("[data-language-menu]", picker);
         if (current) current.textContent = language.toUpperCase();
+        const flag = $("[data-language-flag]", picker);
+        const selectedFlag = $(`[data-language-option="${language}"] .language-flag-svg`, picker);
+        if (flag && selectedFlag) flag.replaceChildren(selectedFlag.cloneNode(true));
         $$("[data-language-option]", picker).forEach((option) => {
           option.classList.toggle("is-active", option.dataset.languageOption === language);
           option.setAttribute("aria-checked", String(option.dataset.languageOption === language));
@@ -463,6 +467,21 @@
         }
       });
     });
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape") return;
+      pickers.forEach((picker) => {
+        const menu = $("[data-language-menu]", picker);
+        const trigger = $("[data-language-trigger]", picker);
+        if (menu && !menu.hidden) {
+          menu.hidden = true;
+          trigger?.setAttribute("aria-expanded", "false");
+          trigger?.focus();
+        }
+      });
+    });
+    window.addEventListener("storage", (event) => {
+      if (event.key === "somi-language") apply(event.newValue);
+    });
     apply(saved);
   }
 
@@ -470,7 +489,7 @@
     const homeHeader = $(".header-home");
     if (homeHeader) {
       const updateHeader = () => {
-        if (document.documentElement.lang !== "vi") return;
+
         homeHeader.classList.toggle("is-scrolled", window.scrollY > 12);
       };
       window.addEventListener("scroll", updateHeader, { passive: true });

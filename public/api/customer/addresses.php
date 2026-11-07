@@ -12,6 +12,11 @@ delivery_run(['GET', 'POST', 'PUT', 'DELETE'], 'address.manage_own', $method !==
         $service->archive($owner, delivery_query_id());
         return [200, ['archived' => true]];
     }
-    $id = $method === 'PUT' ? delivery_query_id() : null;
-    return [$method === 'POST' ? 201 : 200, ['address' => $service->save($owner, delivery_body(), $id)]];
+    $input=delivery_body();
+    if($method==='POST'&&isset($input['action'])){
+        $action=$input['action'];$id=isset($input['address_id'])?DeliveryInput::id($input['address_id']):null;
+        if($action==='archive'){DeliveryInput::only($input,['action','address_id']);if($id===null)DeliveryInput::invalid('address_id');$service->archive($owner,$id);return [200,['archived'=>true]];}
+        if($action!=='save')DeliveryInput::invalid('action');unset($input['action'],$input['address_id']);
+    }else $id=$method==='PUT'?delivery_query_id():null;
+    return [$id===null?201:200,['address'=>$service->save($owner,$input,$id)]];
 });

@@ -1,0 +1,54 @@
+[
+    {
+        "test": "KYC audit NEEDS_INFO",
+        "result": "PASS"
+    },
+    {
+        "test": "KYC audit APPROVED",
+        "result": "PASS"
+    },
+    {
+        "test": "KYC audit REJECTED",
+        "result": "PASS"
+    },
+    {
+        "test": "KYC rejected identity persisted",
+        "result": "PASS"
+    },
+    {
+        "test": "KYC approved identity persisted",
+        "result": "PASS"
+    },
+    {
+        "test": "draft does not activate a real pricing policy",
+        "result": "PASS"
+    },
+    {
+        "test": "nationality rejection preserves user country",
+        "result": "PASS"
+    },
+    {
+        "test": "nationality review audited",
+        "result": "PASS"
+    },
+    {
+        "test": "expired session denied and cleared",
+        "result": "PASS"
+    },
+    {
+        "test": "missing issued timestamp denied",
+        "result": "PASS"
+    },
+    {
+        "test": "password reset revokes session with microsecond precision",
+        "result": "PASS"
+    },
+    {
+        "test": "forged session workspace never grants Admin role",
+        "result": "PASS"
+    },
+    {
+        "test": "permission revoked in DB denies API authorization",
+        "result": "PASS"
+    }
+]

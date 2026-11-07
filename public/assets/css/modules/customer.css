@@ -88,7 +88,7 @@ body[data-page="customer"] a { text-decoration: none; }
 .c-locale-title { margin: 4px 2px 8px; color: var(--c-muted); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
 .c-locale-seg + .c-locale-title { margin-top: 14px; }
 .c-locale-seg { padding: 4px; border-radius: 12px; background: var(--c-paper); gap: 4px; }
-.c-locale-seg > .btn { flex: 1 1 0; padding: 9px 8px; border: 0; border-radius: 9px !important; background: none; color: var(--c-muted); font-size: 13px; font-weight: 600; }
+.c-locale-seg > .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; flex: 1 1 0; padding: 9px 8px; border: 0; border-radius: 9px !important; background: none; color: var(--c-muted); font-size: 13px; font-weight: 600; }
 .c-locale-seg > .btn:hover { background: #fff; color: var(--c-navy); }
 .c-locale-seg > .btn.active { background: var(--c-navy); color: #fff; }
 .c-locale-note { margin: 12px 2px 2px; color: var(--c-muted); font-size: 12px; line-height: 1.5; }
@@ -521,6 +521,11 @@ body[data-page="customer"] .modal-footer > * { margin: 0; }
 
 /* =================== Responsive =================== */
 @media (max-width: 1024px) {
+  /* Tablet: the pill nav shrinks and scrolls inside itself instead of pushing the actions off-screen. */
+  .c-top { gap: 16px; }
+  .c-nav { flex: 0 1 auto; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+  .c-nav::-webkit-scrollbar { display: none; }
+  .c-nav .nav-link { padding: 8px 12px; }
   .c-sticky { position: static; }
   .c-avatar-name { display: none; }
   .c-avatar-btn { padding: 4px; }

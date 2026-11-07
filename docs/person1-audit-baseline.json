@@ -1,0 +1,546 @@
+[
+  {
+    "id": "A-01",
+    "task": "Kiến trúc backend phân tách route/API, service nghiệp vụ và data access.",
+    "status": "PARTIAL",
+    "file": "public/api/_bootstrap.php; app/Config/database.php; app/Services/SessionGuard.php",
+    "evidence": "Chưa có API/service nghiệp vụ tương ứng.",
+    "priority": "P1"
+  },
+  {
+    "id": "A-02",
+    "task": "Validation đầu vào và chuẩn hóa API response/error.",
+    "status": "PARTIAL",
+    "file": "public/api/_bootstrap.php; app/Config/database.php; app/Services/SessionGuard.php",
+    "evidence": "Chưa có API/service nghiệp vụ tương ứng.",
+    "priority": "P1"
+  },
+  {
+    "id": "A-03",
+    "task": "Cấu hình PostgreSQL theo môi trường.",
+    "status": "DONE",
+    "file": "app/Config/database.php::somi_db",
+    "evidence": "Kết nối Supabase thành công bằng environment, kiểm somi.users trước đợt này.",
+    "priority": "P1"
+  },
+  {
+    "id": "A-04",
+    "task": "Không hardcode mật khẩu hoặc secret.",
+    "status": "NOT_VERIFIED",
+    "file": "public/api/_bootstrap.php; app/Config/database.php; app/Services/SessionGuard.php",
+    "evidence": "DB lấy secret từ environment; cần scan toàn repository.",
+    "priority": "P1"
+  },
+  {
+    "id": "A-05",
+    "task": "Migrations nền đầy đủ, có thể chạy trên database sạch.",
+    "status": "NOT_VERIFIED",
+    "file": "database/SOMI_database.sql; database/migrations/",
+    "evidence": "Có hai baseline SQL; chưa chạy database sạch.",
+    "priority": "P0"
+  },
+  {
+    "id": "A-06",
+    "task": "Quy ước thống nhất về tên bảng, khóa ngoại, trạng thái, timestamp, timezone và tiền tệ.",
+    "status": "PARTIAL",
+    "file": "public/api/_bootstrap.php; app/Config/database.php; app/Services/SessionGuard.php",
+    "evidence": "Chưa có API/service nghiệp vụ tương ứng.",
+    "priority": "P1"
+  },
+  {
+    "id": "A-07",
+    "task": "Có `.env.example` và tài liệu chạy backend.",
+    "status": "MISSING",
+    "file": ".env.example; README.md",
+    "evidence": "Chưa có .env.example hoặc hướng dẫn migration/backend phù hợp.",
+    "priority": "P1"
+  },
+  {
+    "id": "A-08",
+    "task": "Middleware authentication.",
+    "status": "BUG",
+    "file": "app/Services/SessionGuard.php",
+    "evidence": "Chỉ xét account_status hiện tại; phiên cũ có thể sống lại sau suspend→restore; strtotime bỏ phần giây lẻ.",
+    "priority": "P1"
+  },
+  {
+    "id": "A-09",
+    "task": "Middleware authorization theo role/permission.",
+    "status": "PARTIAL",
+    "file": "public/api/_bootstrap.php; app/Config/database.php; app/Services/SessionGuard.php",
+    "evidence": "Chưa có API/service nghiệp vụ tương ứng.",
+    "priority": "P0"
+  },
+  {
+    "id": "A-10",
+    "task": "Lấy chính xác danh tính người dùng từ session/token.",
+    "status": "NOT_VERIFIED",
+    "file": "app/Services/SessionGuard.php; public/api/auth/",
+    "evidence": "Chưa kiểm thử identity/role giả trên database cô lập.",
+    "priority": "P0"
+  },
+  {
+    "id": "B-01",
+    "task": "Đăng ký bằng email/số điện thoại.",
+    "status": "PARTIAL",
+    "file": "public/api/auth/; app/Services/*VerificationService.php; PasswordResetService.php",
+    "evidence": "Có implementation; chưa chạy E2E test độc lập. SMS chỉ có demo mode.",
+    "priority": "P1"
+  },
+  {
+    "id": "B-02",
+    "task": "Đăng nhập bằng email/số điện thoại.",
+    "status": "PARTIAL",
+    "file": "public/api/auth/; app/Services/*VerificationService.php; PasswordResetService.php",
+    "evidence": "Có implementation; chưa chạy E2E test độc lập. SMS chỉ có demo mode.",
+    "priority": "P1"
+  },
+  {
+    "id": "B-03",
+    "task": "Đăng xuất và vô hiệu hóa session/token theo cơ chế thực tế.",
+    "status": "PARTIAL",
+    "file": "public/api/auth/; app/Services/*VerificationService.php; PasswordResetService.php",
+    "evidence": "Có implementation; chưa chạy E2E test độc lập. SMS chỉ có demo mode.",
+    "priority": "P1"
+  },
+  {
+    "id": "B-04",
+    "task": "Xác minh email/điện thoại.",
+    "status": "PARTIAL",
+    "file": "public/api/auth/; app/Services/*VerificationService.php; PasswordResetService.php",
+    "evidence": "Có implementation; chưa chạy E2E test độc lập. SMS chỉ có demo mode.",
+    "priority": "P1"
+  },
+  {
+    "id": "B-05",
+    "task": "Gửi lại mã xác minh.",
+    "status": "PARTIAL",
+    "file": "public/api/auth/; app/Services/*VerificationService.php; PasswordResetService.php",
+    "evidence": "Có implementation; chưa chạy E2E test độc lập. SMS chỉ có demo mode.",
+    "priority": "P1"
+  },
+  {
+    "id": "B-06",
+    "task": "Quên mật khẩu.",
+    "status": "BUG",
+    "file": "public/api/auth/request-password-reset.php",
+    "evidence": "Error provider/config trả500 cho email thật, email không tồn tại trả200; khác biệt response làm lộ sự tồn tại tài khoản.",
+    "priority": "P1"
+  },
+  {
+    "id": "B-07",
+    "task": "Đặt lại mật khẩu an toàn.",
+    "status": "BUG",
+    "file": "app/Services/PasswordResetService.php::reset",
+    "evidence": "Khóa token trước user; hai token khác nhau cho một user có thể tạo vòng chờ khi consume tất cả token.",
+    "priority": "P1"
+  },
+  {
+    "id": "B-08",
+    "task": "API hồ sơ người dùng.",
+    "status": "MISSING",
+    "file": "public/api/",
+    "evidence": "Chưa có API/service nghiệp vụ tương ứng.",
+    "priority": "P1"
+  },
+  {
+    "id": "B-09",
+    "task": "Một tài khoản có thể có đồng thời role Customer và Shipper.",
+    "status": "NOT_VERIFIED",
+    "file": "public/api/auth/switch-workspace.php",
+    "evidence": "Chưa có API/service nghiệp vụ tương ứng.",
+    "priority": "P1"
+  },
+  {
+    "id": "B-10",
+    "task": "Kiểm tra quyền sở hữu dữ liệu ở backend.",
+    "status": "MISSING",
+    "file": "public/api/",
+    "evidence": "Chưa có API/service nghiệp vụ tương ứng.",
+    "priority": "P1"
+  },
+  {
+    "id": "B-11",
+    "task": "Shipper không truy cập được offer/đơn ngoài phạm vi được phép.",
+    "status": "BLOCKED",
+    "file": "public/api/",
+    "evidence": "API offer chưa tồn tại; phối hợp Người 2.",
+    "priority": "P1"
+  },
+  {
+    "id": "B-12",
+    "task": "Admin xem, khóa/mở tài khoản.",
+    "status": "MISSING",
+    "file": "public/api/",
+    "evidence": "Chưa có API/service nghiệp vụ tương ứng.",
+    "priority": "P1"
+  },
+  {
+    "id": "B-13",
+    "task": "Admin xử lý yêu cầu đổi quốc tịch.",
+    "status": "MISSING",
+    "file": "public/api/",
+    "evidence": "Chưa có API/service nghiệp vụ tương ứng.",
+    "priority": "P1"
+  },
+  {
+    "id": "B-14",
+    "task": "Ghi lịch sử trạng thái tài khoản.",
+    "status": "MISSING",
+    "file": "public/api/",
+    "evidence": "Chưa có API/service nghiệp vụ tương ứng.",
+    "priority": "P1"
+  },
+  {
+    "id": "B-15",
+    "task": "Audit log cho thao tác Admin nhạy cảm.",
+    "status": "MISSING",
+    "file": "public/api/",
+    "evidence": "Chưa có API/service nghiệp vụ tương ứng.",
+    "priority": "P1"
+  },
+  {
+    "id": "C-01",
+    "task": "CRUD địa chỉ Customer.",
+    "status": "MISSING",
+    "file": "public/assets/js/customer/store.js; database/SOMI_database.sql",
+    "evidence": "Frontend localStorage, không có API PostgreSQL; chưa kiểm thử persistence/ownership.",
+    "priority": "P1"
+  },
+  {
+    "id": "C-02",
+    "task": "Phân quyền sở hữu địa chỉ.",
+    "status": "MISSING",
+    "file": "public/assets/js/customer/store.js; database/SOMI_database.sql",
+    "evidence": "Frontend localStorage, không có API PostgreSQL; chưa kiểm thử persistence/ownership.",
+    "priority": "P1"
+  },
+  {
+    "id": "C-03",
+    "task": "Danh mục loại kiện hàng.",
+    "status": "MISSING",
+    "file": "public/assets/js/customer/store.js; database/SOMI_database.sql",
+    "evidence": "Frontend localStorage, không có API PostgreSQL; chưa kiểm thử persistence/ownership.",
+    "priority": "P1"
+  },
+  {
+    "id": "C-04",
+    "task": "Admin đánh dấu loại hàng được phép/hạn chế/cấm.",
+    "status": "MISSING",
+    "file": "public/assets/js/customer/store.js; database/SOMI_database.sql",
+    "evidence": "Frontend localStorage, không có API PostgreSQL; chưa kiểm thử persistence/ownership.",
+    "priority": "P1"
+  },
+  {
+    "id": "C-05",
+    "task": "Tạo đơn với địa chỉ lấy/giao.",
+    "status": "MISSING",
+    "file": "public/assets/js/customer/store.js; database/SOMI_database.sql",
+    "evidence": "Frontend localStorage, không có API PostgreSQL; chưa kiểm thử persistence/ownership.",
+    "priority": "P0"
+  },
+  {
+    "id": "C-06",
+    "task": "Lưu tọa độ hợp lệ.",
+    "status": "MISSING",
+    "file": "public/assets/js/customer/store.js; database/SOMI_database.sql",
+    "evidence": "Frontend localStorage, không có API PostgreSQL; chưa kiểm thử persistence/ownership.",
+    "priority": "P1"
+  },
+  {
+    "id": "C-07",
+    "task": "Lưu thông tin liên hệ người gửi/người nhận.",
+    "status": "MISSING",
+    "file": "public/assets/js/customer/store.js; database/SOMI_database.sql",
+    "evidence": "Frontend localStorage, không có API PostgreSQL; chưa kiểm thử persistence/ownership.",
+    "priority": "P1"
+  },
+  {
+    "id": "C-08",
+    "task": "Lưu loại hàng, khối lượng.",
+    "status": "MISSING",
+    "file": "public/assets/js/customer/store.js; database/SOMI_database.sql",
+    "evidence": "Frontend localStorage, không có API PostgreSQL; chưa kiểm thử persistence/ownership.",
+    "priority": "P1"
+  },
+  {
+    "id": "C-09",
+    "task": "Snapshot địa chỉ/liên hệ tại thời điểm tạo đơn.",
+    "status": "MISSING",
+    "file": "public/assets/js/customer/store.js; database/SOMI_database.sql",
+    "evidence": "Frontend localStorage, không có API PostgreSQL; chưa kiểm thử persistence/ownership.",
+    "priority": "P1"
+  },
+  {
+    "id": "C-10",
+    "task": "Customer xem danh sách đơn.",
+    "status": "MISSING",
+    "file": "public/assets/js/customer/store.js; database/SOMI_database.sql",
+    "evidence": "Frontend localStorage, không có API PostgreSQL; chưa kiểm thử persistence/ownership.",
+    "priority": "P1"
+  },
+  {
+    "id": "C-11",
+    "task": "Customer xem chi tiết đơn của mình.",
+    "status": "MISSING",
+    "file": "public/assets/js/customer/store.js; database/SOMI_database.sql",
+    "evidence": "Frontend localStorage, không có API PostgreSQL; chưa kiểm thử persistence/ownership.",
+    "priority": "P1"
+  },
+  {
+    "id": "C-12",
+    "task": "Customer xem trạng thái và lịch sử đơn.",
+    "status": "MISSING",
+    "file": "public/assets/js/customer/store.js; database/SOMI_database.sql",
+    "evidence": "Frontend localStorage, không có API PostgreSQL; chưa kiểm thử persistence/ownership.",
+    "priority": "P1"
+  },
+  {
+    "id": "C-13",
+    "task": "Customer được hủy đơn trước khi Shipper nhận theo quy tắc nghiệp vụ.",
+    "status": "MISSING",
+    "file": "public/assets/js/customer/store.js; database/SOMI_database.sql",
+    "evidence": "Frontend localStorage, không có API PostgreSQL; chưa kiểm thử persistence/ownership.",
+    "priority": "P1"
+  },
+  {
+    "id": "C-14",
+    "task": "Có hợp đồng trạng thái đơn dùng chung với Người 2.",
+    "status": "MISSING",
+    "file": "public/assets/js/customer/store.js; database/SOMI_database.sql",
+    "evidence": "Frontend localStorage, không có API PostgreSQL; chưa kiểm thử persistence/ownership.",
+    "priority": "P1"
+  },
+  {
+    "id": "C-15",
+    "task": "Lưu lịch sử chuyển trạng thái.",
+    "status": "MISSING",
+    "file": "public/assets/js/customer/store.js; database/SOMI_database.sql",
+    "evidence": "Frontend localStorage, không có API PostgreSQL; chưa kiểm thử persistence/ownership.",
+    "priority": "P0"
+  },
+  {
+    "id": "C-16",
+    "task": "Ngăn chuyển trạng thái không hợp lệ và xử lý cập nhật đồng thời.",
+    "status": "MISSING",
+    "file": "public/assets/js/customer/store.js; database/SOMI_database.sql",
+    "evidence": "Frontend localStorage, không có API PostgreSQL; chưa kiểm thử persistence/ownership.",
+    "priority": "P0"
+  },
+  {
+    "id": "D-01",
+    "task": "Admin cấu hình giá theo khoảng cách.",
+    "status": "BLOCKED",
+    "file": "database/SOMI_database.sql:283; public/assets/js/customer/store.js:34",
+    "evidence": "BLOCKED_BY_BUSINESS_DECISION: demo có giá mẫu; chưa có phê duyệt công thức, làm tròn theo bước, nguồn khoảng cách/thời tiết.",
+    "priority": "P1"
+  },
+  {
+    "id": "D-02",
+    "task": "Admin cấu hình giá theo khung giờ.",
+    "status": "BLOCKED",
+    "file": "database/SOMI_database.sql:283; public/assets/js/customer/store.js:34",
+    "evidence": "BLOCKED_BY_BUSINESS_DECISION: demo có giá mẫu; chưa có phê duyệt công thức, làm tròn theo bước, nguồn khoảng cách/thời tiết.",
+    "priority": "P1"
+  },
+  {
+    "id": "D-03",
+    "task": "Admin cấu hình ảnh hưởng thời tiết.",
+    "status": "BLOCKED",
+    "file": "database/SOMI_database.sql:283; public/assets/js/customer/store.js:34",
+    "evidence": "BLOCKED_BY_BUSINESS_DECISION: demo có giá mẫu; chưa có phê duyệt công thức, làm tròn theo bước, nguồn khoảng cách/thời tiết.",
+    "priority": "P1"
+  },
+  {
+    "id": "D-04",
+    "task": "Bảng giá VND và USD riêng.",
+    "status": "BLOCKED",
+    "file": "database/SOMI_database.sql:283; public/assets/js/customer/store.js:34",
+    "evidence": "BLOCKED_BY_BUSINESS_DECISION: demo có giá mẫu; chưa có phê duyệt công thức, làm tròn theo bước, nguồn khoảng cách/thời tiết.",
+    "priority": "P1"
+  },
+  {
+    "id": "D-05",
+    "task": "Tính báo giá theo chính sách đã thống nhất.",
+    "status": "BLOCKED",
+    "file": "database/SOMI_database.sql:283; public/assets/js/customer/store.js:34",
+    "evidence": "BLOCKED_BY_BUSINESS_DECISION: demo có giá mẫu; chưa có phê duyệt công thức, làm tròn theo bước, nguồn khoảng cách/thời tiết.",
+    "priority": "P1"
+  },
+  {
+    "id": "D-06",
+    "task": "Làm tròn lên đơn vị tiền nhỏ nhất theo từng loại tiền.",
+    "status": "BLOCKED",
+    "file": "database/SOMI_database.sql:283; public/assets/js/customer/store.js:34",
+    "evidence": "BLOCKED_BY_BUSINESS_DECISION: demo có giá mẫu; chưa có phê duyệt công thức, làm tròn theo bước, nguồn khoảng cách/thời tiết.",
+    "priority": "P1"
+  },
+  {
+    "id": "D-07",
+    "task": "Snapshot chính sách giá lên đơn.",
+    "status": "BLOCKED",
+    "file": "database/SOMI_database.sql:283; public/assets/js/customer/store.js:34",
+    "evidence": "BLOCKED_BY_BUSINESS_DECISION: demo có giá mẫu; chưa có phê duyệt công thức, làm tròn theo bước, nguồn khoảng cách/thời tiết.",
+    "priority": "P1"
+  },
+  {
+    "id": "D-08",
+    "task": "Snapshot các thành phần tạo thành tổng giá.",
+    "status": "BLOCKED",
+    "file": "database/SOMI_database.sql:283; public/assets/js/customer/store.js:34",
+    "evidence": "BLOCKED_BY_BUSINESS_DECISION: demo có giá mẫu; chưa có phê duyệt công thức, làm tròn theo bước, nguồn khoảng cách/thời tiết.",
+    "priority": "P1"
+  },
+  {
+    "id": "D-09",
+    "task": "Không thay đổi giá đơn đã thanh toán.",
+    "status": "BLOCKED",
+    "file": "database/SOMI_database.sql:283; public/assets/js/customer/store.js:34",
+    "evidence": "BLOCKED_BY_BUSINESS_DECISION: demo có giá mẫu; chưa có phê duyệt công thức, làm tròn theo bước, nguồn khoảng cách/thời tiết.",
+    "priority": "P1"
+  },
+  {
+    "id": "D-10",
+    "task": "Admin cấu hình phí hủy.",
+    "status": "BLOCKED",
+    "file": "database/SOMI_database.sql:283; public/assets/js/customer/store.js:34",
+    "evidence": "BLOCKED_BY_BUSINESS_DECISION: demo có giá mẫu; chưa có phê duyệt công thức, làm tròn theo bước, nguồn khoảng cách/thời tiết.",
+    "priority": "P1"
+  },
+  {
+    "id": "D-11",
+    "task": "Admin cấu hình phí hoàn hàng.",
+    "status": "BLOCKED",
+    "file": "database/SOMI_database.sql:283; public/assets/js/customer/store.js:34",
+    "evidence": "BLOCKED_BY_BUSINESS_DECISION: demo có giá mẫu; chưa có phê duyệt công thức, làm tròn theo bước, nguồn khoảng cách/thời tiết.",
+    "priority": "P1"
+  },
+  {
+    "id": "D-12",
+    "task": "Admin cấu hình phần trăm thu nhập Shipper.",
+    "status": "BLOCKED",
+    "file": "database/SOMI_database.sql:283; public/assets/js/customer/store.js:34",
+    "evidence": "BLOCKED_BY_BUSINESS_DECISION: demo có giá mẫu; chưa có phê duyệt công thức, làm tròn theo bước, nguồn khoảng cách/thời tiết.",
+    "priority": "P1"
+  },
+  {
+    "id": "D-13",
+    "task": "Admin cấu hình bồi hoàn đơn hoàn.",
+    "status": "BLOCKED",
+    "file": "database/SOMI_database.sql:283; public/assets/js/customer/store.js:34",
+    "evidence": "BLOCKED_BY_BUSINESS_DECISION: demo có giá mẫu; chưa có phê duyệt công thức, làm tròn theo bước, nguồn khoảng cách/thời tiết.",
+    "priority": "P1"
+  },
+  {
+    "id": "D-14",
+    "task": "Admin cấu hình chính sách điểm Shipper.",
+    "status": "BLOCKED",
+    "file": "database/SOMI_database.sql:283; public/assets/js/customer/store.js:34",
+    "evidence": "BLOCKED_BY_BUSINESS_DECISION: demo có giá mẫu; chưa có phê duyệt công thức, làm tròn theo bước, nguồn khoảng cách/thời tiết.",
+    "priority": "P1"
+  },
+  {
+    "id": "E-01",
+    "task": "API Admin tra cứu Customer.",
+    "status": "MISSING",
+    "file": "public/api/",
+    "evidence": "Chưa có API/service nghiệp vụ tương ứng.",
+    "priority": "P1"
+  },
+  {
+    "id": "E-02",
+    "task": "API Admin tra cứu Shipper.",
+    "status": "MISSING",
+    "file": "public/api/",
+    "evidence": "Chưa có API/service nghiệp vụ tương ứng.",
+    "priority": "P1"
+  },
+  {
+    "id": "E-03",
+    "task": "API Admin tra cứu và xem chi tiết đơn hàng.",
+    "status": "MISSING",
+    "file": "public/api/",
+    "evidence": "Chưa có API/service nghiệp vụ tương ứng.",
+    "priority": "P1"
+  },
+  {
+    "id": "E-04",
+    "task": "Admin duyệt hồ sơ KYC.",
+    "status": "BUG",
+    "file": "public/api/admin/review-shipper.php",
+    "evidence": "Approve profile không kiểm tra identity tồn tại; UPDATE identity có thể ảnh hưởng0 dòng nhưng profile vẫn APPROVED.",
+    "priority": "P1"
+  },
+  {
+    "id": "E-05",
+    "task": "Admin từ chối KYC.",
+    "status": "PARTIAL",
+    "file": "public/api/admin/review-shipper.php",
+    "evidence": "Có approve/reject Shipper; thiếu NEEDS_INFO; guard lặp; chưa E2E.",
+    "priority": "P1"
+  },
+  {
+    "id": "E-06",
+    "task": "Admin yêu cầu bổ sung hồ sơ.",
+    "status": "MISSING",
+    "file": "public/api/admin/review-shipper.php",
+    "evidence": "Endpoint cũ chỉ nhận APPROVED/REJECTED, không nhận NEEDS_INFO.",
+    "priority": "P1"
+  },
+  {
+    "id": "E-07",
+    "task": "Lưu trạng thái và lịch sử xét duyệt KYC.",
+    "status": "PARTIAL",
+    "file": "public/api/admin/review-shipper.php",
+    "evidence": "Có approve/reject Shipper; thiếu NEEDS_INFO; guard lặp; chưa E2E.",
+    "priority": "P1"
+  },
+  {
+    "id": "E-08",
+    "task": "Hợp đồng API cho matching với Người 2.",
+    "status": "MISSING",
+    "file": "public/api/",
+    "evidence": "Chưa có API/service nghiệp vụ tương ứng.",
+    "priority": "P1"
+  },
+  {
+    "id": "E-09",
+    "task": "Hợp đồng API cho trạng thái giao hàng với Người 2.",
+    "status": "MISSING",
+    "file": "public/api/",
+    "evidence": "Chưa có API/service nghiệp vụ tương ứng.",
+    "priority": "P1"
+  },
+  {
+    "id": "E-10",
+    "task": "Hợp đồng API thanh toán/refund với Người 3.",
+    "status": "MISSING",
+    "file": "public/api/",
+    "evidence": "Chưa có API/service nghiệp vụ tương ứng.",
+    "priority": "P1"
+  },
+  {
+    "id": "E-11",
+    "task": "Review migrations và khả năng tích hợp.",
+    "status": "NOT_VERIFIED",
+    "file": "database/SOMI_database.sql; database/migrations/",
+    "evidence": "Chưa chạy lại migration trên database sạch trong phiên audit mới.",
+    "priority": "P1"
+  },
+  {
+    "id": "E-12",
+    "task": "Chuẩn hóa authentication/authorization giữa các module.",
+    "status": "PARTIAL",
+    "file": "app/Services/SessionGuard.php; public/api/",
+    "evidence": "Guard active dùng chung nhưng có code gọi lặp; thiếu middleware permission dùng lại cho API nghiệp vụ.",
+    "priority": "P0"
+  },
+  {
+    "id": "E-13",
+    "task": "Tài liệu API và hướng dẫn tích hợp.",
+    "status": "MISSING",
+    "file": "public/api/",
+    "evidence": "Chưa có API/service nghiệp vụ tương ứng.",
+    "priority": "P1"
+  }
+]

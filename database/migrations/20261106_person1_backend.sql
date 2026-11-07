@@ -1,7 +1,15 @@
 BEGIN;
 SET LOCAL search_path TO somi, public;
 
-CREATE TABLE nationality_change_requests (
+DO $compat$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema=current_schema() AND table_name='nationality_change_requests' AND column_name='requested_country_code')
+       AND NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema=current_schema() AND table_name='nationality_change_requests' AND column_name='nationality_code') THEN
+        ALTER TABLE nationality_change_requests RENAME COLUMN requested_country_code TO nationality_code;
+        ALTER TABLE nationality_change_requests ALTER COLUMN old_country_code DROP NOT NULL;
+    END IF;
+END $compat$;
+CREATE TABLE IF NOT EXISTS nationality_change_requests (
     request_id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id BIGINT NOT NULL REFERENCES users(user_id),
     nationality_code CHAR(2) NOT NULL,
@@ -10,7 +18,7 @@ CREATE TABLE nationality_change_requests (
     reviewed_by BIGINT REFERENCES users(user_id), review_note TEXT,
     created_at TIMESTAMPTZ NOT NULL DEFAULT now(), reviewed_at TIMESTAMPTZ
 );
-CREATE UNIQUE INDEX ux_nationality_pending ON nationality_change_requests(user_id) WHERE status='PENDING';
+CREATE UNIQUE INDEX IF NOT EXISTS ux_nationality_pending ON nationality_change_requests(user_id) WHERE status='PENDING';
 
 ALTER TABLE payments ADD COLUMN request_key VARCHAR(100), ADD COLUMN checkout_url TEXT,
     ADD COLUMN failure_code VARCHAR(80);

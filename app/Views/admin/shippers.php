@@ -6,6 +6,7 @@
                 <h1>SOMI <span>DELIVERY</span></h1>
             </div>
             <div class="sidebar-category">ADMIN CONSOLE</div>
+            <a href="?page=admin&amp;view=backend" class="menu-item">Quản trị dữ liệu</a>
             <nav class="sidebar-menu">
     <a href="?page=admin&amp;view=index" class="menu-item">
         <i class="fa-solid fa-house"></i> Dashboard
@@ -53,6 +54,7 @@
             <!-- Header -->
             <header class="top-header">
                 <div class="header-right">
+                    <?php require __DIR__ . "/../shared/language-picker.php"; ?>
                     <div class="icon-btn notification-bell">
                         <i class="fa-regular fa-bell"></i>
                         <span class="dot-badge"></span>

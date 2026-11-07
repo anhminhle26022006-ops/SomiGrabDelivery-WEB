@@ -97,7 +97,7 @@ $shipperViewPages = [
 $shipperPage = $shipperViewPages[$shipperView];
 
 $adminView = $_GET['view'] ?? 'index';
-if (!is_string($adminView) || !in_array($adminView, ['index','users','customers','shippers','orders','complaints','disputes','payments','reviews','notifications','audit-logs'], true)) $adminView = 'index';
+if (!is_string($adminView) || !in_array($adminView, ['index','users','customers','shippers','orders','complaints','disputes','payments','reviews','notifications','audit-logs','backend'], true)) $adminView = 'index';
 $publicPages = ['home','how','customers','shippers','pricing'];
 $pageTitles = [
     'home' => 'SOMI — Delivery on Your Time',
@@ -112,6 +112,11 @@ $pageTitles = [
     'admin' => 'Admin Dashboard — SOMI',
 ];
 function e(string $value): string { return htmlspecialchars($value, ENT_QUOTES, 'UTF-8'); }
+/** Asset URL with a content-change version so browsers can cache it for a year. */
+function somi_asset(string $path): string {
+    $mtime = @filemtime(__DIR__ . '/' . $path);
+    return $path . '?v=' . ($mtime === false ? '0' : base_convert((string) $mtime, 10, 36));
+}
 function linkTo(string $page, array $params = []): string {
     return '?' . http_build_query(array_merge(['page' => $page], $params));
 }
@@ -123,20 +128,21 @@ function linkTo(string $page, array $params = []): string {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#14284b">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2314284b'/%3E%3Ctext x='16' y='22' font-family='Arial' font-size='17' font-weight='700' fill='%23fff' text-anchor='middle'%3ES%3C/text%3E%3C/svg%3E">
   <title><?= e($pageTitles[$page]) ?></title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="public/assets/css/app.css?v=20261018-auth2">
+  <link rel="stylesheet" href="<?= e(somi_asset('public/assets/css/app.css')) ?>">
   <?php if (in_array($page, ['customer', 'shipper', 'admin'], true)): ?>
-  <link rel="stylesheet" href="public/assets/css/modules/<?= e($page) ?>.css<?= $page === 'shipper' ? '?v=20261014-3' : '' ?>">
+  <link rel="stylesheet" href="<?= e(somi_asset('public/assets/css/modules/' . $page . '.css')) ?>">
   <?php endif; ?>
   <?php if ($page === 'admin'): ?>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script defer src="public/assets/js/admin.js"></script>
+  <script defer src="<?= e(somi_asset('public/assets/js/admin.js')) ?>"></script>
   <?php endif; ?>
-  <script defer src="public/assets/js/app.js?v=20261018-passwordreset1"></script>
+  <script defer src="<?= e(somi_asset('public/assets/js/app.js')) ?>"></script>
 </head>
 <body data-page="<?= e($page) ?>"<?php if ($page === 'shipper'): ?> data-shipper-view="<?= e($shipperView) ?>"<?php endif; ?>>
 <?php if (in_array($page, $publicPages, true)): ?>
@@ -156,6 +162,6 @@ function linkTo(string $page, array $params = []): string {
 <?php else: ?>
   <?php require __DIR__ . '/app/Views/admin/' . $adminView . '.php'; ?>
 <?php endif; ?>
-<?php if ($page === 'shipper'): ?><script defer src="public/assets/js/shipper-navigation.js?v=20261014-6"></script><script defer src="public/assets/js/shipper.js?v=20261014-6"></script><?php endif; ?>
+<?php if ($page === 'shipper'): ?><script defer src="<?= e(somi_asset('public/assets/js/shipper-navigation.js')) ?>"></script><script defer src="<?= e(somi_asset('public/assets/js/shipper.js')) ?>"></script><?php endif; ?>
 </body>
 </html>

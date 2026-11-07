@@ -1,0 +1,14 @@
+{
+  "php": {
+    "checks": 93,
+    "failures": []
+  },
+  "javascript": {
+    "checks": 29,
+    "failures": []
+  },
+  "secret_scan": {
+    "files": 163,
+    "findings": []
+  }
+}

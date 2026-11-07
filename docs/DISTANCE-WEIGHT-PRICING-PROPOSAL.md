@@ -51,3 +51,7 @@ Ví dụ lẻ: 4,5 km và 3,5 kg → 27.250đ / 134 cent; giờ cao điểm và 
 3. API lưu đủ base fee, số km/kg miễn phí, đơn giá km/kg, phần khoảng cách, phần trọng lượng, multipliers và tổng cuối vào snapshot.
 4. Đồng bộ Pricing VI/EN, công cụ tính thử và Customer demo; thêm input trọng lượng và giải thích công thức, bỏ bảng band cố định của policy mới.
 5. Kiểm thử quãng đường/khối lượng lẻ, mốc 3 km/3 kg/40 km/30 kg, làm tròn đồng/cent, snapshot và hệ số giờ/thời tiết.
+
+## Ownership theo scope 06/11/2026
+
+Người 1 sở hữu công thức/giá/phí/policy, quote/order snapshot, payment/refund và email. Người 3 tiếp quản CRUD địa chỉ và Google Places/Geocoding/Routes, cung cấp dữ liệu để Người 1 tính giá; Người 2 dùng route/GPS cho giao nhận. Thay scope không thay giá đã duyệt. Owner transport/key Open-Meteo chưa giao riêng trong bản mới, cần nhóm chốt theo [BACKEND-SCOPE.md](BACKEND-SCOPE.md).

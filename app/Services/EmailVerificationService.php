@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../Config/database.php';
 require_once __DIR__ . '/ResendMailer.php';
+require_once __DIR__ . '/EmailService.php';
 
 /** Issues and verifies six-digit email codes for an existing SOMI account. */
 final class EmailVerificationService
@@ -76,17 +77,7 @@ final class EmailVerificationService
                 'ttl_minutes' => self::CODE_TTL_MINUTES,
             ]);
 
-            $isVietnamese = strtoupper(trim((string) $user['nationality_code'])) === 'VN';
-            $subject = $isVietnamese ? 'Mã xác minh email SOMI' : 'Your SOMI email verification code';
-            $safeCode = htmlspecialchars($code, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-            $html = $isVietnamese
-                ? '<p>Mã xác minh email SOMI của bạn là:</p><p style="font-size:28px;font-weight:bold;letter-spacing:6px">' . $safeCode . '</p><p>Mã có hiệu lực trong 5 phút. Nếu bạn không yêu cầu mã này, hãy bỏ qua email.</p>'
-                : '<p>Your SOMI email verification code is:</p><p style="font-size:28px;font-weight:bold;letter-spacing:6px">' . $safeCode . '</p><p>This code expires in 5 minutes. If you did not request it, you can ignore this email.</p>';
-            $text = $isVietnamese
-                ? "Mã xác minh email SOMI: {$code}. Mã có hiệu lực trong 5 phút."
-                : "Your SOMI email verification code is {$code}. It expires in 5 minutes.";
-
-            ResendMailer::send((string) $user['email'], $subject, $html, $text);
+            EmailService::enqueue($db,$userId,'VERIFY_EMAIL','verify:'.$userId.':'.hash('sha256',$code),['code'=>$code],null,240);
             $db->commit();
         } catch (Throwable $error) {
             if ($db->inTransaction()) {
@@ -107,6 +98,7 @@ final class EmailVerificationService
         $db->beginTransaction();
 
         try {
+            $userLock=$db->prepare("SELECT account_status FROM users WHERE user_id=? FOR UPDATE");$userLock->execute([$userId]);if(!in_array($userLock->fetchColumn(),['ACTIVE','PENDING_VERIFICATION'],true))throw new RuntimeException('The account is not active.');
             $query = $db->prepare(
                 "SELECT verification_id, token_hash, expires_at, attempt_count
                  FROM email_verifications

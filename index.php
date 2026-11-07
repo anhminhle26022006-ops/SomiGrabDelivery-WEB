@@ -3,6 +3,10 @@ declare(strict_types=1);
 
 // Only public assets and explicit API endpoints may bypass the front controller.
 $requestPath = rawurldecode((string) parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH));
+if (preg_match('#(?:^|/)\.env#i', $requestPath)) {
+    http_response_code(404);
+    exit('Not found');
+}
 if (PHP_SAPI === 'cli-server' && $requestPath !== '/') {
     $candidate = realpath(__DIR__ . '/' . ltrim($requestPath, '/'));
     $publicRoot = realpath(__DIR__ . '/public');

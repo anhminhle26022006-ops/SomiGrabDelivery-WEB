@@ -1,5 +1,7 @@
 # Kết quả kiểm tra API Customer — 05/11/2026
 
+> Kết quả dưới đây thuộc đợt triển khai API/pricing trước khi điều chỉnh scope. Sửa tài liệu 06/11/2026 không chạy lại các kiểm thử hoặc kiểm tra lại môi trường. Owner hiện hành: payment/refund/email Người 1; Shipper/matching/giao nhận/GPS Người 2; địa chỉ/Google/chat/ticket/earnings/payout/in-app Người 3. Xem [BACKEND-SCOPE.md](BACKEND-SCOPE.md).
+
 - `php tests/customer_orders.php`: PASS 84 checks. PostgreSQL TEMP tables, search_path pg_temp/pg_catalog, rollback toàn bộ. Bao gồm các release legacy và công thức mới, audit, giữ snapshot cũ, ví dụ 15/20/39 km và 1/5 kg cho VND/USD, số lẻ km/kg, làm tròn một lần, ranh giới 3 km/3 kg/40 km/30 kg.
 - `php tests/pricing_provider.php`: PASS 23 checks, không gọi dịch vụ ngoài. Bao gồm TWO_WHEELER, 39,999 km được chấp nhận/40 km bị từ chối, đơn vị km/phút, timeout chung, commercial endpoint, geocoding TP.HCM/ngoài vùng, weather mapping/staleness và dừng nhận đơn khi thời tiết nguy hiểm.
 - `node tests/pricing_browser.cjs`: PASS 44 checks, 0 runtime exceptions. Đổi VI/EN nhiều lần, toàn bộ nội dung Pricing/CTA/menu/footer modal, input trọng lượng, tính 4,5 km/3,5 kg/cao điểm/mưa nhẹ đúng 35.970đ và 1,77 USD, giới hạn 40 km và quá 30 kg, lưu ngôn ngữ sau reload và responsive 1440/768/375. Artifact `pricing-browser-results.json`; ảnh trong tests/.runtime.

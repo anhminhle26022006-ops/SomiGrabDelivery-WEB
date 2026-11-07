@@ -53,7 +53,7 @@ final class OrderLifecycleService
         $q = $db->prepare('UPDATE orders SET paid_at = COALESCE(paid_at, :paid), updated_at = now() WHERE order_id = :id');
         $q->execute(['paid' => $payment['paid_at'], 'id' => $orderId]);
         if ($order['status'] === 'CANCELLED') {
-            self::event($db, $order, 'RefundRequested', 'refund:cancel:' . $orderId, ['reason' => 'CUSTOMER_CANCELLATION', 'deducted_fee_minor' => '0']);
+            self::event($db, $order, 'RefundRequested', 'refund:cancel:' . $orderId, ['reason' => 'CUSTOMER_CANCELLATION', 'deducted_fee_minor' => (string)$order['cancellation_fee_minor']]);
             return 'CANCELLED';
         }
         if ($order['status'] !== 'PENDING_PAYMENT') return $order['status'];

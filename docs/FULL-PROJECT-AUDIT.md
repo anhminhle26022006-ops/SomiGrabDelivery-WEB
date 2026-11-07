@@ -1,5 +1,7 @@
 # SOMI Grab Delivery — Audit 2026-11-01
 
+> **Tài liệu lịch sử:** kết luận, phân công và trạng thái repository dưới đây thuộc ngày kiểm tra ghi trong báo cáo. Xem [scope hiện hành 06/11/2026](BACKEND-SCOPE.md), [API/giá hiện hành](DELIVERY-API.md). Giữ nguyên bằng chứng kiểm thử quá khứ; không dùng báo cáo này để giao việc hiện tại.
+
 ## A. Project Overview
 
 PHP templates + vanilla JavaScript + CSS; Customer nạp Bootstrap 5.3.3 CDN. Không có TypeScript, Composer, npm manifest hoặc build/test script trước audit. Backend dùng PDO PostgreSQL, cURL Resend và OpenSSL AES-256-GCM cho giấy tờ. PHP cục bộ: 8.0.30; Docker khai báo PHP 8.3 Apache.

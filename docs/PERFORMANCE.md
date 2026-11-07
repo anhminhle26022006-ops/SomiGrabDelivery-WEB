@@ -12,7 +12,7 @@ Trước tối ưu, một API cần đăng nhập (ví dụ `auth/profile.php`) 
 
 | Phần | Thay đổi |
 |---|---|
-| `app/Config/database.php` | Kết nối persistent cho web (mỗi PHP worker giữ 1 kết nối). `search_path` gửi trong gói khởi tạo kết nối thay cho lệnh `SET`. Dùng `PGSQL_ATTR_DISABLE_PREPARES`: 1 round-trip mỗi truy vấn, tham số vẫn bind phía server (không phải emulate). |
+| `app/Config/database.php` | Persistent mặc định tắt; chỉ bật sau khi tính ngân sách kết nối. `search_path` gửi trong gói khởi tạo kết nối thay cho lệnh `SET`. Dùng `PGSQL_ATTR_DISABLE_PREPARES`: 1 round-trip mỗi truy vấn, tham số vẫn bind phía server (không phải emulate). |
 | `app/Services/SessionGuard.php`, `public/api/_person1.php` | Gộp kiểm tra quyền vào truy vấn session. Nhả khoá file session ngay sau khi xác thực, để các request song song của cùng một người dùng không phải xếp hàng chờ nhau. |
 | `public/api/auth/profile.php` | Dùng lại danh sách role đã tải khi kiểm tra session. |
 | `index.php` (`somi_asset()`) | URL asset tự gắn `?v=<mtime>`, không cần sửa version bằng tay. Thêm favicon inline để bỏ request 404. |
@@ -24,9 +24,9 @@ Trước tối ưu, một API cần đăng nhập (ví dụ `auth/profile.php`) 
 
 | Biến | Mặc định | Ý nghĩa |
 |---|---|---|
-| `SOMI_DB_PERSISTENT` | bật (web) | Đặt `0` để tắt kết nối persistent. |
+| `SOMI_DB_PERSISTENT` | `0` | Chỉ giá trị `1` mới bật persistent cho web. |
 | `SOMI_DB_SET_SEARCH_PATH` | tắt | Đặt `1` khi dùng pooler bỏ qua startup options (PgBouncer, hoặc Supavisor transaction mode cổng 6543). |
-| `SOMI_MAX_WORKERS` | `40` | Số PHP-FPM worker, cũng là số kết nối DB tối đa của **mỗi container**. Phải nhỏ hơn giới hạn kết nối của gói Supabase, và chừa chỗ cho migration/admin. RAM khoảng 15–30 MB/worker. |
+| `SOMI_MAX_WORKERS` | `6` | Giới hạn worker mỗi container; pool `ondemand` thoát sau 10 giây rảnh. Tổng worker của mọi instance, worker nền và công cụ quản trị phải nằm trong ngân sách kết nối DB. |
 | `PHP_OPCACHE_VALIDATE_TIMESTAMPS` | `0` | Đặt `1` nếu mount source code vào container lúc dev. |
 
 Khi cần chạy nhiều container: tổng `SOMI_MAX_WORKERS` × số container phải nằm dưới giới hạn kết nối DB. Nếu vượt, chuyển sang Supavisor transaction mode (app đã tương thích nhờ không dùng named prepared statement) và đặt `SOMI_DB_SET_SEARCH_PATH=1`. Session hiện lưu bằng file trong container, nên chạy nhiều container sau load balancer sẽ cần sticky session hoặc một session store dùng chung (Redis).

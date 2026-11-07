@@ -475,6 +475,9 @@ function createSomiUI() {
   function setupLocaleMenu() {
     const btn = $("[data-locale-btn]");
     if (!btn) return;
+    // Same flag icons as the language buttons in the menu (and the public/Shipper pickers).
+    const selectedFlag = $(`[data-set-lang="${I18N.lang}"] .language-flag-svg`);
+    if (selectedFlag) $("[data-locale-flag]", btn).replaceChildren(selectedFlag.cloneNode(true));
     $("[data-locale-current]", btn).textContent = `${I18N.LANGUAGES[I18N.lang].short} · ${I18N.currency}`;
     $$("[data-fx-note]").forEach((el) => {
       el.textContent = t('Bảng giá USD độc lập, không quy đổi từ VND.');
@@ -587,6 +590,10 @@ function createSomiUI() {
   }
 
   document.addEventListener("DOMContentLoaded", () => {
+    if (document.body.dataset.cView === "backend") {
+      setupLocaleMenu();
+      return;
+    }
     refreshCounters();
     setupLocaleMenu();
     setupDemoPanel();

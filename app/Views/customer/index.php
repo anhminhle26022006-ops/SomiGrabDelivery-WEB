@@ -8,6 +8,7 @@
  * saved language (localStorage "somi-language", shared with the index page) is "en".
  */
 $customerViews = [
+    'backend'       => ['Dữ liệu của tôi', 'backend'],
     'dashboard'     => ['Tổng quan', 'dashboard'],
     'create'        => ['Gửi hàng', 'create'],
     'orders'        => ['Đơn hàng', 'orders'],
@@ -31,6 +32,7 @@ $liveCustomerView = in_array($customerView, ['dashboard','create','orders','orde
 $asset = 'public/assets/js/customer/';
 
 $nav = [
+    'backend'      => ['Dữ liệu của tôi', 'list'],
     'dashboard' => ['Tổng quan', 'home'],
     'create'    => ['Gửi hàng', 'send'],
     'orders'    => ['Đơn hàng', 'list'],
@@ -63,13 +65,13 @@ function customerIcon(string $paths, int $size = 20): string {
     <div class="c-top-actions">
       <div class="dropdown c-locale">
         <button class="c-locale-btn" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" data-locale-btn aria-expanded="false" aria-label="Ngôn ngữ và tiền tệ">
-          <?= customerIcon($navIcon['globe'], 18) ?><span data-locale-current>VI · VND</span>
+          <span data-locale-flag aria-hidden="true"><svg class="language-flag-svg" viewBox="0 0 30 20" aria-hidden="true" focusable="false"><rect width="30" height="20" rx="2" fill="#17356b"/><path d="M0 0L30 20M30 0L0 20" stroke="#fff" stroke-width="5"/><path d="M0 0L30 20M30 0L0 20" stroke="#c8102e" stroke-width="2"/><path d="M15 0V20M0 10H30" stroke="#fff" stroke-width="7"/><path d="M15 0V20M0 10H30" stroke="#c8102e" stroke-width="3.5"/></svg></span><span data-locale-current>EN · VND</span><span class="language-chevron" aria-hidden="true">⌄</span>
         </button>
         <div class="dropdown-menu dropdown-menu-end c-locale-menu" data-locale-menu>
           <p class="c-locale-title">Ngôn ngữ</p>
           <div class="btn-group w-100 c-locale-seg" role="group" aria-label="Ngôn ngữ">
-            <button type="button" class="btn" data-set-lang="vi">Tiếng Việt</button>
-            <button type="button" class="btn" data-set-lang="en">English</button>
+            <button type="button" class="btn" data-set-lang="vi"><svg class="language-flag-svg" viewBox="0 0 30 20" aria-hidden="true" focusable="false"><rect width="30" height="20" rx="2" fill="#da251d"/><path d="M15 3.5L16.8 8.4L22 8.5L17.9 11.6L19.4 16.5L15 13.6L10.6 16.5L12.1 11.6L8 8.5L13.2 8.4Z" fill="#ffde00"/></svg>Tiếng Việt</button>
+            <button type="button" class="btn" data-set-lang="en"><svg class="language-flag-svg" viewBox="0 0 30 20" aria-hidden="true" focusable="false"><rect width="30" height="20" rx="2" fill="#17356b"/><path d="M0 0L30 20M30 0L0 20" stroke="#fff" stroke-width="5"/><path d="M0 0L30 20M30 0L0 20" stroke="#c8102e" stroke-width="2"/><path d="M15 0V20M0 10H30" stroke="#fff" stroke-width="7"/><path d="M15 0V20M0 10H30" stroke="#c8102e" stroke-width="3.5"/></svg>English</button>
           </div>
           <p class="c-locale-title">Tiền tệ</p>
           <div class="btn-group w-100 c-locale-seg" role="group" aria-label="Tiền tệ">
@@ -138,10 +140,12 @@ function customerIcon(string $paths, int $size = 20): string {
     <?php endforeach; ?>
   </nav>
 
+  <?php if ($customerView !== 'backend'): ?>
   <aside class="c-demo" data-demo <?= $liveCustomerView ? 'hidden' : '' ?>>
     <button type="button" class="c-demo-toggle" data-demo-toggle aria-expanded="false"><?= customerIcon('<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>', 18) ?><span>Mô phỏng demo</span></button>
     <div class="c-demo-body" data-demo-body hidden></div>
   </aside>
+  <?php endif; ?>
 </div>
 <script>document.body.dataset.userId = <?= json_encode((string) $sessionUserId) ?>; document.body.dataset.cView = <?= json_encode($customerView) ?>; document.title = <?= json_encode($customerTitle . ' · SOMI') ?>;</script>
 <script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
@@ -152,5 +156,5 @@ function customerIcon(string $paths, int $size = 20): string {
 <?php else: ?>
 <script defer src="<?= e(assetUrl($asset . 'store.js')) ?>"></script>
 <script defer src="<?= e(assetUrl($asset . 'ui.js')) ?>"></script>
-<script defer src="<?= e(assetUrl($asset . 'pages/' . $customerView . '.js')) ?>"></script>
+<?php if ($customerView !== 'backend'): ?><script defer src="<?= e(assetUrl($asset . 'pages/' . $customerView . '.js')) ?>"></script><?php endif; ?>
 <?php endif; ?>

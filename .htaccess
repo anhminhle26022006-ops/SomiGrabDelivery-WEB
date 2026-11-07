@@ -2,18 +2,22 @@ Options -Indexes
 DirectoryIndex index.php
 RewriteEngine On
 RewriteRule (^|/)\.env - [F,L,NC]
-RewriteRule ^(?:app|bin|database|resources|demoUI|tests|docs|\.git)(?:/|$) - [F,L,NC]
-RewriteRule \.(?:sql|pdf|env|ini|log|md)$ - [F,L,NC]
+RewriteRule ^(?:app|bin|database|resources|demoUI|tests|docs|docker|scripts|\.git)(?:/|$) - [F,L,NC]
+RewriteRule \.(?:sql|pdf|env|ini|log|md|ps1)$ - [F,L,NC]
 RewriteRule ^Dockerfile$ - [F,L]
 RewriteRule ^public/api/_ - [F,L]
 
 RewriteRule ^admin/?$ index.php?page=admin [L,QSA]
 
-<IfModule mod_deflate.c>
-    AddOutputFilterByType DEFLATE text/html text/plain text/css application/javascript application/json image/svg+xml
-</IfModule>
+# Static assets. Pages reference them as ?v=<mtime> (somi_asset in index.php), so a
+# versioned URL never changes content and can be cached for a year; unversioned
+# requests get a short cache with revalidation.
 <IfModule mod_headers.c>
-    <FilesMatch "\.(?:css|js|png|jpg|jpeg|gif|webp|svg|woff2?)$">
-        Header set Cache-Control "public, max-age=604800"
+    <FilesMatch "\.(?:css|js|svg|png|jpe?g|webp|gif|ico|woff2?|json)$">
+        Header set Cache-Control "public, max-age=31536000, immutable" "expr=%{QUERY_STRING} =~ /(?:^|&)v=/"
+        Header set Cache-Control "public, max-age=600, must-revalidate" "expr=%{QUERY_STRING} !~ /(?:^|&)v=/"
     </FilesMatch>
+</IfModule>
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/css text/javascript application/javascript application/json image/svg+xml
 </IfModule>

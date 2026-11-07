@@ -1,0 +1,9 @@
+{
+    "read_only": true,
+    "required_tables": 23,
+    "missing": [],
+    "required_columns": 84,
+    "missing_columns": [],
+    "new_migration_applied": false,
+    "result": "PASS"
+}

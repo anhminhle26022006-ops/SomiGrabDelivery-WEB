@@ -101,3 +101,7 @@ Official integration references: [SePay signed form](https://developer.sepay.vn/
 - Chưa gửi SMS/email thử, chưa gọi SePay sandbox/live hoặc chuyển tiền. Cần cấu hình merchant/IPN, scheduler worker, danh mục và nguồn route/weather, sau đó nghiệm thu đầu cuối với Người 2/3. Refund Gateway vận hành bằng operator + đối soát chứng từ như mô tả trên.
 
 Source/backend checks passed; live-provider delivery, funds movement and full team integration remain separate acceptance steps.
+
+## Integration verification — 07/11/2026
+
+Merged the latest dev UI, language flags and Apache event/PHP-FPM changes with the approved order/pricing and SePay APIs. Verified from a clean staged snapshot without local `.env`: 74 Person 1 checks, 84 order regressions, 5 legacy migration checks, 38 read-only HTTP checks, 24 Customer browser checks, 44 Pricing browser checks, plus environment/SePay/provider/origin/frontend checks and PHP/JS syntax. The local `.env` remains ignored and is not included in Docker. Render requires process Environment values and the canonical migration runner; Git push alone does not copy local keys or run migrations.

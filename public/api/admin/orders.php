@@ -3,6 +3,7 @@ declare(strict_types=1);
 require_once __DIR__.'/../_kernel.php';
 require_once __DIR__.'/../../../app/Services/CustomerOrderService.php';
 somi_run_api(['GET'],['ADMIN'],'order.read_all',true,static function(PDO $db,int $admin):array{
+    if(isset($_GET['order_id']))$_GET['id']=$_GET['order_id'];
     if(isset($_GET['id'])){
         $id=DeliveryInput::id($_GET['id']);$q=$db->prepare('SELECT customer_id FROM orders WHERE order_id=?');$q->execute([$id]);$owner=$q->fetchColumn();if(!$owner)throw new DeliveryApiError(404,'ORDER_NOT_FOUND','Order not found.');
         AuditService::record($db,$admin,'ADMIN','ORDER_READ','ORDER',$id);return [200,['order'=>(new CustomerOrderService($db))->detail((int)$owner,$id)]];

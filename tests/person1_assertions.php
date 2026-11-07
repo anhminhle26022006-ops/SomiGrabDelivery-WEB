@@ -31,6 +31,8 @@ $db=somi_db();$db->beginTransaction();
 $repo->all("DELETE FROM role_permissions WHERE role_id=(SELECT role_id FROM roles WHERE role_code='ADMIN') AND permission_id=(SELECT permission_id FROM permissions WHERE permission_code='account.read_all')");
 $denied=false;try{person1_identity('ADMIN','account.read_all');}catch(ApiProblem $e){$denied=$e->status===403;}
 $db->rollBack();proof('permission revoked in DB denies API authorization',$denied);
+// person1_identity() releases the session lock; reopen it to delete the test session.
+if (session_status() !== PHP_SESSION_ACTIVE) session_start();
 session_destroy();
 file_put_contents(__DIR__.'/../docs/person1-assertion-results.json',json_encode($r,JSON_PRETTY_PRINT));
 $fail=count(array_filter($r,fn($x)=>$x['result']==='FAIL'));echo json_encode(['checks'=>count($r),'failures'=>$fail]);exit($fail?1:0);

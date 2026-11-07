@@ -17,7 +17,7 @@ final class ResendMailer
      *
      * @throws RuntimeException when configuration or delivery fails
      */
-    public static function send(string $to, string $subject, string $html, ?string $text = null): string
+    public static function send(string $to, string $subject, string $html, ?string $text = null, ?string $idempotencyKey = null): string
     {
         if (!filter_var($to, FILTER_VALIDATE_EMAIL)) {
             throw new InvalidArgumentException('Recipient email address is invalid.');
@@ -62,6 +62,7 @@ final class ResendMailer
             CURLOPT_HTTPHEADER => [
                 'Authorization: Bearer ' . $apiKey,
                 'Content-Type: application/json',
+                ...($idempotencyKey === null ? [] : ['Idempotency-Key: ' . $idempotencyKey]),
             ],
             CURLOPT_POSTFIELDS => json_encode($payload, JSON_THROW_ON_ERROR),
         ]);

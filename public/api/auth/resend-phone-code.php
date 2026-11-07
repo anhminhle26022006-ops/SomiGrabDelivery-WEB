@@ -9,7 +9,7 @@ try {
     $phoneCode = PhoneVerificationService::sendCode(somi_api_current_user_id());
     somi_api_json(200, [
         'status' => 'PHONE_CODE_SENT',
-        'delivery_mode' => 'DEMO',
+        'delivery_mode' => $phoneCode===null?'SMS':'DEMO',
         'demo_code' => $phoneCode,
     ]);
 } catch (Throwable $error) {

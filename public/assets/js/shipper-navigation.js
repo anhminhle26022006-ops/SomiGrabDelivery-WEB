@@ -32,7 +32,8 @@
     });
     document.getElementById("profileDropdown")?.classList.remove("open");
     document.getElementById("profileBtn")?.setAttribute("aria-expanded", "false");
-    if (updateUrl && window.history?.pushState) {
+    document.body.dataset.shipperView = pageToView[page];
+    if (updateUrl && window.history?.pushState && new URLSearchParams(window.location.search).get("view") !== pageToView[page]) {
       const url = new URL(window.location.href);
       url.searchParams.set("page", "shipper");
       url.searchParams.set("view", pageToView[page]);

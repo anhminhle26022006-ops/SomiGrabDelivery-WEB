@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../../app/Config/database.php';
 require_once __DIR__ . '/../../app/Services/RequestOrigin.php';
+require_once __DIR__ . '/../../app/Services/DeliveryApiError.php';
 
 function somi_api_start_session(): void
 {
@@ -70,13 +71,14 @@ function somi_api_current_user_id(): int
 
 function somi_api_handle_error(Throwable $error): void
 {
+    if ($error instanceof DeliveryApiError) somi_api_json($error->httpStatus, ['code'=>$error->errorCode,'error'=>$error->getMessage()]);
     if ($error instanceof PDOException && $error->getCode() === '23505') {
         somi_api_json(409, ['error' => 'Email or phone number is already registered.']);
     }
     if ($error instanceof InvalidArgumentException || ($error instanceof RuntimeException && !$error instanceof PDOException && !preg_match('/environment|configured|SOMI_|RESEND_|Resend|SQLSTATE/i', $error->getMessage()))) {
         somi_api_json(422, ['error' => $error->getMessage()]);
     }
-    error_log('[SOMI API ERROR] ' . $error->getMessage());
+    error_log('[SOMI API ERROR] ' . get_class($error) . ' code=' . $error->getCode());
     somi_api_json(500, ['error' => 'The request could not be completed. Please try again.']);
 }
 

@@ -32,7 +32,11 @@ window.SomiLangEN = {
   "Tiền tệ": "Currency",
   "Tiền tệ áp dụng cho báo giá và đơn mới. Đơn đã tạo giữ nguyên tiền tệ lúc đặt.": "Currency applies to quotes and new orders. Existing orders keep the currency they were placed in.",
   "Ngôn ngữ dùng chung với trang chủ SOMI. Tiền tệ áp dụng cho báo giá và đơn mới, đơn đã tạo giữ nguyên tiền tệ lúc đặt.": "Language is shared with the SOMI home page. Currency applies to quotes and new orders; existing orders keep the currency they were placed in.",
-  "Bảng giá USD tham chiếu tỷ giá 1 USD = {0}. USD chỉ thanh toán bằng thẻ quốc tế.": "The USD price table uses a reference rate of 1 USD = {0}. USD orders are paid by international card only.",
+  "Bảng giá USD độc lập, không quy đổi từ VND.": "The USD price table is independent and is not converted from VND.",
+  "Tuyến giao phải dưới 40 km trong khu vực hỗ trợ.": "Delivery routes must be shorter than 40 km within supported service areas.",
+  "Khối lượng hàng phải lớn hơn 0 và không quá 30 kg.": "Parcel weight must be greater than 0 and at most 30 kg.",
+  "Cước quãng đường và trọng lượng ({km} km, {kg} kg)": "Distance and weight charge ({km} km, {kg} kg)",
+  "Chưa cấu hình giá cho khoảng cách này.": "Pricing for this distance is not configured yet.",
 
   /* ---------- Common words and buttons ---------- */
   "Đang tải": "Loading",
@@ -372,7 +376,6 @@ window.SomiLangEN = {
   "Tiền tệ thanh toán": "Payment currency",
   "USD theo bảng giá USD. Chỉ thanh toán bằng thẻ quốc tế.": "USD, using the USD price table. Paid by international card only.",
   "VND theo bảng giá VND.": "VND, using the VND price table.",
-  "Bảng giá USD. Tham khảo: 1 USD = {0}.": "USD price table. Reference: 1 USD = {0}.",
   "Ước tính": "Estimate",
   "Chọn khu vực cho điểm lấy và điểm giao để SOMI tính quãng đường và phí.": "Choose the districts for pickup and drop-off so SOMI can work out the distance and fee.",
   "khoảng {0} phút": "about {0} min",

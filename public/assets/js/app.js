@@ -136,7 +136,7 @@
     "Phone code has expired. Request a new code.": "Mã điện thoại đã hết hạn. Hãy yêu cầu mã mới.",
     "Please wait before requesting another email code.": "Vui lòng chờ trước khi yêu cầu mã email mới.",
     "Please wait before requesting another phone code.": "Vui lòng chờ trước khi yêu cầu mã điện thoại mới.",
-    "A new email verification code was sent.": "Đã gửi mã xác minh email mới.",
+    "A new email verification code was queued.": "Đã xếp hàng gửi mã xác minh email mới.",
     "An email code was recently sent. Enter that code or wait briefly to request another.": "Mã email vừa được gửi. Hãy nhập mã đó hoặc chờ một lát để yêu cầu mã mới.",
     "Could not send the email code right now. Use Resend code to try again.": "Chưa gửi được mã email. Hãy bấm Gửi lại mã để thử lại.",
     "A phone code was recently generated. Wait briefly, then request another code.": "Mã điện thoại vừa được tạo. Hãy chờ một lát rồi yêu cầu mã mới.",
@@ -238,7 +238,6 @@
     "Standard delivery": "Giao hàng tiêu chuẩn",
     "Express delivery": "Giao hàng nhanh",
     "Estimated delivery fee": "Phí giao hàng dự kiến",
-    "Demo estimate: base fee ₫30,000 for first 3 km + ₫5,000 per additional km.": "Phí demo: 30.000₫ cho 3 km đầu + 5.000₫ mỗi km tiếp theo.",
     "Send delivery request ↗": "Gửi yêu cầu giao hàng ↗",
     "Smart matching": "Ghép đơn thông minh",
     "Offers are sent to nearby verified shippers.": "Đơn được gửi đến người giao đã xác minh ở gần.",
@@ -332,12 +331,11 @@
     "Fees are based on route distance, package details, and timing.": "Phí dựa trên khoảng cách, thông tin kiện hàng và thời gian giao.",
     "Base delivery": "Phí giao cơ bản",
     "Returns": "Phí hoàn trả",
-    "30,000₫ includes the first 3 km.": "30.000₫ bao gồm 3 km đầu tiên.",
-    "5,000₫ for each additional kilometer.": "5.000₫ cho mỗi km tiếp theo.",
     "Return fees are shown before confirmation.": "Phí hoàn trả được hiển thị trước khi xác nhận.",
     "Terms of Service": "Điều khoản dịch vụ",
     "Privacy Policy": "Chính sách quyền riêng tư",
     "Close": "Đóng",
+    "This demo presents the information and policies for the Somi frontend. Production terms and privacy details should be reviewed before launch.": "Bản demo này trình bày thông tin và chính sách cho giao diện SOMI. Điều khoản và nội dung quyền riêng tư cần được rà soát trước khi vận hành chính thức.",
     "AVAILABLE": "SẴN SÀNG NHẬN ĐƠN",
     "Save demo changes": "Lưu thay đổi demo",
     "Personal information": "Thông tin cá nhân",
@@ -380,6 +378,7 @@
     const nodes = [];
     while (walker.nextNode()) nodes.push(walker.currentNode);
     nodes.forEach((node) => {
+      if (node.parentElement?.closest('[data-copy-en], script, style')) return;
       const current = node.nodeValue.trim();
       const translated = toVietnamese ? viText[current] : reverseText[current];
       if (translated) node.nodeValue = node.nodeValue.replace(current, translated);
@@ -434,6 +433,14 @@
       try { localStorage.setItem("somi-language", language); } catch { /* Language still updates in memory. */ }
       document.documentElement.lang = language;
       translateVietnameseDocument();
+      $$('[data-copy-en][data-copy-vi]').forEach((element) => {
+        element.textContent = language === 'vi' ? element.dataset.copyVi : element.dataset.copyEn;
+      });
+      if (document.body.dataset.page === 'pricing') document.title = language === 'vi' ? 'Bảng giá — SOMI' : 'Pricing — SOMI';
+      pickers.forEach((picker) => $('[data-language-trigger]', picker)?.setAttribute('aria-label', language === 'vi' ? 'Chọn ngôn ngữ' : 'Choose language'));
+      [['Main navigation','Điều hướng chính'],['Open menu','Mở menu'],['Close menu','Đóng menu'],['Close','Đóng']].forEach(([en,vi]) => {
+        $$('[aria-label]').forEach(el => { if ([en,vi].includes(el.getAttribute('aria-label'))) el.setAttribute('aria-label', language === 'vi' ? vi : en); });
+      });
       document.dispatchEvent(new CustomEvent("somi:language-change", { detail: { language } }));
     };
     pickers.forEach((picker) => {
@@ -475,7 +482,8 @@
       const open = menu.hidden;
       menu.hidden = !open;
       toggle.setAttribute("aria-expanded", String(open));
-      toggle.setAttribute("aria-label", open ? "Close menu" : "Open menu");
+      const vi = document.documentElement.lang === 'vi';
+      toggle.setAttribute("aria-label", open ? (vi ? 'Đóng menu' : 'Close menu') : (vi ? 'Mở menu' : 'Open menu'));
       toggle.textContent = open ? "×" : "☰";
     });
 
@@ -483,7 +491,8 @@
     $$("[data-legal]").forEach((button) => button.addEventListener("click", () => {
       if (!modal) return;
       const privacy = button.dataset.legal === "privacy";
-      $("[data-legal-title]", modal).textContent = privacy ? "Privacy Policy" : "Terms of Service";
+      const vi = document.documentElement.lang === 'vi';
+      $("[data-legal-title]", modal).textContent = privacy ? (vi ? 'Chính sách quyền riêng tư' : 'Privacy Policy') : (vi ? 'Điều khoản dịch vụ' : 'Terms of Service');
       modal.hidden = false;
     }));
     $$("[data-modal-close]").forEach((button) => button.addEventListener("click", () => { if (modal) modal.hidden = true; }));
@@ -701,7 +710,7 @@
           step = result.status === "PHONE_VERIFICATION_REQUIRED" ? 4 : 5;
           currentPhoneDemoCode = result.demo_code || "";
           render();
-          showError(result.notice || (step === 4 ? "Phone verification is required. Enter the demo code shown here." : "A new email verification code was sent."));
+          showError(result.notice || (step === 4 ? "Phone verification is required. Enter the demo code shown here." : "A new email verification code was queued."));
           return;
         }
         if (result.status !== "SIGNED_IN") throw new Error("Unexpected sign-in response. Please try again.");
@@ -726,7 +735,7 @@
       resendEmail.disabled = true;
       try {
         await apiPost("send-email-code.php");
-        showError(document.documentElement.lang === "vi" ? "Đã gửi mã email mới." : "A new email code was sent.");
+        showError(document.documentElement.lang === "vi" ? "Đã xếp hàng gửi mã email mới." : "A new email code was queued.");
       } catch (requestError) { showError(requestError.message); }
       finally { resendEmail.disabled = false; }
     });
@@ -929,12 +938,21 @@
   function setupCustomer() {
     const form = $("[data-order-form]");
     if (!form) return;
+    const pricing = JSON.parse($('#approved-pricing-config').textContent);
+    const deliveryAmount = (km) => {
+      if (km < 0 || km >= Number(pricing.max_distance_km)) return null;
+      const clock = new Intl.DateTimeFormat('en-GB', {timeZone:pricing.timezone,hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).format(new Date());
+      const timeBand = pricing.time_bands.find(b => b.start < b.end ? clock >= b.start && clock < b.end : clock >= b.start || clock < b.end);
+      const weight = Number(form.elements.weight.value);
+      if (!(weight > 0 && weight <= Number(pricing.max_weight_kg))) return null;
+      return window.SomiDeliveryPrice.calculate(pricing,km,weight,'VND',Math.round(Number(timeBand.multiplier)*10000)).total;
+    };
     const distance = form.elements.distance;
     const fee = $("[data-fee]");
     const estimate = () => {
       const km = Math.max(1, Number(distance.value) || 1);
-      const amount = 30000 + Math.max(0, km - 3) * 5000 + (form.elements.service.value === "EXPRESS" ? 7000 : 0);
-      fee.textContent = money(amount);
+      const amount = deliveryAmount(km);
+      fee.textContent = amount === null ? '—' : money(amount);
     };
     distance.addEventListener("input", estimate);
     form.elements.service.addEventListener("change", estimate);
@@ -945,7 +963,8 @@
       const orders = getOrders();
       const nextId = `SOMI-${String(orders.length + 240127).padStart(6, "0")}`;
       const km = Number(distance.value);
-      const amount = 30000 + Math.max(0, km - 3) * 5000 + (form.elements.service.value === "EXPRESS" ? 7000 : 0);
+      const amount = deliveryAmount(km);
+      if (amount === null) return;
       orders.unshift({ id: nextId, pickup: form.elements.pickup.value.trim(), dropoff: form.elements.dropoff.value.trim(), distance: km, weight: Number(form.elements.weight.value), fee: amount, service: form.elements.service.value, status: "MATCHING" });
       saveOrders(orders);
       renderOrders();
@@ -1054,6 +1073,25 @@
       }
     }));
   }
+
+  // Show feedback while a real document navigation is waiting on the server.
+  document.addEventListener("click", event => {
+    const link = event.target.closest("a[href]");
+    if (!link || link.hasAttribute("download") || (link.target && link.target !== "_self")
+        || event.button !== 0 || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+    const destination = new URL(link.href, document.baseURI);
+    if (destination.origin !== location.origin || destination.pathname !== location.pathname
+        || destination.search === location.search || !destination.searchParams.has("page")) return;
+    queueMicrotask(() => {
+      if (event.defaultPrevented) return;
+      document.documentElement.classList.add("is-navigating");
+      document.documentElement.setAttribute("aria-busy", "true");
+    });
+  });
+  window.addEventListener("pageshow", () => {
+    document.documentElement.classList.remove("is-navigating");
+    document.documentElement.removeAttribute("aria-busy");
+  });
 
   document.addEventListener("DOMContentLoaded", () => {
     setupLanguage();

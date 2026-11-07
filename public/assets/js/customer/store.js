@@ -34,34 +34,12 @@ function createSomiStore() {
    * (VND: đồng, USD: cent). Admin will own these numbers once the pricing API
    * exists; the USD table is kept separate on purpose instead of converting
    * every quote, as the design asks for separate VND/USD price tables. */
-  const PRICING = {
-    VND: {
-      baseFee: 18000,          // covers the first baseKm km
-      baseKm: 2,
-      pricePerKm: 5000,
-      freeWeightKg: 3,
-      pricePerExtraKg: 2500,
-      extraItem: 3000,         // each item after the first
-      cancellation: 10000,     // customer cancels after a shipper accepted
-      reschedule: 10000,
-      returnRate: 0.5,         // return fee = 50% of delivery fee
-      surcharge: { DOCUMENT: 0, SMALL: 0, MEDIUM: 5000, FRAGILE: 10000 }
-    },
-    USD: {
-      baseFee: 72,
-      baseKm: 2,
-      pricePerKm: 20,
-      freeWeightKg: 3,
-      pricePerExtraKg: 10,
-      extraItem: 12,
-      cancellation: 40,
-      reschedule: 40,
-      returnRate: 0.5,
-      surcharge: { DOCUMENT: 0, SMALL: 0, MEDIUM: 20, FRAGILE: 40 }
-    }
-  };
-  // Reference rate shown to the customer next to USD prices (Admin config: 1 USD = 25,000 VND).
-  const USD_RATE = 25000;
+  const approved = JSON.parse(document.getElementById('approved-pricing-config').textContent);
+  const PRICING = Object.fromEntries(['VND', 'USD'].map(currency => [currency, {
+    returnFee: approved.return_fee_minor[currency],
+    cancellation: approved.cancellation_before_assignment_minor, reschedule: 0,
+    surcharge: { DOCUMENT: 0, SMALL: 0, MEDIUM: 0, FRAGILE: 0 }
+  }]));
   const fee = (order) => PRICING[order.currency] || PRICING.VND;
   // Every computed amount is rounded UP to the smallest unit of its currency.
   const roundUp = (n) => Math.ceil(n - 1e-9);
@@ -227,24 +205,22 @@ function createSomiStore() {
    * Line labels are msg() objects because they are saved on the order. */
   function quote(pickup, delivery, pkg = {}, currency = I18N.currency) {
     const FEE = PRICING[currency] || PRICING.VND;
-    const ready = Boolean(pickup && delivery && pickup.area && delivery.area);
-    const distanceKm = ready && pickup && delivery ? routeDistance(pickup, delivery) : 0;
+    const hasAddress = Boolean(pickup && delivery && pickup.area && delivery.area);
+    const distanceKm = hasAddress ? routeDistance(pickup, delivery) : 0;
+    const weightKg = Number(pkg.weightKg) || 0;
+    const invalidWeight = !(weightKg > 0 && weightKg <= Number(approved.max_weight_kg)) || !/^\d+(?:\.\d{1,3})?$/.test(String(pkg.weightKg));
+    const ready = hasAddress && distanceKm < Number(approved.max_distance_km) && !invalidWeight;
     const durationMin = ready ? Math.round(8 + (distanceKm / 22) * 60) : 0;
-    const type = PACKAGE_TYPES.find((x) => x.value === pkg.type);
-    const weight = Number(pkg.weightKg) || 0;
-    const quantity = Math.max(1, Math.floor(Number(pkg.quantity) || 1));
     const lines = [];
     if (ready) {
-      const distanceFee = roundUp(FEE.baseFee + Math.max(0, distanceKm - FEE.baseKm) * FEE.pricePerKm);
-      lines.push({ key: "distance", label: msg("Cước quãng đường ({km} km)", { km: distanceKm }), amount: distanceFee });
+      const clock = new Intl.DateTimeFormat('en-GB', {timeZone: approved.timezone, hour:'2-digit', minute:'2-digit', second:'2-digit', hourCycle:'h23'}).format(new Date());
+      const timeBand = approved.time_bands.find(b => b.start < b.end ? clock >= b.start && clock < b.end : clock >= b.start || clock < b.end);
+      // Demo route/weather remain simulated; production quotes use the server API.
+      const price = window.SomiDeliveryPrice.calculate(approved, distanceKm, weightKg, currency, Math.round(Number(timeBand.multiplier)*10000));
+      lines.push({ key: 'delivery', label: msg('Cước quãng đường và trọng lượng ({km} km, {kg} kg)', {km:distanceKm,kg:weightKg}), amount:price.total });
     }
-    const extraKg = Math.max(0, Math.ceil(weight - FEE.freeWeightKg));
-    if (extraKg > 0) lines.push({ key: "weight", label: msg("Phụ phí khối lượng (+{kg} kg)", { kg: extraKg }), amount: extraKg * FEE.pricePerExtraKg });
-    const surcharge = type ? FEE.surcharge[type.value] || 0 : 0;
-    if (surcharge) lines.push({ key: "type", label: msg(TYPE_SURCHARGE[type.value]), amount: surcharge });
-    if (quantity > 1) lines.push({ key: "items", label: msg("Thêm {n} kiện", { n: quantity - 1 }), amount: (quantity - 1) * FEE.extraItem });
     const deliveryFee = lines.reduce((sum, line) => sum + line.amount, 0);
-    return { ready, currency, distanceKm, durationMin, lines, deliveryFee, returnFee: roundUp(deliveryFee * FEE.returnRate) };
+    return { ready, invalidWeight, outsideServiceArea: hasAddress && distanceKm >= Number(approved.max_distance_km), currency, distanceKm, durationMin, lines, deliveryFee, returnFee: FEE.returnFee };
   }
 
   const TYPE_SURCHARGE = { MEDIUM: "Phụ phí bưu kiện vừa", FRAGILE: "Phụ phí hàng dễ vỡ" };
@@ -252,7 +228,7 @@ function createSomiStore() {
     return (PRICING[currency] || PRICING.VND).surcharge[type] || 0;
   }
   function returnFeeOf(order) {
-    return roundUp(order.fees.delivery * fee(order).returnRate);
+    return order.returnFeeSnapshot ?? fee(order).returnFee;
   }
 
   /* ---------- Money owed / refunded ---------- */
@@ -573,6 +549,7 @@ function createSomiStore() {
     if (!s.account.phoneVerified) throw new Error(t("Bạn cần xác thực số điện thoại trước khi tạo đơn."));
     const currency = PRICING[draft.currency] ? draft.currency : I18N.currency;
     const q = quote(draft.pickup, draft.delivery, draft.pkg, currency);
+    if (!q.ready) throw new Error(t(q.invalidWeight ? 'Khối lượng hàng phải lớn hơn 0 và không quá 30 kg.' : 'Tuyến giao phải dưới 40 km trong khu vực hỗ trợ.'));
     const created = iso(now());
     const order = {
       code: nextCode(),
@@ -585,6 +562,7 @@ function createSomiStore() {
       pkg: draft.pkg,
       schedule: draft.schedule,
       distanceKm: q.distanceKm,
+      returnFeeSnapshot: q.returnFee,
       durationMin: q.durationMin,
       feeLines: q.lines,
       fees: { delivery: q.deliveryFee, additional: 0, reschedule: 0, cancellation: 0, return: 0 },
@@ -794,7 +772,9 @@ function createSomiStore() {
     const order = raw(code);
     const newKm = routeDistance(order.pickup, newDelivery);
     const extraKm = Math.max(0, Math.round((newKm - order.distanceKm) * 10) / 10);
-    return { newKm, extraKm, additionalFee: roundUp(extraKm * fee(order).pricePerKm), currency: order.currency };
+    const revised = quote(order.pickup, newDelivery, order.pkg, order.currency);
+    if (!revised.ready) throw new Error(t(revised.invalidWeight ? 'Khối lượng hàng phải lớn hơn 0 và không quá 30 kg.' : 'Tuyến giao phải dưới 40 km trong khu vực hỗ trợ.'));
+    return { newKm, extraKm, additionalFee: Math.max(0, revised.deliveryFee - order.fees.delivery), currency: order.currency };
   }
   function approveAddressChange(code, newDelivery) {
     const order = raw(code);
@@ -1132,7 +1112,7 @@ function createSomiStore() {
   return {
     // constants
     STATUS, GROUPS, ON_THE_ROAD, TRANSITIONS, PACKAGE_TYPES, AREAS, PAYMENT_METHODS, REPORT_TYPES, REPORT_STATUS,
-    CANCEL_REASONS, PRICING, USD_RATE, MAX_WEIGHT_KG, MAX_QUANTITY, MAX_PAYMENT_ATTEMPTS, OTP_MAX_ATTEMPTS,
+    CANCEL_REASONS, PRICING, MAX_WEIGHT_KG, MAX_QUANTITY, MAX_PAYMENT_ATTEMPTS, OTP_MAX_ATTEMPTS,
     // formatting
     formatMoney,
     // orders

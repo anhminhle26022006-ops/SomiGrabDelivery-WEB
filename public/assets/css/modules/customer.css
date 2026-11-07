@@ -521,6 +521,11 @@ body[data-page="customer"] .modal-footer > * { margin: 0; }
 
 /* =================== Responsive =================== */
 @media (max-width: 1024px) {
+  /* Tablet: the pill nav shrinks and scrolls inside itself instead of pushing the actions off-screen. */
+  .c-top { gap: 16px; }
+  .c-nav { flex: 0 1 auto; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+  .c-nav::-webkit-scrollbar { display: none; }
+  .c-nav .nav-link { padding: 8px 12px; }
   .c-sticky { position: static; }
   .c-avatar-name { display: none; }
   .c-avatar-btn { padding: 4px; }

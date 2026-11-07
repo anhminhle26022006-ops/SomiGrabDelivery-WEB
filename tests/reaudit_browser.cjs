@@ -25,7 +25,7 @@ for(const width of [1440,768,375]){
  if(role==='shipper'){
  const avatar=await evaluate(`(()=>{const b=document.querySelector('#profileBtn');if(!b)return null;b.click();return document.querySelector('#profileDropdown').classList.contains('open')})()`);
  results.push({test:'shipper avatar opens with one click',width,result:avatar===null?'BLOCKED':avatar?'PASS':'FAIL'});
- const navigated=await evaluate(`(()=>{const a=document.querySelector('#sidebar [data-page="offers"]');if(!a)return false;a.click();return true})()`);
+ const navigated=await evaluate(`(()=>{const a=document.querySelector('#shipperNav [data-page="offers"]');if(!a)return false;a.click();return true})()`);
  if(navigated){for(let i=0;i<160;i++){if(await evaluate(`!!document.querySelector('#allOrders button[onclick^="openOrderDetail"]')`))break;await sleep(100)};const view=await evaluate('new URLSearchParams(location.search).get("view")');results.push({test:'shipper offers navigation',width,result:view==='offers'?'PASS':'FAIL'});const offer=await evaluate(`(()=>{const b=document.querySelector('#allOrders button[onclick^="openOrderDetail"]');if(!b)return false;b.click();return !document.querySelector('#orderDetailModal').classList.contains('hidden')})()`);results.push({test:'shipper offer detail opens',width,result:offer?'PASS':'FAIL'});}
  }
  if(role==='customer'){

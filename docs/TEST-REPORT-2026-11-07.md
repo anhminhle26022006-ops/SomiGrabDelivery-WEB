@@ -1,5 +1,19 @@
 # Kiểm thử chức năng ngày 07/11/2026
 
+## Cập nhật ngày 08/11/2026 sau restart Render
+
+Người dùng đã thêm `SOMI_DB_PERSISTENT=0`, `SOMI_MAX_WORKERS=6` và báo restart hoàn tất. Chạy lại ba suite từ bản sao test không có `.env` local, dùng cùng database được cấu hình trong process environment:
+
+| Suite | Kết quả mới |
+|---|---|
+| `tests/customer_orders.php` | PASS 85/85; bảng TEMP, rollback, không ghi bảng nghiệp vụ thật |
+| `tests/person1_backend.php` | PASS 74/74; bảng TEMP, provider giả lập, không gửi email hoặc chuyển tiền thật |
+| `tests/migration_compat.php` | PASS 5/5; không ghi dữ liệu nghiệp vụ thật |
+
+Tổng lần chạy lại: **164/164 PASS**. Không còn lỗi giới hạn pool trong lần chạy này. Kết quả này xác nhận các suite service chạy được trên kết nối từ máy kiểm thử, không chứng minh toàn bộ HTTP trên Render hoặc roundtrip SePay sandbox đã thành công.
+
+Kiểm tra HTTP có đăng nhập chưa chạy lại: hệ thống duyệt tự động từ chối công cụ tạo session dựa trên tài khoản ACTIVE trong database thật vì nguy cơ giả mạo truy cập dữ liệu người dùng. Không dùng lại session cũ để vượt qua giới hạn này. Cần database/tài khoản test chuyên dụng hoặc người dùng cho phép rõ việc dùng một tài khoản cụ thể; không gửi mật khẩu hay session cookie vào chat. Các kết quả BLOCKED trong bảng dưới là lịch sử ngày 07/11; ba suite ở bảng trên đã được gỡ chặn.
+
 Đợt kiểm tra sau commit `e86b4fb`. Kết quả dưới đây thuộc mã nguồn local với các sửa lỗi đang chờ triển khai; không xác nhận Render đã chạy bản sửa.
 
 ## Lỗi đã tái hiện

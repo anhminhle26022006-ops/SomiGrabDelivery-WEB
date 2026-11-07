@@ -8,7 +8,6 @@
  * saved language (localStorage "somi-language", shared with the index page) is "en".
  */
 $customerViews = [
-    'backend'       => ['Dữ liệu của tôi', 'backend'],
     'dashboard'     => ['Tổng quan', 'dashboard'],
     'create'        => ['Gửi hàng', 'create'],
     'orders'        => ['Đơn hàng', 'orders'],
@@ -24,15 +23,15 @@ $customerViews = [
     'addresses'     => ['Sổ địa chỉ', 'account'],
 ];
 $customerView = $_GET['view'] ?? 'dashboard';
+if ($customerView === 'backend') $customerView = 'account';
 if (!is_string($customerView) || !array_key_exists($customerView, $customerViews)) {
     $customerView = 'dashboard';
 }
 [$customerTitle, $customerSection] = $customerViews[$customerView];
-$liveCustomerView = in_array($customerView, ['dashboard','create','orders','order','payment','account','matching','tracking'], true);
+$liveCustomerView = in_array($customerView, ['dashboard','create','orders','order','payment','account','matching','tracking','addresses'], true);
 $asset = 'public/assets/js/customer/';
 
 $nav = [
-    'backend'      => ['Dữ liệu của tôi', 'list'],
     'dashboard' => ['Tổng quan', 'home'],
     'create'    => ['Gửi hàng', 'send'],
     'orders'    => ['Đơn hàng', 'list'],
@@ -101,33 +100,31 @@ function customerIcon(string $paths, int $size = 20): string {
     </div>
   </header>
 
-  <main class="c-main" id="c-main">
+  <main class="c-main" id="c-main"<?= $liveCustomerView ? ' data-customer-server aria-busy="true"' : '' ?>>
     <div data-account-banner></div>
     <?php if ($customerView === 'dashboard'): ?>
   <?php if ($hasShipperWorkspace): ?>
   <div class="card card-body mb-3">
-    <strong>Also a Shipper?</strong>
-    <p class="text-muted mb-2">Your account has a Shipper workspace.</p>
-    <button class="btn btn-outline-dark" type="button" data-workspace-switch="SHIPPER">Switch to Shipper workspace</button>
+    <strong data-copy-en="Also a Shipper?" data-copy-vi="Bạn cũng là Shipper?">Bạn cũng là Shipper?</strong>
+    <p class="text-muted mb-2" data-copy-en="Your account has a Shipper workspace." data-copy-vi="Tài khoản của bạn có không gian Shipper.">Tài khoản của bạn có không gian Shipper.</p>
+    <button class="btn btn-outline-dark" type="button" data-workspace-switch="SHIPPER" data-copy-en="Switch to Shipper workspace" data-copy-vi="Chuyển sang Shipper">Chuyển sang Shipper</button>
   </div>
   <?php else: ?>
   <div class="card card-body mb-3">
-    <h2 class="h5">Become a Shipper</h2>
-    <p class="text-muted">Apply with your vehicle details. Your Shipper workspace will be available after Admin review.</p>
+    <h2 class="h5" data-copy-en="Become a Shipper" data-copy-vi="Đăng ký làm Shipper">Đăng ký làm Shipper</h2>
+    <p class="text-muted" data-copy-en="Apply with your vehicle details. Your Shipper workspace will be available after Admin review." data-copy-vi="Đăng ký thông tin phương tiện. Không gian Shipper sẽ hoạt động sau khi Admin duyệt.">Đăng ký thông tin phương tiện. Không gian Shipper sẽ hoạt động sau khi Admin duyệt.</p>
     <form data-shipper-application-form>
       <div class="row g-2">
-        <div class="col-md-6"><label class="form-label" for="switchVehicleType">Vehicle type</label><input class="form-control" id="switchVehicleType" name="vehicle_type" maxlength="80" required placeholder="Motorbike, bicycle, car"></div>
-        <div class="col-md-6"><label class="form-label" for="switchVehicleRegistration">Vehicle registration</label><input class="form-control" id="switchVehicleRegistration" name="vehicle_registration" maxlength="40" required placeholder="License plate or registration number"></div>
+        <div class="col-md-6"><label class="form-label" for="switchVehicleType" data-copy-en="Vehicle type" data-copy-vi="Loại phương tiện">Loại phương tiện</label><input class="form-control" id="switchVehicleType" name="vehicle_type" maxlength="80" required placeholder="Motorbike, bicycle, car"></div>
+        <div class="col-md-6"><label class="form-label" for="switchVehicleRegistration" data-copy-en="Vehicle registration" data-copy-vi="Biển số xe">Biển số xe</label><input class="form-control" id="switchVehicleRegistration" name="vehicle_registration" maxlength="40" required placeholder="License plate or registration number"></div>
       </div>
       <p class="text-danger small mt-2" data-switch-error role="alert" hidden></p>
-      <button class="btn btn-dark mt-2" type="submit">Apply to become a Shipper</button>
+      <button class="btn btn-dark mt-2" type="submit" data-copy-en="Apply to become a Shipper" data-copy-vi="Gửi đăng ký Shipper">Gửi đăng ký Shipper</button>
     </form>
   </div>
   <?php endif; ?>
 <?php endif; ?>
-    <?php if ($liveCustomerView): ?>
-      <section data-customer-server aria-live="polite"><p role="status">Đang tải / Loading…</p></section>
-    <?php else: require __DIR__ . '/pages/' . $customerView . '.php'; endif; ?>
+    <?php require __DIR__ . '/pages/' . $customerView . '.php'; ?>
   </main>
 
   <nav class="c-tabbar d-md-none" aria-label="Điều hướng nhanh">
@@ -140,7 +137,7 @@ function customerIcon(string $paths, int $size = 20): string {
     <?php endforeach; ?>
   </nav>
 
-  <?php if ($customerView !== 'backend'): ?>
+  <?php if (!$liveCustomerView): ?>
   <aside class="c-demo" data-demo <?= $liveCustomerView ? 'hidden' : '' ?>>
     <button type="button" class="c-demo-toggle" data-demo-toggle aria-expanded="false"><?= customerIcon('<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>', 18) ?><span>Mô phỏng demo</span></button>
     <div class="c-demo-body" data-demo-body hidden></div>

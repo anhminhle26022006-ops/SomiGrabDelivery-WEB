@@ -73,7 +73,7 @@ final class CustomerOrderService
             if (!array_key_exists($status, OrderLifecycleService::TRANSITIONS)) DeliveryInput::invalid('status');
             $where .= ' AND status = :status'; $params['status'] = $status;
         }
-        $q = $this->db->prepare('SELECT order_id, order_code, status, currency_code, total_charge_minor, pickup_address, delivery_address, created_at, paid_at, cancelled_at FROM orders WHERE ' . $where . ' ORDER BY order_id DESC LIMIT ' . ($limit + 1));
+        $q = $this->db->prepare('SELECT order_id, order_code, status, currency_code, total_charge_minor, pickup_address, delivery_address, receiver_name, parcel_description, created_at, paid_at, cancelled_at FROM orders WHERE ' . $where . ' ORDER BY order_id DESC LIMIT ' . ($limit + 1));
         $q->execute($params);
         $items = $q->fetchAll();
         $more = count($items) > $limit;

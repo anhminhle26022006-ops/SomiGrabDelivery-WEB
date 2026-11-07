@@ -1,5 +1,7 @@
 # Người 1 — API và vận hành / API and operations
 
+Tiến độ và phần cần nghiệm thu cập nhật: [08/11/2026](PROGRESS-2026-11-08.md). Đã thêm 6 danh mục VI/EN theo duyệt bằng migration `20261108_common_parcel_categories`; chỉ thêm mã còn thiếu, không ghi đè thiết lập Admin. Các ghi nhận ngày cũ bên dưới về 0 danh mục không còn là hiện trạng.
+
 Cập nhật 06/11/2026. Triển khai trong source hiện tại; xem [scope](BACKEND-SCOPE.md) và [API đơn](DELIVERY-API.md). SePay đã được chọn. Hướng dẫn bật sandbox: [SEPAY-SETUP.md](SEPAY-SETUP.md); kiểm tra cấu hình không lộ khóa bằng `php bin/sepay-check.php`. Người dùng duyệt **tạm khóa thanh toán USD**; bảng giá USD và snapshot cũ giữ nguyên. SMS chưa có nhà cung cấp thử nghiệm: dùng chế độ demo có cấu hình rõ ràng khi phát triển.
 
 Implemented in the current source. SePay is selected; USD checkout is disabled by approval. USD quotes remain independent and are never silently converted. SMS has no selected test provider; explicit demo mode is available for development.
@@ -14,7 +16,7 @@ php -S 127.0.0.1:3000 index.php
 php bin/person1-worker.php --limit=20
 ```
 
-Runner áp dụng migration có ledger và advisory lock trong transaction, không tạo tài khoản, loại hàng hoặc policy thu nhập/điểm giả. Migration `20261106_person1_backend` bổ sung quyền, yêu cầu quốc tịch, biên nhận callback, đối soát, job, email và giới hạn đăng nhập.
+Runner áp dụng migration có ledger và advisory lock trong transaction, không tạo tài khoản hoặc policy thu nhập/điểm giả. Migration `20261108_common_parcel_categories` thêm 6 danh mục phổ biến đã được người dùng duyệt. Migration `20261106_person1_backend` bổ sung quyền, yêu cầu quốc tịch, biên nhận callback, đối soát, job, email và giới hạn đăng nhập.
 
 Schedule the bounded CLI worker every minute in the same server environment. Multiple workers claim jobs with `FOR UPDATE SKIP LOCKED`, a 90-second lease and a fencing token. Failed jobs back off, stop after eight attempts, and can be retried by an authorized administrator. Do not expose the CLI through HTTP. Run promptly for verification emails: codes expire after five minutes; reset links expire after thirty minutes. Email payloads expire before the provider's 24-hour idempotency window and are purged after acceptance/expiry. `ACCEPTED` means the email provider accepted the request, not confirmed inbox delivery.
 

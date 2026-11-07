@@ -116,6 +116,7 @@ try {
     $q2 = $quotes->create(1, $input); $o2 = $orders->create(1, $q2['quote_id'], 'test-create-0004')['order']; $id2 = (int) $o2['order_id'];
     $usd = $quotes->create(2, $input);
     check($usd['snapshot']['currency_code'] === 'USD' && $usd['snapshot']['components']['total_charge_minor'] === '53', 'currency derived from stored account language');
+    check($orders->list(1, null, 1, null)['items'][0]['receiver_name'] === 'Receiver', 'list includes owned recipient name for search');
     check($orders->list(1, null, 1, null)['next_before_id'] === (string) $id2, 'keyset cursor');
     check((int) $orders->list(1, $id2, 1, null)['items'][0]['order_id'] === $id, 'keyset next page');
 

@@ -27,7 +27,7 @@ const browserPath = [
 if (!browserPath) { console.error('No Chrome/Edge found; set SOMI_UI_BROWSER.'); process.exit(2); }
 
 const views = {
-  customer: ['dashboard', 'create', 'orders', 'order', 'payment', 'matching', 'tracking', 'review', 'report', 'reports', 'notifications', 'account', 'addresses', 'backend'],
+  customer: ['dashboard', 'create', 'orders', 'order', 'payment', 'matching', 'tracking', 'review', 'report', 'reports', 'notifications', 'account', 'addresses'],
   shipper: ['dashboard', 'offers', 'active', 'history', 'earnings', 'account', 'notifications'],
   admin: ['index', 'users', 'customers', 'shippers', 'orders', 'complaints', 'disputes', 'payments', 'reviews', 'notifications', 'audit-logs', 'backend'],
 };

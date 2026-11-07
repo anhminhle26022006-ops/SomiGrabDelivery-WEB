@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__.'/environment.php';
+require_once __DIR__.'/../Services/DatabaseDiagnostics.php';
 somi_load_env();
 
 /**
@@ -10,9 +11,8 @@ somi_load_env();
  *
  * Latency matters more than anything else here: against a remote database
  * (Supabase) a fresh TLS connection costs ~0.8s and every round trip ~0.3s.
- *  - Web requests reuse a persistent connection per PHP worker
- *    (SOMI_DB_PERSISTENT=0 turns this off). PDO rolls back any transaction a
- *    request leaves open before the connection is reused.
+ *  - Persistent connections are opt-in. Session poolers reserve a backend for
+ *    each PHP worker, including idle workers; size the pool before enabling.
  *  - search_path is sent in the connection startup packet instead of a SET
  *    round trip. Poolers that drop startup options (e.g. PgBouncer/Supavisor
  *    transaction mode) need SOMI_DB_SET_SEARCH_PATH=1.
@@ -57,7 +57,7 @@ function somi_db(): PDO
         $setSearchPath ? '' : ";options='-c search_path=somi,public'"
     );
 
-    $persistent = PHP_SAPI !== 'cli' && getenv('SOMI_DB_PERSISTENT') !== '0';
+    $persistent = PHP_SAPI !== 'cli' && getenv('SOMI_DB_PERSISTENT') === '1';
     $disablePrepares = defined('Pdo\Pgsql::ATTR_DISABLE_PREPARES')
         ? constant('Pdo\Pgsql::ATTR_DISABLE_PREPARES')
         : PDO::PGSQL_ATTR_DISABLE_PREPARES;

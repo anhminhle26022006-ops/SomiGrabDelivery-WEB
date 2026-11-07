@@ -85,9 +85,7 @@ if (in_array($page, ['customer', 'shipper', 'admin'], true)) {
         $pendingShipperApplications = $pendingQuery->fetchAll();
     }
     } catch (Throwable $error) {
-        $sqlState=$error instanceof PDOException?(string)($error->errorInfo[0]??$error->getCode()):'';
-        $sqlState=preg_match('/^[A-Z0-9]{5}$/D',$sqlState)?$sqlState:'unknown';
-        error_log('[SOMI workspace] '.get_class($error).' sqlstate='.$sqlState.' page='.$page);
+        error_log('[SOMI workspace] '.get_class($error).' '.somi_database_diagnostic($error).' page='.$page);
         http_response_code(503);
         exit('Workspace temporarily unavailable. Please try again later.');
     }

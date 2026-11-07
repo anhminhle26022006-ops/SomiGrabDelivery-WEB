@@ -26,8 +26,8 @@ RUN a2dismod -f mpm_prefork >/dev/null 2>&1 || true; \
 COPY docker/start.sh /usr/local/bin/somi-start
 RUN sed -i 's/\r$//' /usr/local/bin/somi-start && chmod +x /usr/local/bin/somi-start
 
-# PHP workers (= max persistent DB connections per container). Tune per RAM and DB limit.
-ENV SOMI_MAX_WORKERS=40 \
+# Concurrent PHP worker limit per container. Budget across replicas and DB tools.
+ENV SOMI_MAX_WORKERS=6 \
     PHP_OPCACHE_VALIDATE_TIMESTAMPS=0
 
 WORKDIR /var/www/html

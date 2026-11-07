@@ -78,7 +78,10 @@ function somi_api_handle_error(Throwable $error): void
     if ($error instanceof InvalidArgumentException || ($error instanceof RuntimeException && !$error instanceof PDOException && !preg_match('/environment|configured|SOMI_|RESEND_|Resend|SQLSTATE/i', $error->getMessage()))) {
         somi_api_json(422, ['error' => $error->getMessage()]);
     }
-    error_log('[SOMI API ERROR] ' . get_class($error) . ' code=' . $error->getCode());
+    error_log('[SOMI API ERROR] ' . get_class($error) . ' ' . somi_database_diagnostic($error));
+    if ($error instanceof PDOException && (str_starts_with(somi_database_diagnostic($error), 'sqlstate=08') || str_starts_with(somi_database_diagnostic($error), 'sqlstate=53300'))) {
+        somi_api_json(503, ['code'=>'SERVICE_UNAVAILABLE','error'=>'Service is temporarily unavailable. Please try again later.']);
+    }
     somi_api_json(500, ['error' => 'The request could not be completed. Please try again.']);
 }
 

@@ -44,10 +44,10 @@ function somi_run_api(array $methods,array $roles,string $permission,bool $write
         if($render!==null){http_response_code($status);$render($payload);exit;}
         somi_api_json($status,somi_wire($payload));
     }catch(Throwable $e){
-        if($db instanceof PDO&&$db->inTransaction())$db->rollBack();
+        if($db instanceof PDO)somi_rollback_safely($db);
         if($e instanceof DeliveryApiError)somi_api_json($e->httpStatus,['code'=>$e->errorCode,'error'=>$e->getMessage()]);
         if($e instanceof PDOException&&in_array((string)$e->getCode(),['40001','40P01','23505'],true))somi_api_json(409,['code'=>'CONCURRENT_CHANGE','error'=>'Concurrent change detected. Retry with the same idempotency key.']);
-        error_log('[SOMI API] '.get_class($e).' code='.$e->getCode());
+        error_log('[SOMI API] '.get_class($e).' '.somi_database_diagnostic($e));
         somi_api_json(503,['code'=>'SERVICE_UNAVAILABLE','error'=>'Service is unavailable. Check migrations and configuration.']);
     }
 }

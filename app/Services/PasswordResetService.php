@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../Config/database.php';
 require_once __DIR__ . '/ResendMailer.php';
+require_once __DIR__ . '/EmailService.php';
 
 final class PasswordResetService
 {
@@ -30,6 +31,7 @@ final class PasswordResetService
 
         $db->beginTransaction();
         try {
+            $lock=$db->prepare("SELECT user_id FROM users WHERE user_id=? AND account_status='ACTIVE' FOR UPDATE");$lock->execute([$user['user_id']]);if(!$lock->fetchColumn()){$db->commit();return;}
             $latestQuery = $db->prepare(
                 'SELECT created_at FROM password_reset_tokens
                  WHERE user_id = :user_id ORDER BY created_at DESC LIMIT 1'
@@ -69,17 +71,7 @@ final class PasswordResetService
             ]);
 
             $url = self::baseUrl() . '/?page=reset-password&token=' . rawurlencode($token);
-            $safeUrl = htmlspecialchars($url, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
-            $isVietnamese = $language === 'vi';
-            $subject = $isVietnamese ? 'Đặt lại mật khẩu SOMI' : 'Reset your SOMI password';
-            $html = $isVietnamese
-                ? '<p>Nhấn nút bên dưới để đặt mật khẩu mới cho tài khoản SOMI. Liên kết có hiệu lực trong 30 phút.</p><p><a href="' . $safeUrl . '" style="display:inline-block;padding:12px 20px;background:#14284b;color:#fff;border-radius:8px;text-decoration:none">Đặt lại mật khẩu</a></p><p>Nếu bạn không yêu cầu thao tác này, hãy bỏ qua email.</p>'
-                : '<p>Use the button below to choose a new password for your SOMI account. This link expires in 30 minutes.</p><p><a href="' . $safeUrl . '" style="display:inline-block;padding:12px 20px;background:#14284b;color:#fff;border-radius:8px;text-decoration:none">Reset password</a></p><p>If you did not request this, you can ignore this email.</p>';
-            $text = $isVietnamese
-                ? "Đặt lại mật khẩu SOMI tại đây: {$url}\nLiên kết có hiệu lực trong 30 phút."
-                : "Reset your SOMI password here: {$url}\nThis link expires in 30 minutes.";
-
-            ResendMailer::send((string) $user['email'], $subject, $html, $text);
+            EmailService::enqueue($db,(int)$user['user_id'],'RESET_PASSWORD','reset:'.hash('sha256',$token),['url'=>$url],null,1740);
             $db->commit();
         } catch (Throwable $error) {
             if ($db->inTransaction()) {
@@ -101,6 +93,9 @@ final class PasswordResetService
         $db = somi_db();
         $db->beginTransaction();
         try {
+            $find=$db->prepare('SELECT user_id FROM password_reset_tokens WHERE token_hash=?');$find->execute([hash('sha256',$token)]);$owner=$find->fetchColumn();
+            if(!$owner)throw new InvalidArgumentException('This reset link is invalid or has expired. Request a new one.');
+            $lock=$db->prepare("SELECT user_id FROM users WHERE user_id=? AND account_status='ACTIVE' FOR UPDATE");$lock->execute([$owner]);if(!$lock->fetchColumn())throw new InvalidArgumentException('This reset link is invalid or has expired. Request a new one.');
             $lookup = $db->prepare(
                 'SELECT reset_token_id, user_id FROM password_reset_tokens
                  WHERE token_hash = :token_hash AND consumed_at IS NULL AND expires_at > now()

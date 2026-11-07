@@ -14,7 +14,7 @@ try {
         throw new RuntimeException('Verify your phone before requesting the email code.');
     }
     EmailVerificationService::sendCode($userId);
-    somi_api_json(200, ['status' => 'EMAIL_CODE_SENT']);
+    somi_api_json(200, ['status' => 'EMAIL_CODE_QUEUED']);
 } catch (Throwable $error) {
     somi_api_handle_error($error);
 }

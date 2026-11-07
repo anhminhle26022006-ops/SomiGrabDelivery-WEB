@@ -1,0 +1,38 @@
+[
+  {
+    "path": "/public/api/auth/login.php",
+    "http": 200,
+    "elapsed_ms": 3752,
+    "bytes": 37
+  },
+  {
+    "path": "/?page=admin&view=index",
+    "http": 200,
+    "elapsed_ms": 3500,
+    "bytes": 15678
+  },
+  {
+    "path": "/?page=admin&view=users",
+    "http": 200,
+    "elapsed_ms": 3502,
+    "bytes": 12492
+  },
+  {
+    "path": "/?page=admin&view=orders",
+    "http": 200,
+    "elapsed_ms": 3819,
+    "bytes": 11612
+  },
+  {
+    "path": "/?page=admin&view=index",
+    "http": 200,
+    "elapsed_ms": 3724,
+    "bytes": 15678
+  },
+  {
+    "path": "/public/api/auth/logout.php",
+    "http": 200,
+    "elapsed_ms": 462,
+    "bytes": 23
+  }
+]

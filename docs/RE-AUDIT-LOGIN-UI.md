@@ -1,5 +1,7 @@
 # SOMI — Re-audit sau Supabase Restore, Login & UI
 
+> **Tài liệu lịch sử:** kết luận, phân công và trạng thái repository dưới đây thuộc ngày kiểm tra ghi trong báo cáo. Xem [scope hiện hành 06/11/2026](BACKEND-SCOPE.md), [API/giá hiện hành](DELIVERY-API.md). Giữ nguyên bằng chứng kiểm thử quá khứ; không dùng báo cáo này để giao việc hiện tại.
+
 Ngày: 2026-11-01.
 
 Cập nhật sau audit: đăng nhập Admin bằng mật khẩu thật, mở workspace, logout và chặn truy cập sau logout đã PASS 4/4; artifact `reaudit-password-admin.json`. Customer/Shipper vẫn chưa có kiểm thử mật khẩu thật. Các mục BLOCKED bên dưới mô tả thời điểm audit trước khi có credential Admin.

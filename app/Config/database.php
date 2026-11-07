@@ -1,10 +1,13 @@
 <?php
 declare(strict_types=1);
 
+require_once __DIR__.'/environment.php';
+somi_load_env();
+
 /**
  * Returns the shared PDO connection to the SOMI PostgreSQL database.
- * Credentials are read from Windows/server environment variables and are
- * deliberately not stored in this project.
+ * Credentials come from the server/process environment or the ignored local
+ * .env file. Server/process variables take precedence.
  */
 function somi_db(): PDO
 {
@@ -48,6 +51,8 @@ function somi_db(): PDO
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::ATTR_EMULATE_PREPARES => false,
+            // Bind parameters natively in one call, without a separate named PREPARE round trip.
+            PDO::PGSQL_ATTR_DISABLE_PREPARES => true,
         ]
     );
 

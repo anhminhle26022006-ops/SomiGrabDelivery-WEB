@@ -4,6 +4,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/../_bootstrap.php';
 require_once __DIR__ . '/../../../app/Services/EmailVerificationService.php';
 require_once __DIR__ . '/../../../app/Services/PhoneVerificationService.php';
+require_once __DIR__ . '/../../../app/Services/AuthRateLimiter.php';
 
 somi_api_require_post();
 $input = somi_api_input();
@@ -15,6 +16,8 @@ if ($identifier === '' || $password === '' || !in_array($roleCode, ['CUSTOMER', 
 }
 
 try {
+    AuthRateLimiter::hit(somi_db(),'login-ip:'.($_SERVER['REMOTE_ADDR']??'unknown'),100);
+    AuthRateLimiter::hit(somi_db(),'login-identity:'.strtolower($identifier),10);
     $emailIdentifier = strtolower($identifier);
     $phoneIdentifier = preg_replace('/[\s().-]+/', '', $identifier);
     $query = somi_db()->prepare(
@@ -76,7 +79,7 @@ try {
         if ($user['email_verified_at'] === null) {
             try {
                 EmailVerificationService::sendCode((int) $user['user_id']);
-                $notice = 'A new email verification code was sent.';
+                $notice = 'A new email verification code was queued.';
             } catch (Throwable $deliveryError) {
                 if (str_contains($deliveryError->getMessage(), 'Please wait before requesting another email code.')) {
                     $notice = 'An email code was recently sent. Enter that code or wait briefly to request another.';

@@ -3,13 +3,13 @@ $en = [
  'how'=>['HOW SOMI WORKS','Delivery, made clear at every step.','One simple flow from pickup request to proof of delivery.',['Create your delivery','Choose and pay','Track with confidence'],['Tell us where, when, and what you need delivered.','See your fee upfront and select your preferred payment method.','Get a verified shipper and follow each delivery milestone.']],
  'customers'=>['FOR CUSTOMERS','Every delivery under control.','From urgent documents to thoughtful packages, Somi keeps you informed.',['Simple booking','Clear pricing','Human support'],['Create a delivery in a few focused steps.','Review every fee before you confirm.','Report an issue and follow its resolution.']],
  'shippers'=>['FOR SHIPPERS','Your time. Your routes. Your earnings.','Go online when it suits you and accept only the offers that work.',['Choose your work','Earn transparently','Grow your rating'],['Review distance, package, and earnings before accepting.','See daily and weekly earnings at a glance.','Deliver with care and build customer trust.']],
- 'pricing'=>['SIMPLE PRICING','Know the cost before you send.','Fees are based on route distance, package details, and timing.',['Base delivery','Distance','Returns'],['30,000₫ includes the first 3 km.','5,000₫ for each additional kilometer.','Return fees are shown before confirmation.']]
+ 'pricing'=>[]
 ];
 $vi = [
  'how'=>['CÁCH SOMI HOẠT ĐỘNG','Giao hàng rõ ràng ở mọi bước.','Một quy trình đơn giản từ lúc tạo yêu cầu đến khi hoàn tất giao hàng.',['Tạo đơn giao hàng','Chọn và thanh toán','Theo dõi an tâm'],['Cho biết nơi nhận, thời gian và món hàng cần giao.','Xem trước chi phí và chọn phương thức thanh toán.','Theo dõi từng mốc giao hàng.']],
  'customers'=>['DÀNH CHO KHÁCH HÀNG','Mọi chuyến giao đều trong tầm kiểm soát.','Từ tài liệu cần giao gấp đến những gói hàng quan trọng, Somi luôn cập nhật cho bạn.',['Đặt đơn đơn giản','Chi phí minh bạch','Hỗ trợ trực tiếp'],['Tạo yêu cầu giao hàng qua vài bước.','Xem mọi khoản phí trước khi xác nhận.','Báo cáo vấn đề và theo dõi xử lý.']],
  'shippers'=>['DÀNH CHO NGƯỜI GIAO','Thời gian của bạn. Tuyến đường của bạn. Thu nhập của bạn.','Online khi phù hợp và chỉ nhận những đơn giao phù hợp với bạn.',['Chọn công việc','Thu nhập minh bạch','Nâng cao đánh giá'],['Xem khoảng cách, gói hàng và thu nhập trước khi nhận.','Theo dõi thu nhập theo ngày và tuần.','Giao hàng tận tâm và xây dựng niềm tin.']],
- 'pricing'=>['BẢNG GIÁ ĐƠN GIẢN','Biết trước chi phí trước khi gửi.','Chi phí dựa trên khoảng cách, thông tin gói hàng và thời gian giao.',['Phí giao cơ bản','Khoảng cách','Phí hoàn trả'],['30.000₫ bao gồm 3 km đầu tiên.','5.000₫ cho mỗi km phát sinh.','Phí hoàn trả hiển thị trước khi xác nhận.']]
+ 'pricing'=>[]
 ];
 ?>
 <header class="site-header <?= $page === 'home' ? 'header-home' : '' ?>">
@@ -66,7 +66,8 @@ $vi = [
     <article class="feature-card"><span class="feature-number">03</span><div class="feature-icon">◎</div><h3>Transparent pricing</h3><p>Review estimated delivery fees before you confirm an order.</p><a href="<?= linkTo('pricing') ?>">View pricing <span>→</span></a></article>
   </section>
 </main>
-<?php else: $content = ($vi[$page] ?? $en[$page]); ?>
+<?php elseif ($page === 'pricing'): require __DIR__ . '/pricing.php'; ?>
+<?php else: $content = $en[$page]; ?>
 <main class="info-page">
   <section class="info-hero"><p class="eyebrow dark-eyebrow"><?= e($content[0]) ?></p><h1><?= e($content[1]) ?></h1><p><?= e($content[2]) ?></p>
   <?php if ($page === 'customers' || $page === 'pricing'): ?><a class="button button-dark" href="<?= linkTo('auth',['next'=>'customer']) ?>">Send a Package <span>↗</span></a><?php elseif ($page === 'shippers'): ?><a class="button button-dark" href="<?= linkTo('auth',['next'=>'shipper']) ?>">Become a Shipper <span>↗</span></a><?php endif; ?></section>

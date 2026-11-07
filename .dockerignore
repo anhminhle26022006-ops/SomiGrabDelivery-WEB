@@ -1,4 +1,7 @@
 .git
-tests/.runtime
+tests
+docs
+demoUI
+*.pdf
 **/__pycache__
 **/*.pyc

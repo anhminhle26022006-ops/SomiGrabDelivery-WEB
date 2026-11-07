@@ -30,6 +30,9 @@ final class PasswordResetService
 
         $db->beginTransaction();
         try {
+            // Serialize requests for this account before checking cooldown/invalidation.
+            $lock = $db->prepare('SELECT user_id FROM users WHERE user_id = :id FOR UPDATE');
+            $lock->execute(['id' => $user['user_id']]);
             $latestQuery = $db->prepare(
                 'SELECT created_at FROM password_reset_tokens
                  WHERE user_id = :user_id ORDER BY created_at DESC LIMIT 1'
@@ -101,6 +104,14 @@ final class PasswordResetService
         $db = somi_db();
         $db->beginTransaction();
         try {
+            // Discover the owner without taking a token lock. Every reset locks the user
+            // first, so two valid tokens cannot deadlock while consuming each other.
+            $owner = $db->prepare('SELECT user_id FROM password_reset_tokens WHERE token_hash = :hash');
+            $owner->execute(['hash' => hash('sha256', $token)]);
+            $ownerId = $owner->fetchColumn();
+            if ($ownerId === false) throw new InvalidArgumentException('This reset link is invalid or has expired. Request a new one.');
+            $lock = $db->prepare('SELECT user_id FROM users WHERE user_id = :id FOR UPDATE');
+            $lock->execute(['id' => $ownerId]);
             $lookup = $db->prepare(
                 'SELECT reset_token_id, user_id FROM password_reset_tokens
                  WHERE token_hash = :token_hash AND consumed_at IS NULL AND expires_at > now()

@@ -111,6 +111,6 @@ try {
 
     somi_api_json(200, ['status' => 'SIGNED_IN', 'role' => strtolower($roleCode)]);
 } catch (Throwable $error) {
-    if (isset($db) && $db->inTransaction()) $db->rollBack();
+    if (isset($db)) somi_rollback_safely($db);
     somi_api_handle_error($error);
 }

@@ -85,7 +85,7 @@ if (in_array($page, ['customer', 'shipper', 'admin'], true)) {
         $pendingShipperApplications = $pendingQuery->fetchAll();
     }
     } catch (Throwable $error) {
-        error_log('[SOMI workspace] ' . get_class($error));
+        error_log('[SOMI workspace] '.get_class($error).' '.somi_database_diagnostic($error).' page='.$page);
         http_response_code(503);
         exit('Workspace temporarily unavailable. Please try again later.');
     }

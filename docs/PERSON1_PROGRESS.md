@@ -1,5 +1,7 @@
 # Người 1 — Tiến độ sau triển khai
 
+**Tiến độ hiện hành: [08/11/2026](PROGRESS-2026-11-08.md). Nội dung bên dưới là lịch sử ngày 02/11, không dùng tỷ lệ cũ để đánh giá hiện tại.**
+
 > Historical snapshot. Current integration, approved pricing, SePay/payment/email APIs and ownership: [PERSON1-API.md](PERSON1-API.md), [BACKEND-SCOPE.md](BACKEND-SCOPE.md).
 
 

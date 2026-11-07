@@ -19,7 +19,7 @@ try {
     if($db->query("SELECT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema='somi' AND table_name='schema_migrations' AND column_name='version')")->fetchColumn()){
         $db->exec('INSERT INTO somi.backend_migrations(version,applied_at) SELECT version,applied_at FROM somi.schema_migrations ON CONFLICT(version) DO NOTHING');
     }
-    foreach (['20261105_customer_orders', '20261105_approved_pricing', '20261105_service_range_40km', '20261105_distance_weight_pricing', '20261106_person1_backend','20261107_person1_compat'] as $version) {
+    foreach (['20261105_customer_orders', '20261105_approved_pricing', '20261105_service_range_40km', '20261105_distance_weight_pricing', '20261106_person1_backend','20261107_person1_compat','20261108_common_parcel_categories'] as $version) {
     $q = $db->prepare('SELECT 1 FROM somi.backend_migrations WHERE version = :version');
     $q->execute(['version' => $version]);
     if ($q->fetchColumn()) continue;
@@ -35,7 +35,7 @@ try {
     $q->execute(['version' => $version]);
     }
     $db->commit();
-    echo "Backend migrations are up to date, including Person 1 APIs. No parcel categories seeded.\n";
+    echo "Backend migrations are up to date, including Person 1 APIs and missing common parcel categories.\n";
 } catch (Throwable $error) {
     if ($db instanceof PDO && $db->inTransaction()) $db->rollBack();
     fwrite(STDERR, 'Migration failed (' . get_class($error) . ', code ' . $error->getCode() . "). No partial migration committed.\n");

@@ -16,5 +16,9 @@ try {
     PasswordResetService::request($email, $language);
     somi_api_json(200, ['status' => 'RESET_EMAIL_REQUESTED']);
 } catch (Throwable $error) {
-    somi_api_handle_error($error);
+    if ($error instanceof InvalidArgumentException) somi_api_handle_error($error);
+    // Provider/configuration failures must not distinguish existing accounts from
+    // unknown addresses. This acknowledges the request, not email delivery.
+    error_log('[SOMI PASSWORD RESET REQUEST FAILED] ' . get_class($error));
+    somi_api_json(200, ['status' => 'RESET_EMAIL_REQUESTED']);
 }

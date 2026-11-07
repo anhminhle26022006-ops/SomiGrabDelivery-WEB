@@ -1,0 +1,14 @@
+.person1-workspace { max-width:1200px; margin:20px auto; }
+.person1-workspace h1 { font-size:30px; }
+.person1-tabs { display:flex; flex-wrap:wrap; gap:8px; margin:20px 0; }
+.person1-workspace form { display:grid; gap:12px; margin:16px 0; max-width:700px; }
+.person1-workspace label { display:grid; gap:5px; font-size:14px; }
+.person1-workspace input, .person1-workspace select, .person1-workspace textarea { width:100%; padding:10px; border:1px solid #ccd3de; border-radius:8px; font:inherit; background:#fff; color:#14284b; }
+.person1-workspace textarea { min-height:100px; }
+.person1-workspace .person1-table { overflow-x:auto; margin:16px 0; }
+.person1-workspace table { width:100%; border-collapse:collapse; }
+.person1-workspace th, .person1-workspace td { padding:10px; border-bottom:1px solid #e1e5ec; text-align:left; vertical-align:top; }
+.person1-workspace td button { margin:3px; }
+.person1-workspace [role="status"] { min-height:24px; white-space:pre-wrap; }
+.person1-workspace [aria-current="true"] { background:#14284b; color:#fff; }
+.person1-workspace pre { white-space:pre-wrap; overflow-wrap:anywhere; max-height:500px; overflow:auto; }

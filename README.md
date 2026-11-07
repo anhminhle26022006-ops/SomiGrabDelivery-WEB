@@ -80,3 +80,13 @@ php tests/person1_backend.php
 ```
 
 Bộ kiểm thử dùng PostgreSQL TEMP tables và rollback toàn bộ, không thay dữ liệu nghiệp vụ trong schema ứng dụng. Không cần áp dụng migration thật để chạy bộ kiểm thử này.
+
+## Tích hợp bản mới — 07/11/2026
+
+Đã giữ các cập nhật cờ ngôn ngữ, bố cục Shipper, định dạng VND và tối ưu PostgreSQL/Apache event/PHP-FPM từ nhánh dev. Docker bổ sung BCMath cho tính giá và đối soát chính xác. Hiệu năng: [PERFORMANCE.md](docs/PERFORMANCE.md).
+
+`dev` là nhánh tích hợp; `main` vẫn là bản cũ và không được ghi đè tự động. Render cần theo dõi đúng nhánh `dev`. Key `.env` local không lên GitHub/Docker: đặt các biến tương ứng trong Render Environment. API IPN: `/public/api/payments/callback.php`.
+
+Runner migration thống nhất: `php database/migrate-customer-orders.php --apply` (alias `php scripts/migrate.php`). Ledger mới `somi.backend_migrations` giữ lại cả hai dạng ledger cũ, nhập lịch sử version hiện có, không xóa ledger cũ. Migration tương thích giữ yêu cầu quốc tịch cũ và màn hình giá nháp; nháp không thay policy đã duyệt. Chạy runner trước khi nghiệm thu API mới trên hosting.
+
+API và checklist hiện hành: [PERSON1-API.md](docs/PERSON1-API.md), [BACKEND-SCOPE.md](docs/BACKEND-SCOPE.md). Các báo cáo `PERSON1_*` và kết quả test trước đợt tích hợp mô tả phiên bản tại ngày ghi trong báo cáo, không thay contract hiện hành. Suite hiện tại: `./scripts/test-person1.ps1 -Php C:/xampp/php/php.exe`; các kịch bản local-db cũ cần cập nhật theo contract mới trước khi dùng lại.

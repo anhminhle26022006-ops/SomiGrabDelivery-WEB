@@ -16,24 +16,33 @@ function person1_method(array $methods): string
     return $method;
 }
 
+/** Roles of the user validated by person1_identity() in this request. */
+function person1_session_roles(?array $set = null): array
+{
+    static $roles = [];
+    if ($set !== null) $roles = $set;
+    return $roles;
+}
+
 /** The session workspace alone never grants a role or a permission. */
 function person1_identity(?string $role = null, ?string $permission = null): int
 {
     $id = $_SESSION['somi_user_id'] ?? null;
     if (!is_int($id) || $id < 1) throw new ApiProblem(401, 'Please sign in.', 'UNAUTHENTICATED');
-    if (!somi_require_active_session($user)) throw new ApiProblem(401, 'Please sign in again.', 'UNAUTHENTICATED');
+    // Session validity and the permission grant are checked in one query.
+    if (!somi_require_active_session($user, $permission)) throw new ApiProblem(401, 'Please sign in again.', 'UNAUTHENTICATED');
+    // Person 1 endpoints never write the session after this point. Releasing the
+    // file lock lets one user's parallel API calls run concurrently instead of
+    // queueing behind each other.
+    session_write_close();
     $roles = json_decode((string) $user['roles'], true, 512, JSON_THROW_ON_ERROR);
+    person1_session_roles($roles);
     $workspace = strtoupper((string) ($_SESSION['somi_role'] ?? ''));
     if (!in_array($workspace, $roles, true) || ($role !== null && $workspace !== $role)) {
         throw new ApiProblem(403, 'This workspace is not authorized.', 'FORBIDDEN');
     }
-    if ($permission !== null) {
-        $repo = new Person1Repository(somi_db());
-        $grant = $repo->one('SELECT 1 FROM user_roles ur JOIN roles r USING(role_id)
-            JOIN role_permissions rp USING(role_id) JOIN permissions p USING(permission_id)
-            WHERE ur.user_id = :id AND r.role_code = :role AND p.permission_code = :permission',
-            ['id' => $id, 'role' => $workspace, 'permission' => $permission]);
-        if (!$grant) throw new ApiProblem(403, 'Permission is required.', 'FORBIDDEN');
+    if ($permission !== null && !in_array($user['has_permission'], [true, 't', '1', 1], true)) {
+        throw new ApiProblem(403, 'Permission is required.', 'FORBIDDEN');
     }
     return $id;
 }

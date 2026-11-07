@@ -4,11 +4,11 @@
     "failures": []
   },
   "javascript": {
-    "checks": 27,
+    "checks": 29,
     "failures": []
   },
   "secret_scan": {
-    "files": 160,
+    "files": 162,
     "findings": []
   }
 }

@@ -1,6 +1,10 @@
 const fs = require('fs');
 const cp = require('child_process');
-const files = cp.execFileSync('rg', ['--files','--hidden','-g','!.git/**','-g','!tests/.runtime/**'], {encoding:'utf8'}).split(/\r?\n/).filter(Boolean);
+// ripgrep when installed; otherwise git's tracked + untracked (non-ignored) files.
+let listing;
+try { listing = cp.execFileSync('rg', ['--files','--hidden','-g','!.git/**','-g','!tests/.runtime/**'], {encoding:'utf8'}); }
+catch (e) { if (e.code !== 'ENOENT') throw e; listing = cp.execFileSync('git', ['ls-files','--cached','--others','--exclude-standard'], {encoding:'utf8'}); }
+const files = listing.split(/\r?\n/).filter(f => f && !f.startsWith('tests/.runtime/') && fs.existsSync(f));
 const result = {php:{checks:0,failures:[]},javascript:{checks:0,failures:[]},secret_scan:{files:0,findings:[]}};
 for (const file of files) {
   if (file.endsWith('.php')) {

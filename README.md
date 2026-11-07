@@ -76,6 +76,8 @@ Chưa sẵn sàng production.
 
 ## Backend và kiểm thử Người 1
 
+Hiệu năng, cấu hình Docker production (Apache event + PHP-FPM) và kiểm thử giao diện/tải: xem [PERFORMANCE.md](docs/PERFORMANCE.md).
+
 Xem [hướng dẫn backend](docs/PERSON1_BACKEND.md), [tiến độ](docs/PERSON1_PROGRESS.md), [API](docs/PERSON1_API_CONTRACT.md) và [hợp đồng tích hợp](docs/PERSON1_INTEGRATION.md).
 
 Biến môi trường được mô tả trong `.env.example`; app đọc process environment, không tự nạp file `.env`. Trên Windows, chạy `./scripts/serve.ps1` để nạp cấu hình User và bật PostgreSQL/mbstring cho PHP.

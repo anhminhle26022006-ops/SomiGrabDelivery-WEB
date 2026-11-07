@@ -15,6 +15,9 @@ try {
     }
     $profile = $repo->one('SELECT user_id, full_name, email, phone, nationality_code, date_of_birth, gender,
         app_language, account_status, email_verified_at, phone_verified_at, created_at FROM users WHERE user_id = :id', ['id' => $id]);
-    $profile['roles'] = array_column($repo->all('SELECT r.role_code FROM user_roles ur JOIN roles r USING(role_id) WHERE ur.user_id = :id ORDER BY r.role_code', ['id' => $id]), 'role_code');
+    // Roles were already loaded by the session check; no extra round trip.
+    $roles = person1_session_roles();
+    sort($roles, SORT_STRING);
+    $profile['roles'] = $roles;
     somi_api_json(200, ['data' => $profile]);
 } catch (Throwable $error) { person1_error($error); }

@@ -24,7 +24,7 @@
       item.toggleAttribute("hidden", !visible);
       item.setAttribute("aria-hidden", String(!visible));
     });
-    document.querySelectorAll("#sidebar [data-page]").forEach((button) => {
+    document.querySelectorAll("#shipperNav [data-page]").forEach((button) => {
       const active = button.dataset.page === page;
       button.classList.toggle("active", active);
       if (active) button.setAttribute("aria-current", "page");
@@ -43,10 +43,10 @@
   }
   window.go = navigate;
   document.addEventListener("DOMContentLoaded", () => {
-    const sidebar = document.getElementById("sidebar");
-    sidebar?.addEventListener("click", (event) => {
+    const tabs = document.getElementById("shipperNav");
+    tabs?.addEventListener("click", (event) => {
       const link = event.target.closest("a[data-page]");
-      if (!link || !sidebar.contains(link) || event.defaultPrevented || event.button !== 0
+      if (!link || !tabs.contains(link) || event.defaultPrevented || event.button !== 0
           || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
       if (navigate(link.dataset.page)) event.preventDefault();
     });

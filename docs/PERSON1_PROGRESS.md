@@ -1,6 +1,6 @@
 # Người 1 — Tiến độ sau triển khai
 
-Ngày 2026-11-02. Nhánh dev. Không commit/push/merge/deploy. Giữ nguyên thay đổi navigation/ngôn ngữ trước đó.
+Ngày 2026-11-02. Nhánh dev. Đã commit và push lên `origin/dev` (commit `2ceda53`); chưa merge vào `main`, chưa deploy. Giữ nguyên thay đổi navigation/ngôn ngữ trước đó.
 
 ## Mức hoàn thành
 

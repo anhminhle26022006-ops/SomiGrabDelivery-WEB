@@ -64,13 +64,13 @@ function customerIcon(string $paths, int $size = 20): string {
     <div class="c-top-actions">
       <div class="dropdown c-locale">
         <button class="c-locale-btn" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" data-locale-btn aria-expanded="false" aria-label="Ngôn ngữ và tiền tệ">
-          <span data-locale-flag aria-hidden="true"><svg class="language-flag-svg" viewBox="0 0 30 20" aria-hidden="true" focusable="false"><rect width="30" height="20" rx="2" fill="#17356b"/><path d="M0 0L30 20M30 0L0 20" stroke="#fff" stroke-width="5"/><path d="M0 0L30 20M30 0L0 20" stroke="#c8102e" stroke-width="2"/><path d="M15 0V20M0 10H30" stroke="#fff" stroke-width="7"/><path d="M15 0V20M0 10H30" stroke="#c8102e" stroke-width="3.5"/></svg></span><span data-locale-current>VI · VND</span>
+          <span data-locale-flag aria-hidden="true"><svg class="language-flag-svg" viewBox="0 0 30 20" aria-hidden="true" focusable="false"><rect width="30" height="20" rx="2" fill="#17356b"/><path d="M0 0L30 20M30 0L0 20" stroke="#fff" stroke-width="5"/><path d="M0 0L30 20M30 0L0 20" stroke="#c8102e" stroke-width="2"/><path d="M15 0V20M0 10H30" stroke="#fff" stroke-width="7"/><path d="M15 0V20M0 10H30" stroke="#c8102e" stroke-width="3.5"/></svg></span><span data-locale-current>EN · VND</span><span class="language-chevron" aria-hidden="true">⌄</span>
         </button>
         <div class="dropdown-menu dropdown-menu-end c-locale-menu" data-locale-menu>
           <p class="c-locale-title">Ngôn ngữ</p>
           <div class="btn-group w-100 c-locale-seg" role="group" aria-label="Ngôn ngữ">
-            <button type="button" class="btn" data-set-lang="vi">Tiếng Việt</button>
-            <button type="button" class="btn" data-set-lang="en">English</button>
+            <button type="button" class="btn" data-set-lang="vi"><svg class="language-flag-svg" viewBox="0 0 30 20" aria-hidden="true" focusable="false"><rect width="30" height="20" rx="2" fill="#da251d"/><path d="M15 3.5L16.8 8.4L22 8.5L17.9 11.6L19.4 16.5L15 13.6L10.6 16.5L12.1 11.6L8 8.5L13.2 8.4Z" fill="#ffde00"/></svg>Tiếng Việt</button>
+            <button type="button" class="btn" data-set-lang="en"><svg class="language-flag-svg" viewBox="0 0 30 20" aria-hidden="true" focusable="false"><rect width="30" height="20" rx="2" fill="#17356b"/><path d="M0 0L30 20M30 0L0 20" stroke="#fff" stroke-width="5"/><path d="M0 0L30 20M30 0L0 20" stroke="#c8102e" stroke-width="2"/><path d="M15 0V20M0 10H30" stroke="#fff" stroke-width="7"/><path d="M15 0V20M0 10H30" stroke="#c8102e" stroke-width="3.5"/></svg>English</button>
           </div>
           <p class="c-locale-title">Tiền tệ</p>
           <div class="btn-group w-100 c-locale-seg" role="group" aria-label="Tiền tệ">

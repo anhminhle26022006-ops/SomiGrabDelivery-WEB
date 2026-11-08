@@ -3,6 +3,8 @@
 > Update 06/11/2026: Person 1 payment/email/Admin APIs and live Customer flow are implemented. SePay is selected; USD checkout is disabled. Current contracts, setup, tests and live-provider limitations: [PERSON1-API.md](docs/PERSON1-API.md).
 
 
+Admin trực tiếp trên nhánh MINH-ANH: [chức năng, API và kiểm thử](docs/ADMIN-LIVE.md). Mở `/admin` bằng tài khoản có role ADMIN; các trang quản trị đọc dữ liệu thật từ Supabase.
+
 ## Stack thống nhất
 - **PHP 8+**: render trang và điều hướng theo `?page=...`.
 - **HTML**: cấu trúc giao diện.
@@ -14,6 +16,8 @@ Dự án không cần framework frontend, `npm install` hay build frontend.
 ## Cấu hình key và môi trường
 
 File `.env` tại root được PHP tự nạp cho web/API và worker. Dùng [.env.example](.env.example) làm mẫu khi clone mới; điền key tại máy, không commit `.env`. Biến môi trường server/process được ưu tiên, kể cả khi được đặt rỗng. Giá trị trong file là literal, không nội suy `${VARIABLE}`. Giữ khóa mã hóa cũ để đọc được dữ liệu đã mã hóa. Docker không đóng gói file này; truyền cấu hình khi chạy container bằng `--env-file .env` hoặc hệ thống Secrets của hosting.
+
+Địa chỉ, bản đồ Leaflet + Geoapify và Supabase: [hướng dẫn cấu hình](docs/ADDRESS-GEOAPIFY-SETUP.md). Điền GEOAPIFY_API_KEY cho backend và GEOAPIFY_BROWSER_API_KEY cho tiles trình duyệt. Kiểm tra bằng `php bin/address-check.php`; luồng hiện tại không cần key Google.
 
 Kiểm tra SePay: `php bin/sepay-check.php`. Hướng dẫn [SePay sandbox](docs/SEPAY-SETUP.md).
 
@@ -66,7 +70,7 @@ Project có backend tài khoản/session, email verification/reset và duyệt h
 
 Backend Customer đã bổ sung API địa chỉ, danh mục kiện hàng, báo giá, tạo/xem/hủy đơn, lịch sử trạng thái và integration events cho payment/matching. Hướng dẫn migration, cấu hình provider/giá, request/response và hợp đồng trạng thái nằm trong [docs/DELIVERY-API.md](docs/DELIVERY-API.md). Cấu hình mẫu: [docs/runtime.env.example](docs/runtime.env.example); PHP không tự nạp file này. API báo giá yêu cầu nguồn quãng đường/thời tiết tin cậy và chính sách đã cấu hình, không dùng giá demo.
 
-Bảng giá được duyệt ngày 05/11/2026, phạm vi TP. Hồ Chí Minh, tuyến dưới 40 km và hàng lớn hơn 0 đến 30 kg. Công thức hiện tại: `(cơ bản + km vượt mức + kg vượt mức) × giờ × thời tiết`, làm tròn lên một lần. Cơ bản 20.000đ/99 cent gồm 3 km và 3 kg; mỗi km vượt mức 4.000đ/20 cent; mỗi kg vượt mức 2.500đ/10 cent. Xem [cấu hình đã duyệt](docs/DISTANCE-WEIGHT-PRICING-PROPOSAL.md). Trang Pricing có đầy đủ VI/EN và công cụ minh họa có trọng lượng; Pricing minh họa dùng cấu hình đã duyệt; báo giá xác nhận lấy policy active tại server. Migration runner phát hành policy có version/audit và chạy lại an toàn. Provider trực tiếp cần GOOGLE_MAPS_API_KEY bật Routes/Geocoding và OPEN_METEO_API_KEY; chưa có key sẽ không giả lập báo giá thật.
+Bảng giá được duyệt ngày 05/11/2026, phạm vi TP. Hồ Chí Minh, tuyến dưới 40 km và hàng lớn hơn 0 đến 30 kg. Công thức hiện tại: `(cơ bản + km vượt mức + kg vượt mức) × giờ × thời tiết`, làm tròn lên một lần. Cơ bản 20.000đ/99 cent gồm 3 km và 3 kg; mỗi km vượt mức 4.000đ/20 cent; mỗi kg vượt mức 2.500đ/10 cent. Xem [cấu hình đã duyệt](docs/DISTANCE-WEIGHT-PRICING-PROPOSAL.md). Trang Pricing có đầy đủ VI/EN và công cụ minh họa có trọng lượng; Pricing minh họa dùng cấu hình đã duyệt; báo giá xác nhận lấy policy active tại server. Migration runner phát hành policy có version/audit và chạy lại an toàn. Provider trực tiếp cần GEOAPIFY_API_KEY cho reverse geocoding/routing xe máy và Open-Meteo thời tiết. Với đồ án, `OPEN_METEO_MODE="free"` không cần key thời tiết; chế độ `commercial` cần `OPEN_METEO_API_KEY`. Kiểm tra kết nối thời tiết bằng `php bin/weather-check.php`; không giả lập báo giá thật khi provider lỗi.
 
 Luồng Customer chính đã nối API thật qua server.js; payment SePay, refund ledger/đối soát, email queue và API Admin Người 1 đã có. SePay refund cần operator xử lý về phương thức gốc rồi đối soát chứng từ; chưa có tự động chuyển tiền refund Gateway. Shipper, chat/ticket/in-app/payout và một số view legacy vẫn cần Người 2/3 nối backend. Các thao tác demo không đại diện giao dịch thực.
 

@@ -53,6 +53,7 @@ function customerIcon(string $paths, int $size = 20): string {
 <?php /* Bootstrap 5.3 (CDN) chỉ nạp cho trang Customer, sau đó nạp lại customer.css để màu và bố cục SOMI đè lên Bootstrap. */ ?>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
 <link rel="stylesheet" href="<?= e(assetUrl('public/assets/css/modules/customer.css')) ?>">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <div class="c-app" data-customer-app>
   <header class="navbar c-top">
     <a class="navbar-brand c-brand" href="?page=customer&amp;view=dashboard" aria-label="SOMI, về trang tổng quan"><strong>SOMI</strong><span>DELIVERY</span></a>
@@ -100,7 +101,7 @@ function customerIcon(string $paths, int $size = 20): string {
     </div>
   </header>
 
-  <main class="c-main" id="c-main"<?= $liveCustomerView ? ' data-customer-server aria-busy="true"' : '' ?>>
+  <main data-geoapify-key="<?= e(getenv('GEOAPIFY_BROWSER_API_KEY') ?: '') ?>" class="c-main" id="c-main"<?= $liveCustomerView ? ' data-customer-server aria-busy="true"' : '' ?>>
     <div data-account-banner></div>
     <?php if ($customerView === 'dashboard'): ?>
   <?php if ($hasShipperWorkspace): ?>
@@ -149,6 +150,9 @@ function customerIcon(string $paths, int $size = 20): string {
 <script defer src="<?= e(assetUrl($asset . 'lang/en.js')) ?>"></script>
 <script defer src="<?= e(assetUrl($asset . 'i18n.js')) ?>"></script>
 <?php if ($liveCustomerView): ?>
+<script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script defer src="<?= e(assetUrl($asset . 'maps.js')) ?>"></script>
+<script defer src="<?= e(assetUrl($asset . 'places.js')) ?>"></script>
 <script defer src="<?= e(assetUrl($asset . 'server.js')) ?>"></script>
 <?php else: ?>
 <script defer src="<?= e(assetUrl($asset . 'store.js')) ?>"></script>

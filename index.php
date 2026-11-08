@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+define('SOMI_FRONT_CONTROLLER', true);
 
 // Only public assets and explicit API endpoints may bypass the front controller.
 $requestPath = rawurldecode((string) parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH));
@@ -20,8 +21,10 @@ if (PHP_SAPI === 'cli-server' && $requestPath !== '/') {
         exit('Not found');
     }
 }
-if (in_array($requestPath, ['/admin', '/admin/'], true)) {
-    $_GET['page'] = 'admin';
+if (preg_match('#/admin/?$#D', $requestPath)) {
+    $basePath = preg_replace('#/admin/?$#D', '', $requestPath);
+    header('Location: ' . $basePath . '/index.php?' . http_build_query(['page' => 'admin'] + $_GET), true, 303);
+    exit;
 }
 require_once __DIR__ . '/app/Services/SessionGuard.php';
 require_once __DIR__ . '/app/Services/RequestOrigin.php';
@@ -38,7 +41,7 @@ $shipperIdentityReviewStatus = null;
 $shipperRejectionReason = null;
 $pendingShipperApplications = [];
 $adminView = $_GET['view'] ?? 'index';
-if (!is_string($adminView) || !in_array($adminView, ['index','users','customers','shippers','orders','complaints','disputes','payments','reviews','notifications','audit-logs','backend'], true)) $adminView = 'index';
+if (!is_string($adminView) || !in_array($adminView, ['index','users','customers','shippers','orders','complaints','disputes','payments','reviews','notifications','audit-logs','backend','categories','policies','nationality','refunds','operations'], true)) $adminView = 'index';
 if (in_array($page, ['customer', 'shipper', 'admin'], true)) {
     session_set_cookie_params([
         'httponly' => true,
@@ -71,18 +74,6 @@ if (in_array($page, ['customer', 'shipper', 'admin'], true)) {
         $shipperVerificationStatus = $sessionUser['verification_status'];
         $shipperIdentityReviewStatus = $sessionUser['review_status'];
         $shipperRejectionReason = $sessionUser['rejection_reason'];
-    }
-    if ($page === 'admin' && $adminView === 'index') {
-        $pendingQuery = somi_db()->query(
-            "SELECT sp.user_id, u.full_name, u.email, sp.vehicle_type, sp.vehicle_registration,
-                    sp.verification_status, uid.review_status AS identity_review_status
-             FROM shipper_profiles sp
-             JOIN users u ON u.user_id = sp.user_id
-             LEFT JOIN user_identity_documents uid ON uid.user_id = sp.user_id
-             WHERE sp.verification_status IN ('PENDING', 'NEEDS_INFO')
-             ORDER BY sp.created_at ASC"
-        );
-        $pendingShipperApplications = $pendingQuery->fetchAll();
     }
     } catch (Throwable $error) {
         error_log('[SOMI workspace] '.get_class($error).' '.somi_database_diagnostic($error).' page='.$page);
@@ -136,6 +127,10 @@ function linkTo(string $page, array $params = []): string {
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <?php if ($page === 'admin'): ?>
+  <link rel="stylesheet" href="<?= e(assetUrl('public/assets/vendor/bootstrap/bootstrap.min.css')) ?>">
+  <script defer src="<?= e(assetUrl('public/assets/vendor/bootstrap/bootstrap.bundle.min.js')) ?>"></script>
+  <?php endif; ?>
   <link rel="stylesheet" href="<?= e(assetUrl('public/assets/css/app.css')) ?>">
   <?php if (in_array($page, ['shipper', 'admin'], true)): ?>
   <link rel="stylesheet" href="<?= e(assetUrl('public/assets/css/modules/' . $page . '.css')) ?>">
@@ -167,7 +162,7 @@ function linkTo(string $page, array $params = []): string {
     <?php require __DIR__ . '/app/Views/shipper/index.php'; ?>
   <?php endif; ?>
 <?php else: ?>
-  <?php require __DIR__ . '/app/Views/admin/' . $adminView . '.php'; ?>
+  <?php require __DIR__ . '/app/Views/admin/live.php'; ?>
 <?php endif; ?>
 <?php if ($page === 'shipper'): ?><script defer src="<?= e(assetUrl('public/assets/js/shipper-navigation.js')) ?>"></script><script defer src="<?= e(assetUrl('public/assets/js/shipper.js')) ?>"></script><?php endif; ?>
 </body>

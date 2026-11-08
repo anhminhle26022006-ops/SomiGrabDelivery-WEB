@@ -14,11 +14,17 @@ final class OpenMeteoWeatherService
         $this->mode=$mode??(getenv('OPEN_METEO_MODE')?:($this->key!==''?'commercial':'free'));
     }
     public function current(array $point, DateTimeImmutable $at, int $timeoutMs=8000): array {
+        $weather=$this->observe($point,$at,$timeoutMs);
+        if($weather['delivery_paused'])throw new DeliveryApiError(422,'WEATHER_SERVICE_PAUSED','New deliveries are temporarily paused due to unsafe weather.');
+        return $weather;
+    }
+    /** Observation for Admin visibility: dangerous weather is displayed, never hidden as an error. */
+    public function observe(array $point, DateTimeImmutable $at, int $timeoutMs=8000): array {
         $latitude=DeliveryInput::decimal($point['latitude']??null,'latitude',7,'-90','90');
         $longitude=DeliveryInput::decimal($point['longitude']??null,'longitude',7,'-180','180');
         if(!in_array($this->mode,['free','commercial'],true)||($this->mode==='commercial'&&$this->key==='')||preg_match('/[\r\n]/',$this->key))
             throw new DeliveryApiError(503,'PRICING_CONTEXT_UNAVAILABLE','Weather service is not configured.');
-        $params=['latitude'=>$latitude,'longitude'=>$longitude,'current'=>'weather_code','timezone'=>'GMT','timeformat'=>'unixtime'];
+        $params=['latitude'=>$latitude,'longitude'=>$longitude,'current'=>'weather_code,temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,wind_speed_10m','timezone'=>'GMT','timeformat'=>'unixtime'];
         $host='https://api.open-meteo.com/v1/forecast';
         if($this->mode==='commercial'){$host='https://customer-api.open-meteo.com/v1/forecast';$params['apikey']=$this->key;}
         try {
@@ -27,7 +33,11 @@ final class OpenMeteoWeatherService
         $code=$data['current']['weather_code']??null;$time=$data['current']['time']??null;
         if(isset($data['error'])||!is_int($code)||!is_int($time)||$at->getTimestamp()-$time>1800||$time>$at->getTimestamp()+60)
             throw new DeliveryApiError(503,'PRICING_CONTEXT_UNAVAILABLE','Weather service returned invalid or stale data.');
-        return ['weather_condition'=>self::condition($code),'weather_code'=>$code,'weather_observed_at'=>gmdate(DATE_ATOM,$time),'provider'=>'Open-Meteo'];
+        $paused=false;
+        try{$condition=self::condition($code);}catch(DeliveryApiError $e){if($e->errorCode!=='WEATHER_SERVICE_PAUSED')throw $e;$condition='UNSAFE';$paused=true;}
+        $number=static function(string $field)use($data):?float{$value=$data['current'][$field]??null;return (is_int($value)||is_float($value))&&is_finite((float)$value)?(float)$value:null;};
+        return ['weather_condition'=>$condition,'weather_code'=>$code,'weather_observed_at'=>gmdate(DATE_ATOM,$time),'provider'=>'Open-Meteo','delivery_paused'=>$paused,
+            'temperature_c'=>$number('temperature_2m'),'feels_like_c'=>$number('apparent_temperature'),'humidity_percent'=>$number('relative_humidity_2m'),'precipitation_mm'=>$number('precipitation'),'wind_kmh'=>$number('wind_speed_10m')];
     }
     public static function condition(int $code): string
     {

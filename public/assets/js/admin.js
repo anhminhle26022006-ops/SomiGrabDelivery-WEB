@@ -1,7 +1,7 @@
 /* Existing Admin preview controls. No API writes or generated business data. */
 (() => {
   "use strict";
-  if (document.body.dataset.page !== "admin") return;
+  if (document.body.dataset.page !== "admin" || document.querySelector("[data-admin-console]")) return;
   const rows = [...document.querySelectorAll(".users-table-card tbody tr")];
   let filter = "all";
   const search = document.querySelector(".search-box input");

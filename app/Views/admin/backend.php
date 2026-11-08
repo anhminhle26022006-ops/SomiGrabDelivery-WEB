@@ -1,3 +1,4 @@
+<?php require_once __DIR__.'/_entry.php'; ?>
 <header class="workspace-header">
   <a class="brand" href="?page=admin"><strong>SOMI</strong><span>ADMIN</span></a>
   <div class="header-actions">

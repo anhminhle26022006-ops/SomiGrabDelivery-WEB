@@ -6,7 +6,7 @@ const plain=cp.spawn('C:/xampp/php/php.exe',['-S','127.0.0.1:3062','-t',path.res
 const wait=ms=>new Promise(r=>setTimeout(r,ms));const base='http://127.0.0.1:3061';let checks=0;
 (async()=>{
  for(let i=0;i<60;i++){try{await fetch(base);break;}catch{await wait(100);}}
- for(const path of ['/public/api/admin/console.php?section=overview','/public/api/admin/console.php?section=accounts','/public/api/admin/console.php?section=tickets','/public/api/admin/console.php?section=chat&ticket_id=1']){const r=await fetch(base+path);assert.equal(r.status,401,path);checks++;}
+ for(const path of ['/public/api/admin/weather.php','/public/api/admin/console.php?section=overview','/public/api/admin/console.php?section=accounts','/public/api/admin/console.php?section=tickets','/public/api/admin/console.php?section=chat&ticket_id=1']){const r=await fetch(base+path);assert.equal(r.status,401,path);checks++;}
  let r=await fetch(base+'/public/api/admin/actions.php');assert.equal(r.status,405);checks++;
  r=await fetch(base+'/public/api/admin/actions.php',{method:'POST',headers:{'Content-Type':'application/json',Origin:'https://untrusted.example'},body:JSON.stringify({action:'CANCEL_ORDER',order_id:'1',reason:'fixture'})});assert.equal(r.status,403);checks++;
  r=await fetch(base+'/public/api/admin/actions.php',{method:'POST',headers:{'Content-Type':'application/json',Origin:base},body:JSON.stringify({action:'TICKET_STATUS',ticket_id:'1',status:'CLOSED',note:'fixture'})});assert.equal(r.status,401);checks++;

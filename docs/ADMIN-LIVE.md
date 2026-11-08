@@ -10,6 +10,7 @@ Chạy powershell -ExecutionPolicy Bypass -File scripts/start-local.ps1 để m�
 
 | Màn hình | Dữ liệu/thao tác |
 |---|---|
+| Thời tiết TP.HCM | Open-Meteo tại điểm tham chiếu trung tâm: nhiệt độ/cảm giác, độ ẩm, lượng mưa, gió, thời gian dữ liệu, cảnh báo thời tiết nguy hiểm; tải riêng không chặn dashboard, có nút cập nhật |
 | Tổng quan | Số tài khoản, đơn, đơn đang xử lý, KYC chờ duyệt, ticket mở, job lỗi; biểu đồ 7 ngày theo giờ Việt Nam; tiền đã thu tách VND/USD, trước hoàn tiền |
 | Tài khoản / Khách hàng / Shipper | Tìm theo tên/email/điện thoại, lọc trạng thái/role/KYC, phân trang 50 bản ghi, xem hồ sơ, khóa/mở có lý do và audit |
 | KYC | Xem metadata giấy tờ, phương tiện, điểm tin cậy; duyệt/từ chối/yêu cầu bổ sung qua AdminService hiện có |
@@ -24,6 +25,8 @@ Chạy powershell -ExecutionPolicy Bypass -File scripts/start-local.ps1 để m�
 | Quốc tịch | Duyệt/từ chối yêu cầu, bắt buộc ghi chú, dùng AdminService và audit hiện có |
 | Thông báo | Chỉ thông báo của Admin đang đăng nhập, đánh dấu đã đọc bằng API có owner check |
 | Audit / Email & tác vụ | Xem nhật ký và chi tiết before/after, lịch sử email không chứa nội dung mã hóa; retry chỉ job FAILED |
+
+Admin đã tích hợp Bootstrap 5.3.3 tự host tại public/assets/vendor/bootstrap (CSS + JS bundle, SHA-384 được kiểm tra, kèm MIT LICENSE). Bootstrap được nạp trước theme riêng, chỉ ở workspace Admin; áp dụng row/col responsive, card, btn, form-control/form-select/form-check-input, table/table-responsive, badge và alert. Giữ native dialog để bảo toàn focus trap và các biểu mẫu xác nhận.
 
 Giao diện hỗ trợ VI/EN, dùng language picker chung, sidebar luôn dọc bên trái theo giao diện gốc; thu gọn chiều rộng ở màn hình nhỏ và cuộn theo chiều dọc, đăng xuất nằm cuối sidebar, bảng cuộn ngang trong vùng riêng. Các thao tác thay đổi có biểu mẫu xác nhận và chống gửi lặp khi đang xử lý. CSV chỉ xuất trang hiện tại và chặn công thức bắt đầu bằng =,+,-,@,tab/CR.
 
@@ -48,7 +51,7 @@ Figma Make được cung cấp chỉ trả về source Customer, không có màn
 ## Kiểm tra đã chạy
 
 - php tests/admin_console.php: 37 checks với bảng TEMP và search_path pg_temp, pg_catalog; không sửa bảng ứng dụng, gửi email hoặc chuyển tiền thật.
-- node tests/admin_browser.cjs: 145 checks bằng browser fixtures, 15 màn hình × desktop/tablet/mobile (1440/768/375), cộng KYC, ticket transition, xác nhận hủy, lỗi permission, clone policy; không gọi mutation thật.
+- node tests/admin_browser.cjs: 237 checks bằng browser fixtures, 15 màn hình × desktop/tablet/mobile (1440/768/375), kiểm tra Bootstrap thật được nạp, class form/button, sidebar dọc ở mọi kích thước, cộng KYC, ticket transition, xác nhận hủy, lỗi permission, clone policy; không gọi mutation thật.
 - node tests/admin_http.cjs: 31 kiểm tra HTTP, gồm mở template trực tiếp, /admin và /admin/ không lặp chuyển hướng, CSS tải được, anonymous/method/origin, redirect đăng nhập, .env và đường dẫn tests không truy cập được qua production router.
 - php tests/admin_live_smoke.php: 6 nhóm truy vấn Admin đọc thành công trên Supabase thật, toàn bộ transaction rollback và không in dữ liệu cá nhân.
 - Kiểm tra PHP/JS syntax và git diff --check. Ảnh fixture dashboard/shippers được render và xem tại tests/.runtime/admin-live; thư mục runtime bị Git bỏ qua.
@@ -56,3 +59,5 @@ Figma Make được cung cấp chỉ trả về source Customer, không có màn
 Chạy PHP trên máy này bằng C:/xampp/php/php.exe -d extension=pdo_pgsql khi php chưa có trong PATH. Browser tests tự chạy Chrome/Edge headless bằng profile test riêng và server localhost, không dùng profile người dùng.
 
 Sửa đường mở Admin: /admin và /admin/ chuyển về front controller index.php trước khi kiểm tra phiên, tránh redirect ?page=auth bị ép lại Admin. Các template cũ có guard chuyển qua front controller khi chạy độc lập, không còn count() biến chưa khởi tạo. Server nền có log/PID trong tests/.runtime và không khởi động lại nếu cổng đã có dịch vụ.
+
+GET public/api/admin/weather.php: Admin + order.read_all, giới hạn 10 lần/phút/Admin, không giữ transaction khi gọi thời tiết. OpenMeteoWeatherService.observe cho phép Admin xem cả thời tiết nguy hiểm; current dùng cho báo giá vẫn trả WEATHER_SERVICE_PAUSED trong trường hợp đó. Thời tiết tại điểm tham chiếu không thay thế thời tiết từng điểm pickup.

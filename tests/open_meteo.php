@@ -8,7 +8,7 @@ final class WeatherFixture implements PricingHttpTransport {
  public array $requests=[];public int $age=900;public $code=61;public bool $broken=false;
  public function request(string $method,string $url,array $headers,?array $body,int $timeoutMs):array{
   $this->requests[]=compact('method','url','timeoutMs');if($this->broken)throw new RuntimeException('provider secret');
-  return ['current'=>['weather_code'=>$this->code,'time'=>time()-$this->age]];
+  return ['current'=>['weather_code'=>$this->code,'time'=>time()-$this->age,'temperature_2m'=>28.5,'apparent_temperature'=>31.2,'relative_humidity_2m'=>80,'precipitation'=>0.4,'wind_speed_10m'=>9.5]];
  }
 }
 $http=new WeatherFixture();$point=['latitude'=>'10.7','longitude'=>'106.7'];$now=new DateTimeImmutable('now');
@@ -24,4 +24,9 @@ rejects(fn()=>(new OpenMeteoWeatherService($http,'','bad'))->current($point,$now
 $http->age=1801;rejects(fn()=>$service->current($point,$now),'PRICING_CONTEXT_UNAVAILABLE');$http->age=-61;rejects(fn()=>$service->current($point,$now),'PRICING_CONTEXT_UNAVAILABLE');$http->age=0;
 $http->code=95;rejects(fn()=>$service->current($point,$now),'WEATHER_SERVICE_PAUSED');$http->code='61';rejects(fn()=>$service->current($point,$now),'PRICING_CONTEXT_UNAVAILABLE');$http->code=999;rejects(fn()=>$service->current($point,$now),'PRICING_CONTEXT_UNAVAILABLE');
 $http->broken=true;rejects(fn()=>$service->current($point,$now),'PRICING_CONTEXT_UNAVAILABLE');
+$http->broken=false;$http->age=0;$http->code=95;$observation=$service->observe($point,$now);
+check($observation['delivery_paused']===true&&$observation['weather_condition']==='UNSAFE','admin can inspect unsafe weather');
+check($observation['weather_code']===95,'unsafe code retained for display');
+check($observation['temperature_c']===28.5&&$observation['wind_kmh']===9.5,'display metrics returned');
+rejects(fn()=>$service->current($point,$now),'WEATHER_SERVICE_PAUSED');
 echo json_encode(['passed'=>$checks,'external_requests'=>0]).PHP_EOL;

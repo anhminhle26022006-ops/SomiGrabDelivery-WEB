@@ -2,6 +2,10 @@
 
 Cập nhật **06/11/2026**, theo bản phân công backend điều chỉnh người dùng cung cấp. Tài liệu này thay cách chia backend theo UI Customer/Shipper/Admin trước đây. Chi tiết checklist và bàn giao: [docs/BACKEND-SCOPE.md](docs/BACKEND-SCOPE.md).
 
+> Điều chỉnh theo yêu cầu trực tiếp ngày 09/11/2026: Người 1 tiếp quản module địa chỉ Customer/Google, cấu hình key và Autocomplete. Các mục Người 3 về địa chỉ/Google bên dưới mô tả phân công trước điều chỉnh; chat/ticket, notification và payout giữ owner cũ. Nhà cung cấp hiện hành chuyển sang Leaflet + Geoapify. Triển khai và bàn giao: [ADDRESS-GEOAPIFY-SETUP.md](docs/ADDRESS-GEOAPIFY-SETUP.md).
+
+> Theo yêu cầu Admin ngày 09/11/2026 trên MINH-ANH: Người 1 tích hợp giao diện quản trị thật, gồm API xử lý ticket/Admin chat có kiểm tra ticket + audit. Luồng Customer/Shipper tạo ticket/chat, GPS và payout giữ phần module tương ứng; bàn giao API tại [ADMIN-LIVE.md](docs/ADMIN-LIVE.md).
+
 ## Ownership hiện hành
 
 | Phạm vi | Chủ trì | Phối hợp và ranh giới |

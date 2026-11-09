@@ -25,6 +25,10 @@ final class OrderQuoteService
         $parcel['category_id'] = DeliveryInput::id($parcel['category_id'] ?? null, 'category_id');
         $this->requireCategory($parcel['category_id']);
         $parcel['weight_kg'] = DeliveryInput::decimal($parcel['weight_kg'] ?? null, 'weight_kg', 3, '0.001', '999999.999');
+        $limits = require __DIR__ . '/../Config/delivery-pricing.php';
+        if (bccomp($parcel['weight_kg'], $limits['max_weight_kg'], 3) > 0) {
+            throw new DeliveryApiError(422, 'WEIGHT_NOT_SUPPORTED', 'Parcel weight exceeds the supported motorcycle limit.');
+        }
         $parcel['description'] = DeliveryInput::text($parcel['description'] ?? null, 'description', 2000, false);
         foreach (['length_cm', 'width_cm', 'height_cm'] as $field) {
             $parcel[$field] = isset($parcel[$field]) ? DeliveryInput::decimal($parcel[$field], $field, 2, '0.01', '9999999.99') : null;
@@ -44,6 +48,9 @@ final class OrderQuoteService
             throw new DeliveryApiError(422, 'WEIGHT_NOT_SUPPORTED', 'Parcel weight exceeds the supported policy limit.');
         }
         $context = $this->context($this->provider->resolve($pickup, $delivery, $now), $now);
+        if (bccomp($context['distance_km'], $limits['max_distance_km'], 3) >= 0) {
+            throw new DeliveryApiError(422, 'OUTSIDE_SERVICE_AREA', 'Delivery route is outside the supported distance range.');
+        }
         if (isset($policy['max_distance_km']) && bccomp($context['distance_km'], (string) $policy['max_distance_km'], 3) >= 0) {
             throw new DeliveryApiError(422, 'OUTSIDE_SERVICE_AREA', 'Delivery route is outside the supported distance range.');
         }

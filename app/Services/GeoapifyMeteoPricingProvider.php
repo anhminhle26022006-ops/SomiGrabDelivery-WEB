@@ -27,9 +27,10 @@ final class GeoapifyMeteoPricingProvider implements PricingContextProvider
         $this->requireServiceArea($pickup, $delivery, $deadline);
         $query = http_build_query(['waypoints' => $pickup['latitude'] . ',' . $pickup['longitude'] . '|' . $delivery['latitude'] . ',' . $delivery['longitude'],
             'mode' => 'motorcycle', 'units' => 'metric', 'apiKey' => $this->geoapifyKey]);
-        $data = $this->http->request('GET', 'https://api.geoapify.com/v1/routing?' . $query, ['Accept: application/json'], null, $this->remaining($deadline));
-        if (isset($data['error'])) throw new DeliveryApiError(503, 'PRICING_CONTEXT_UNAVAILABLE', 'Routing is unavailable.');
-        if (empty($data['features'])) throw new DeliveryApiError(422, 'ROUTE_NOT_FOUND', 'No supported motorcycle route was found.');
+        $data = $this->request('routing', $query, $deadline);
+        if (!isset($data['features']) || !is_array($data['features'])) $this->unavailable();
+        if ($data['features'] === []) throw new DeliveryApiError(422, 'ROUTE_NOT_FOUND', 'No supported motorcycle route was found.');
+        if (!is_array($data['features'][0] ?? null) || !is_array($data['features'][0]['properties'] ?? null)) $this->unavailable();
         $route = $data['features'][0]['properties'] ?? [];
         $meters = $route['distance'] ?? null; $seconds = $route['time'] ?? null;
         if ((!is_int($meters) && !is_float($meters)) || !is_finite((float)$meters) || $meters < 0 ||
@@ -53,15 +54,31 @@ final class GeoapifyMeteoPricingProvider implements PricingContextProvider
     {
         foreach ([$pickup, $delivery] as $point) {
             $query = http_build_query(['lat' => $point['latitude'], 'lon' => $point['longitude'], 'lang' => 'en', 'format' => 'json', 'limit' => 1, 'apiKey' => $this->geoapifyKey]);
-            $data = $this->http->request('GET', 'https://api.geoapify.com/v1/geocode/reverse?' . $query, ['Accept: application/json'], null, $this->remaining($deadline));
+            $data = $this->request('geocode/reverse', $query, $deadline);
             if (!isset($data['results']) || !is_array($data['results'])) throw new DeliveryApiError(503, 'PRICING_CONTEXT_UNAVAILABLE', 'Service area verification is unavailable.');
-            $p = $data['results'][0] ?? [];
+            $p = $data['results'][0] ?? null;
+            if (!is_array($p) || !is_string($p['country_code'] ?? null) || !is_string($p['state'] ?? $p['city'] ?? null)) $this->unavailable();
             $city = $p['state'] ?? $p['city'] ?? '';
             if (strtolower($p['country_code'] ?? '') !== 'vn' || ($point['country_code'] ?? '') !== 'VN' ||
                 !in_array($city, ['Ho Chi Minh City', 'Ho Chi Minh', 'Hồ Chí Minh', 'Thành phố Hồ Chí Minh', 'Ho Chi Minh city'], true))
                 throw new DeliveryApiError(422, 'OUTSIDE_SERVICE_AREA', 'Pickup and delivery must both be within Ho Chi Minh City.');
 
         }
+    }
+    private function request(string $path, string $query, float $deadline): array
+    {
+        try {
+            $data = $this->http->request('GET', 'https://api.geoapify.com/v1/' . $path . '?' . $query, ['Accept: application/json'], null, $this->remaining($deadline));
+            if (isset($data['error'])) $this->unavailable();
+            return $data;
+        } catch (Throwable $error) {
+            // Provider exceptions may contain URLs or keys; expose only our stable error.
+            $this->unavailable();
+        }
+    }
+    private function unavailable(): void
+    {
+        throw new DeliveryApiError(503, 'PRICING_CONTEXT_UNAVAILABLE', 'Routing or service area verification is temporarily unavailable.');
     }
     private function remaining(float $deadline): int {
         $ms=(int)floor(($deadline-microtime(true))*1000);

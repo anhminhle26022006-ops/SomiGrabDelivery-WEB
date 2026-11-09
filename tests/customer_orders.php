@@ -78,6 +78,12 @@ try {
     $input = ['pickup' => ['saved_address_id' => $a['address_id'], 'contact_name' => 'Sender', 'contact_phone' => '0900000001'],
         'delivery' => ['address' => array_diff_key($address, ['is_default' => true]), 'contact_name' => 'Receiver', 'contact_phone' => '0900000002'],
         'parcel' => ['category_id' => 1, 'weight_kg' => '1.250'], 'customer_note' => 'Test only'];
+    $overweight = $input;
+    $overweight['parcel']['weight_kg'] = '30.001';
+    rejects(fn() => $quotes->create(1, $overweight), 'WEIGHT_NOT_SUPPORTED');
+    $provider->distance = '40.000';
+    rejects(fn() => $quotes->create(1, $input), 'OUTSIDE_SERVICE_AREA');
+    $provider->distance = '4.000';
     $quote = $quotes->create(1, $input);
     check($quote['snapshot']['components']['total_charge_minor'] === '102', 'exact ceiling of composed multipliers');
     check(OrderQuoteService::total('9007199254740993','1.0000','1.0000') === '9007199254740993', 'money beyond JS precision remains exact');
@@ -96,11 +102,17 @@ try {
     $db->exec('DELETE FROM time_price_bands WHERE multiplier = 2');
     $addresses->save(1, array_replace($address, ['address_detail' => 'Changed street']), (int) $a['address_id']);
     $addresses->archive(1, (int) $a['address_id']);
+    // A quote freezes the accepted price before creation, even if the policy changes.
+    $db->exec('UPDATE distance_price_bands SET amount_minor = 777 WHERE pricing_policy_id = 1');
     $created = $orders->create(1, $quote['quote_id'], 'test-create-0001');
     $id = (int) $created['order']['order_id'];
     check($created['created'] && $created['order']['status'] === 'PENDING_PAYMENT', 'initial unpaid order');
     check(str_contains($created['order']['pickup_address'], 'Test street') && !str_contains($created['order']['pickup_address'], 'Changed'), 'immutable address and contact snapshot');
-    $db->exec('UPDATE distance_price_bands SET amount_minor = 777 WHERE pricing_policy_id = 1');
+    check($created['order']['pricing_snapshot'] == $quote['snapshot'], 'entire accepted quote persists unchanged');
+    check((string) $created['order']['total_charge_minor'] === $quote['snapshot']['components']['total_charge_minor'], 'policy edit before create does not reprice quote');
+    check($created['order']['pickup_latitude'] === $quote['snapshot']['pickup']['latitude'] && $created['order']['sender_phone'] === '0900000001', 'coordinates and contacts are frozen');
+    check(!array_key_exists('request_key', $created['order']), 'detail does not expose idempotency key');
+    check(count($created['order']['status_history']) === 1 && $created['order']['status_history'][0]['old_status'] === null && $created['order']['status_history'][0]['new_status'] === 'PENDING_PAYMENT', 'initial timeline records unpaid creation');
     check((string) $orders->detail(1, $id)['total_charge_minor'] === '102', 'policy edits do not change existing order');
     check(!$orders->create(1, $quote['quote_id'], 'test-create-0001')['created'], 'create retry idempotent');
     rejects(fn() => $orders->create(1, $quote['quote_id'], 'test-create-0002'), 'QUOTE_ALREADY_USED');
@@ -119,6 +131,9 @@ try {
     check($orders->list(1, null, 1, null)['items'][0]['receiver_name'] === 'Receiver', 'list includes owned recipient name for search');
     check($orders->list(1, null, 1, null)['next_before_id'] === (string) $id2, 'keyset cursor');
     check((int) $orders->list(1, $id2, 1, null)['items'][0]['order_id'] === $id, 'keyset next page');
+    check($orders->list(1, $id, 1, null)['items'] === [] && $orders->list(1, $id, 1, null)['next_before_id'] === null, 'pagination stops without duplicates');
+    rejects(fn() => $orders->list(1, null, 101, null), 'VALIDATION_ERROR');
+    rejects(fn() => $orders->list(1, null, 20, 'NOT_A_STATUS'), 'VALIDATION_ERROR');
 
     $db->prepare("INSERT INTO payments (order_id, amount_minor,currency_code,method,status) VALUES (?,102,'VND','GATEWAY','PENDING')")->execute([$id]);
     $paymentId = (int) scalar($db, 'SELECT payment_id FROM payments WHERE order_id = ?', [$id]);
@@ -132,6 +147,11 @@ try {
     check(scalar($db, 'SELECT status FROM order_match_offers WHERE order_id = ?', [$id]) === 'CANCELLED', 'cancel invalidates pending offers');
     check((int) scalar($db, "SELECT count(*) FROM order_status_history WHERE order_id = ? AND new_status = 'CANCELLED'", [$id]) === 1, 'cancel retry creates one history entry');
     check((int) scalar($db, "SELECT count(*) FROM order_events WHERE order_id = ? AND event_type = 'RefundRequested'", [$id]) === 1, 'paid cancellation requests refund');
+    $cancelled = $orders->detail(1, $id);
+    check(array_column($cancelled['status_history'], 'new_status') === ['PENDING_PAYMENT','SEARCHING_SHIPPER','CANCELLED'], 'timeline is ordered from creation through cancellation');
+    check($cancelled['status_history'][2]['note'] === 'No longer needed', 'cancel retry preserves original reason');
+    check($cancelled['pricing_snapshot'] == $quote['snapshot'] && (string)$cancelled['total_charge_minor'] === '102', 'cancellation preserves original address and price snapshot');
+    check(count($orders->list(1, null, 20, 'CANCELLED')['items']) === 1, 'cancelled orders remain in filtered history');
     $orders->cancel(1, $id2, 'Before payment');
     $db->prepare("INSERT INTO payments (order_id,amount_minor,currency_code,method,status,paid_at) VALUES (?,?,'VND','CARD','PAID',now())")->execute([$id2, $o2['total_charge_minor']]);
     $late = (int) scalar($db, 'SELECT payment_id FROM payments WHERE order_id = ?', [$id2]);
@@ -144,6 +164,9 @@ try {
     $db->prepare('INSERT INTO order_assignments (order_id,shipper_id) VALUES (?,3)')->execute([$id3]);
     rejects(fn() => $orders->cancel(1, $id3, 'Test'), 'ORDER_NOT_CANCELLABLE');
     $db->prepare("UPDATE orders SET status = 'SHIPPER_ASSIGNED' WHERE order_id = ?")->execute([$id3]);
+    rejects(fn() => $orders->cancel(1, $id3, 'Test'), 'ORDER_NOT_CANCELLABLE');
+    check((int) scalar($db, "SELECT count(*) FROM order_status_history WHERE order_id=? AND new_status='CANCELLED'", [$id3]) === 0, 'rejected cancellation does not append history');
+    $db->prepare("UPDATE orders SET status = 'DELIVERED' WHERE order_id = ?")->execute([$id3]);
     rejects(fn() => $orders->cancel(1, $id3, 'Test'), 'ORDER_NOT_CANCELLABLE');
     $q4 = $quotes->create(1, $input);
     $db->exec("UPDATE parcel_categories SET restriction_type = 'PROHIBITED' WHERE category_id = 1");

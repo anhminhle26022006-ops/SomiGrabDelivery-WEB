@@ -12,7 +12,11 @@ delivery_run(['GET', 'POST'], $method === 'POST' ? 'order.create' : 'order.read_
         return [200, $service->list($owner, delivery_query_id('before_id', true), $limit, $status)];
     }
     $input = delivery_body();
-    if(($input['action']??null)==='cancel'){DeliveryInput::only($input,['action','order_id','reason']);return [200,['order'=>$service->cancel($owner,DeliveryInput::id($input['order_id']??null),DeliveryInput::text($input['reason']??null,'reason',500))]];}
+    if(($input['action']??null)==='cancel'){
+        AccessControl::requirePermission($db,$owner,'CUSTOMER','order.cancel_before_assignment');
+        DeliveryInput::only($input,['action','order_id','reason']);
+        return [200,['order'=>$service->cancel($owner,DeliveryInput::id($input['order_id']??null),DeliveryInput::text($input['reason']??null,'reason',500))]];
+    }
     DeliveryInput::only($input, ['quote_id']);
     $quoteId = DeliveryInput::text($input['quote_id'] ?? null, 'quote_id', 32);
     $key = DeliveryInput::text($_SERVER['HTTP_IDEMPOTENCY_KEY'] ?? null, 'Idempotency-Key', 100);

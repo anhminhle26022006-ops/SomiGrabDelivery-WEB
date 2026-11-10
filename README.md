@@ -1,5 +1,7 @@
 # SOMI Grab Delivery
 
+Người 3 (Minh Anh): chat/ticket, notification, private Storage tùy chọn, earnings và payout Admin chuyển khoản/đối soát: [API, cấu hình và bàn giao](docs/PERSON3-API.md). Chạy migration trước API mới; worker CLI riêng `bin/person3-worker.php`.
+
 > Update 06/11/2026: Person 1 payment/email/Admin APIs and live Customer flow are implemented. SePay is selected; USD checkout is disabled. Current contracts, setup, tests and live-provider limitations: [PERSON1-API.md](docs/PERSON1-API.md).
 
 

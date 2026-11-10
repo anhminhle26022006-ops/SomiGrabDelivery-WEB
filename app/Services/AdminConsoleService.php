@@ -54,7 +54,7 @@ final class AdminConsoleService
     public function tickets(int $admin,array $in):array{
         $this->guard($admin,'support.manage_all');$where='TRUE';$params=[];
         if(isset($in['id'])){
-            $id=DeliveryInput::id($in['id']);$ticket=$this->rows('SELECT t.*,o.order_code,u.full_name AS reporter_name FROM support_tickets t JOIN orders o USING(order_id) JOIN users u ON u.user_id=t.opened_by WHERE ticket_id=?',[$id])[0]??null;
+            $id=DeliveryInput::id($in['id']);$ticket=$this->rows('SELECT t.*,o.order_code,u.full_name AS reporter_name FROM support_tickets t LEFT JOIN orders o USING(order_id) JOIN users u ON u.user_id=t.opened_by WHERE ticket_id=?',[$id])[0]??null;
             if(!$ticket)throw new DeliveryApiError(404,'TICKET_NOT_FOUND','Ticket not found.');
             $ticket['events']=$this->rows('SELECT old_status,new_status,note,changed_by,created_at FROM support_ticket_events WHERE ticket_id=? ORDER BY ticket_event_id DESC LIMIT 100',[$id]);
             AuditService::record($this->db,$admin,'ADMIN','SUPPORT_TICKET_READ','SUPPORT_TICKET',$id);return ['ticket'=>$ticket];
@@ -62,7 +62,7 @@ final class AdminConsoleService
         if(!empty($in['status'])){if(!in_array($in['status'],['NEW','IN_PROGRESS','RESOLVED','CLOSED'],true))DeliveryInput::invalid('status');$where.=' AND t.status=?';$params[]=$in['status'];}
         if(!empty($in['q'])){$where.=' AND (t.ticket_code ILIKE ? OR t.subject ILIKE ? OR o.order_code ILIKE ?)';$q='%'.DeliveryInput::text($in['q'],'q',100).'%';array_push($params,$q,$q,$q);}
         if(isset($in['before_id'])){$where.=' AND t.ticket_id<?';$params[]=DeliveryInput::id($in['before_id']);}
-        return $this->page('SELECT t.ticket_id,t.ticket_code,t.order_id,t.category,t.subject,t.status,t.created_at,o.order_code,u.full_name AS reporter_name FROM support_tickets t JOIN orders o USING(order_id) JOIN users u ON u.user_id=t.opened_by WHERE '.$where.' ORDER BY t.ticket_id DESC',$params,'ticket_id');
+        return $this->page('SELECT t.ticket_id,t.ticket_code,t.order_id,t.category,t.subject,t.status,t.created_at,o.order_code,u.full_name AS reporter_name FROM support_tickets t LEFT JOIN orders o USING(order_id) JOIN users u ON u.user_id=t.opened_by WHERE '.$where.' ORDER BY t.ticket_id DESC',$params,'ticket_id');
     }
     public function ticketStatus(int $admin,array $in):array{
         $this->guard($admin,'support.manage_all');DeliveryInput::only($in,['ticket_id','status','note']);
@@ -80,6 +80,7 @@ final class AdminConsoleService
     public function chat(int $admin,int $ticketId):array{
         $this->guard($admin,'support.manage_all');$ticket=$this->rows('SELECT order_id FROM support_tickets WHERE ticket_id=?',[$ticketId])[0]??null;
         if(!$ticket)throw new DeliveryApiError(404,'TICKET_NOT_FOUND','Ticket not found.');
+        if(!$ticket['order_id'])throw new DeliveryApiError(409,'ORDER_TICKET_REQUIRED','Account tickets have no order conversation.');
         AccessControl::auditAdminChatRead($this->db,$admin,$ticketId,(int)$ticket['order_id']);
         return ['items'=>$this->rows("SELECT m.message_id,m.sender_id,u.full_name AS sender_name,m.message_type,m.body,m.sent_at FROM chat_messages m JOIN users u ON u.user_id=m.sender_id WHERE m.order_id=? AND m.deleted_at IS NULL AND m.delete_after>now() ORDER BY m.message_id DESC LIMIT 100",[$ticket['order_id']])];
     }

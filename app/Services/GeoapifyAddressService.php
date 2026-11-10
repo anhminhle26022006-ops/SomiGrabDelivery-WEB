@@ -49,7 +49,9 @@ final class GeoapifyAddressService
             if(!$feature)throw new DeliveryApiError(422,'ROUTE_NOT_FOUND','No motorcycle route found.');
             $geometry=$feature['geometry']??null;
             if(!is_array($geometry)||!in_array($geometry['type']??'', ['LineString','MultiLineString'],true)||!is_array($geometry['coordinates']??null))$this->unavailable();
-            return ['route'=>['type'=>'Feature','geometry'=>$geometry,'properties'=>[]]];
+            $meters=$feature['properties']['distance']??null;$seconds=$feature['properties']['time']??null;
+            if(!is_numeric($meters)||!is_numeric($seconds)||!is_finite((float)$meters)||!is_finite((float)$seconds)||(float)$meters<0||(float)$seconds<0||($feature['properties']['distance_units']??'meters')!=='meters'||($feature['properties']['time_units']??'seconds')!=='seconds')$this->unavailable();
+            return ['route'=>['type'=>'Feature','geometry'=>$geometry,'properties'=>[]],'distance_meters'=>number_format((float)$meters,3,'.',''),'duration_seconds'=>number_format((float)$seconds,3,'.',''),'provider'=>'Geoapify','mode'=>'motorcycle'];
         }
         DeliveryInput::invalid('action');
     }

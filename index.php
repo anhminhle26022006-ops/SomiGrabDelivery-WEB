@@ -122,7 +122,8 @@ function linkTo(string $page, array $params = []): string {
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#14284b">
-  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%2314284b'/%3E%3Ctext x='16' y='22' font-family='Arial' font-size='17' font-weight='700' fill='%23fff' text-anchor='middle'%3ES%3C/text%3E%3C/svg%3E">
+  <link rel="icon" type="image/x-icon" href="<?= e(assetUrl('public/assets/icons/favicon.ico')) ?>">
+  <link rel="icon" type="image/png" sizes="32x32" href="<?= e(assetUrl('public/assets/icons/favicon-32x32.png')) ?>">
   <title><?= e($pageTitles[$page]) ?></title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

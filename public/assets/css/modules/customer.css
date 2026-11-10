@@ -564,3 +564,55 @@ body[data-page="customer"] .modal-footer > * { margin: 0; }
 }
 
 .somi-leaflet-map { height: 280px; width: 100%; border-radius: 12px; margin-top: 12px; z-index: 0; }
+
+/* One shared map for pickup, delivery, and the customer's current location. */
+.c-create-layout { --bs-gutter-x: 24px; }
+.c-create-layout .c-address-pick { background: transparent; padding: 18px 0; border-radius: 0; }
+.c-create-layout .c-address-pick + .c-address-pick { margin-top: 6px; border-top: 1px solid var(--c-line); }
+.c-create-layout [data-create-form] { padding: 24px; }
+.c-create-layout .c-address-pick-head { flex-wrap: wrap; }
+.c-create-layout .c-address-pick-head .c-link { font-size: 12px; }
+.c-create-layout .c-current-location { display: flex; align-items: flex-start; gap: 12px; width: 100%; padding: 15px; border: 1px solid var(--c-line-2); border-radius: 12px; background: var(--c-blue-bg); color: var(--c-navy); text-align: left; }
+.c-current-location > span:last-child { min-width: 0; }
+.c-current-location strong, .c-current-location small, .c-current-location b { display: block; }
+.c-current-location strong { font-size: 14px; }
+.c-current-location small { margin: 4px 0 8px; color: var(--c-muted); overflow-wrap: anywhere; }
+.c-current-location b { font-size: 12px; }
+.c-current-location:disabled { opacity: .65; }
+.c-location-dot { display: inline-block; flex: none; width: 10px; height: 10px; margin: 5px; border-radius: 50%; background: #2877e3; box-shadow: 0 0 0 5px rgba(40,119,227,.14); }
+.c-create-map-tabs { display: flex; flex-wrap: wrap; gap: 8px; }
+.c-create-map-tabs .btn { padding: 8px 13px; font-size: 12px; }
+.c-create-map-tabs .btn[aria-pressed="true"] { background: var(--c-navy-soft); color: var(--c-navy); border-color: var(--c-navy); }
+.c-create-map-panel .somi-leaflet-map { height: 340px; background: var(--c-navy-soft); }
+.c-create-map-legend { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin: 14px 0 10px; font-size: 11px; color: var(--c-muted); }
+.c-create-map-legend > span { display: flex; align-items: center; gap: 4px; }
+.c-create-map-detail { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--c-line); }
+.c-create-map-detail p { margin: 7px 0 0; overflow-wrap: anywhere; }
+.c-route-use-location { width: 100%; margin: 4px 0 12px; white-space: normal; }
+.c-route-summary { display: grid; grid-template-columns: 1fr auto; gap: 3px 12px; align-items: baseline; padding: 16px; margin: 6px 0 12px; border-radius: 12px; background: var(--c-green-bg); color: var(--c-green); }
+.c-route-summary strong { font-size: 26px; line-height: 1.3; letter-spacing: -.03em; }
+.c-route-summary span { font-size: 13px; }
+.c-route-summary small { grid-column: 1 / -1; font-size: 12px; }
+.c-location-details { margin-top: 4px; font-size: 12px; color: var(--c-muted); }
+.c-location-details summary { cursor: pointer; }
+.c-pickup-distance { padding: 14px 16px; margin-top: 16px; border-radius: 10px; background: var(--c-amber-bg); color: var(--c-amber); font-size: 13px; }
+.c-pickup-confirm { width: min(490px, calc(100% - 32px)); max-height: calc(100% - 32px); overflow: auto; padding: 26px; border: 1px solid var(--c-line); border-radius: 18px; background: var(--c-surface); color: var(--c-text); box-shadow: 0 24px 90px rgba(20,40,75,.24); }
+.c-pickup-confirm::backdrop { background: rgba(16,33,60,.55); }
+.c-pickup-confirm h2 { margin: 0 0 14px; color: var(--c-navy); font-size: 21px; }
+.c-pickup-confirm-address { padding: 14px; margin: 16px 0; border-radius: 10px; background: var(--c-navy-soft); font-weight: 600; overflow-wrap: anywhere; }
+.c-pickup-confirm .c-actions { margin-top: 22px; }
+.c-pickup-confirm .c-actions .btn { flex: 1; min-width: 150px; white-space: normal; }
+.c-create-layout .somi-places { position: relative; z-index: 5; }
+.c-create-layout .somi-places .list-group { max-height: 260px; overflow-y: auto; }
+.c-create-layout .somi-places .list-group-item { white-space: normal; overflow-wrap: anywhere; }
+.somi-places .list-group:empty { display: none; }
+.somi-places .list-group:not(:empty) { border: 1px solid var(--c-line-2); border-radius: 12px; box-shadow: 0 8px 24px rgba(20,40,75,.12); overflow: hidden; background: var(--c-surface); }
+.somi-places .list-group-item { padding: 12px 14px; text-align: left; font-size: 14px; line-height: 1.5; }
+@media (max-width: 991px) {
+  .c-create-layout [data-create-form] { padding: 18px; }
+  .c-create-map-panel .somi-leaflet-map { height: 280px; }
+}
+@media (pointer: coarse) {
+  .c-create-layout .form-control, .c-create-layout .form-select { font-size: 16px; }
+  .c-current-location, .c-create-map-tabs .btn { min-height: 44px; }
+}

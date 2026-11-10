@@ -2,7 +2,7 @@
 <section class="c-head">
   <div>
     <h1>Gửi một kiện hàng</h1>
-    <p>Nhập điểm lấy, điểm giao và thông tin kiện hàng. Phí giao được tính ngay và chốt khi bạn xác nhận.</p>
+    <p>Chọn điểm lấy và điểm giao. Xem báo giá trước khi xác nhận đơn hàng.</p>
   </div>
 </section>
 
@@ -16,7 +16,7 @@
     <li><span>4. Xác nhận</span></li>
   </ol>
 
-  <div class="row g-4 align-items-start">
+  <div class="row g-4 align-items-start c-create-layout">
     <div class="col-lg-7"><form class="card card-body" data-create-form novalidate>
       <!-- Step 1: route -->
       <section data-step="1">
@@ -24,26 +24,29 @@
         <p class="c-panel-sub">Chọn nhanh từ sổ địa chỉ hoặc nhập địa chỉ mới.</p>
         <div class="c-address-pick" data-side="pickup">
           <div class="c-address-pick-head"><span class="c-stop-mark c-stop-a">A</span><strong>Điểm lấy hàng</strong><a class="c-link" href="?page=customer&amp;view=addresses">Quản lý sổ địa chỉ</a></div>
+          <button class="c-current-location" type="button" data-use-location><span class="c-location-dot" aria-hidden="true"></span><span><strong data-location-title>Vị trí hiện tại của bạn</strong><small data-current-location>Đang lấy vị trí…</small><b data-location-action>Dùng vị trí này làm điểm lấy →</b></span></button>
+          <p class="c-hint" data-location-status role="status" aria-live="polite"></p>
+          <div class="c-field"><label class="form-label" for="pickup-detail">Địa chỉ lấy hàng</label><input class="form-control" id="pickup-detail" name="pickup-detail" autocomplete="street-address" placeholder="Nhập địa chỉ lấy hàng, kể cả khi gửi hộ"></div>
           <div class="c-field"><label class="form-label" for="pickup-saved">Dùng địa chỉ đã lưu</label><select class="form-select" id="pickup-saved" data-saved></select></div>
           <div class="row g-3">
             <div class="c-field col-md-6"><label class="form-label" for="pickup-name">Người gửi</label><input class="form-control" id="pickup-name" name="pickup-name" autocomplete="name" placeholder="Họ và tên"></div>
             <div class="c-field col-md-6"><label class="form-label" for="pickup-phone">Số điện thoại</label><input class="form-control" id="pickup-phone" name="pickup-phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="0903 128 456"></div>
-            <div class="c-field col-12"><label class="form-label" for="pickup-detail">Số nhà, tên đường, phường</label><input class="form-control" id="pickup-detail" name="pickup-detail" autocomplete="street-address" placeholder="45 Phan Đăng Lưu, Phường 3"></div>
-            <div class="c-field col-md-6"><label class="form-label" for="pickup-area">Khu vực</label><select class="form-select" id="pickup-area" name="pickup-area" data-area></select></div>
+            <div class="c-field col-md-6" hidden><label class="form-label" for="pickup-area">Khu vực</label><select class="form-select" id="pickup-area" name="pickup-area" data-area></select></div>
             <label class="form-check c-check col-md-6" data-save-wrap hidden style="align-self:end;padding-bottom:12px"><input class="form-check-input" type="checkbox" name="pickup-save"> <span class="form-check-label">Lưu vào sổ địa chỉ</span></label>
           </div>
         </div>
         <div class="c-address-pick" data-side="delivery">
           <div class="c-address-pick-head"><span class="c-stop-mark c-stop-b">B</span><strong>Điểm giao hàng</strong></div>
+          <div class="c-field"><label class="form-label" for="delivery-detail">Địa chỉ giao hàng</label><input class="form-control" id="delivery-detail" name="delivery-detail" placeholder="Tìm và chọn địa chỉ người nhận"></div>
           <div class="c-field"><label class="form-label" for="delivery-saved">Dùng địa chỉ đã lưu</label><select class="form-select" id="delivery-saved" data-saved></select></div>
           <div class="row g-3">
             <div class="c-field col-md-6"><label class="form-label" for="delivery-name">Người nhận</label><input class="form-control" id="delivery-name" name="delivery-name" placeholder="Họ và tên người nhận"></div>
             <div class="c-field col-md-6"><label class="form-label" for="delivery-phone">Số điện thoại người nhận</label><input class="form-control" id="delivery-phone" name="delivery-phone" type="tel" inputmode="numeric" placeholder="0987 654 321"></div>
-            <div class="c-field col-12"><label class="form-label" for="delivery-detail">Số nhà, tên đường, phường</label><input class="form-control" id="delivery-detail" name="delivery-detail" placeholder="12 Nguyễn Văn Trỗi, Phường 11"></div>
-            <div class="c-field col-md-6"><label class="form-label" for="delivery-area">Khu vực</label><select class="form-select" id="delivery-area" name="delivery-area" data-area></select></div>
+            <div class="c-field col-md-6" hidden><label class="form-label" for="delivery-area">Khu vực</label><select class="form-select" id="delivery-area" name="delivery-area" data-area></select></div>
             <label class="form-check c-check col-md-6" data-save-wrap hidden style="align-self:end;padding-bottom:12px"><input class="form-check-input" type="checkbox" name="delivery-save"> <span class="form-check-label">Lưu vào sổ địa chỉ</span></label>
           </div>
         </div>
+        <div class="c-pickup-distance" data-pickup-distance hidden role="status" aria-live="polite"></div>
       </section>
 
       <!-- Step 2: package -->
@@ -87,6 +90,18 @@
       </div>
     </form></div>
 
-    <div class="col-lg-5 c-sticky"><aside class="card card-body c-dark c-quote" data-quote aria-live="polite"></aside></div>
+    <div class="col-lg-5 c-sticky c-create-sidebar">
+      <aside class="card card-body c-create-map-panel" data-create-map-panel>
+        <div class="c-create-map-tabs" role="group" aria-label="Chọn điểm trên bản đồ"><button class="btn btn-outline-dark" type="button" data-map-side="pickup" aria-pressed="true">A · Điểm lấy</button><button class="btn btn-outline-dark" type="button" data-map-side="delivery" aria-pressed="false">B · Điểm giao</button></div>
+        <div class="somi-leaflet-map" data-create-map></div>
+        <div class="c-create-map-legend"><span><i class="c-location-dot" aria-hidden="true"></i><span data-user-location-label>Vị trí của bạn</span></span><span data-pickup-label>A · Điểm lấy</span><span data-delivery-label>B · Điểm giao</span></div>
+        <button class="btn btn-outline-dark c-route-use-location" type="button" data-map-use-location hidden>Dùng vị trí hiện tại làm điểm lấy A</button>
+        <div class="c-route-summary" data-route-summary hidden aria-live="polite"><strong data-route-distance></strong><span data-route-duration></span><small data-route-summary-label>Tuyến xe máy A → B</small></div>
+        <p class="c-hint" data-route-status role="status" aria-live="polite"></p>
+        <div class="c-create-map-detail"><strong data-active-point-title>Điểm lấy hàng</strong><p data-active-point-address>Chọn địa chỉ để xác định điểm lấy.</p><p class="c-hint" data-map-pick-hint>Nhấn trên bản đồ để điều chỉnh vị trí đã chọn.</p></div>
+      </aside>
+      <aside class="card card-body c-dark c-quote" data-quote aria-live="polite" hidden></aside>
+    </div>
   </div>
+  <dialog class="c-pickup-confirm" data-pickup-confirm aria-labelledby="pickup-confirm-title"><h2 id="pickup-confirm-title">Điểm lấy hàng khác vị trí của bạn</h2><p data-pickup-confirm-message></p><div class="c-pickup-confirm-address" data-pickup-confirm-address></div><p data-pickup-confirm-question>Bạn đang tạo đơn hộ hoặc muốn shipper lấy hàng tại địa chỉ này?</p><div class="c-actions"><button class="btn btn-outline-dark" type="button" data-pickup-cancel>Kiểm tra lại địa chỉ</button><button class="btn btn-dark" type="button" data-pickup-accept>Đúng, lấy tại địa chỉ này</button></div></dialog>
 </div>

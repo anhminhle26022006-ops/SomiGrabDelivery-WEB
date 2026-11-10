@@ -153,6 +153,7 @@ function customerIcon(string $paths, int $size = 20): string {
 <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script defer src="<?= e(assetUrl($asset . 'maps.js')) ?>"></script>
 <script defer src="<?= e(assetUrl($asset . 'places.js')) ?>"></script>
+<?php if ($customerView === 'create'): ?><script defer src="<?= e(assetUrl($asset . 'create-route.js')) ?>"></script><?php endif; ?>
 <script defer src="<?= e(assetUrl($asset . 'server.js')) ?>"></script>
 <?php else: ?>
 <script defer src="<?= e(assetUrl($asset . 'store.js')) ?>"></script>

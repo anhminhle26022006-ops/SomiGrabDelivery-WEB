@@ -30,6 +30,8 @@ if(!isset($adminSections[$liveView]))$liveView='index';
    <div class="admin-heading"><div><span class="subtitle">SOMI OPERATIONS</span><h1 data-admin-vi="<?= e($adminSections[$liveView][0]) ?>" data-admin-en="<?= e($adminSections[$liveView][1]) ?>"><?= e($adminSections[$liveView][0]) ?></h1><p class="admin-muted" data-admin-vi="Quản lý hoạt động giao hàng từ dữ liệu hệ thống." data-admin-en="Manage delivery operations using live system data.">Quản lý hoạt động giao hàng từ dữ liệu hệ thống.</p></div><button type="button" class="btn btn-outline-secondary admin-btn" data-admin-refresh><i class="fa-solid fa-rotate" aria-hidden="true"></i><span data-admin-vi="Làm mới" data-admin-en="Refresh">Làm mới</span></button></div>
    <div data-admin-status role="status" aria-live="polite"></div>
    <section data-admin-content aria-busy="true"><p data-admin-vi="Đang tải dữ liệu…" data-admin-en="Loading data…">Đang tải dữ liệu…</p></section>
+   <?php if ($liveView==='payments') require __DIR__.'/payout-panel.php'; ?>
+   <?php if ($liveView==='operations') require __DIR__.'/person3-operations.php'; ?>
   </div>
  </main>
  <dialog class="admin-dialog" data-admin-dialog aria-labelledby="admin-dialog-title"><div class="admin-dialog-head"><h2 id="admin-dialog-title"></h2><button type="button" class="btn btn-outline-secondary admin-btn" data-dialog-close aria-label="Close">×</button></div><div data-dialog-body></div></dialog>

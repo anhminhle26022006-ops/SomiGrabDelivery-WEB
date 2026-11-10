@@ -4,8 +4,8 @@
 FROM php:8.3-fpm
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends apache2 libpq-dev libcurl4-openssl-dev libonig-dev \
-    && docker-php-ext-install pdo_pgsql curl mbstring bcmath opcache \
+    && apt-get install -y --no-install-recommends apache2 supervisor libpq-dev libcurl4-openssl-dev libonig-dev \
+    && docker-php-ext-install pdo_pgsql curl mbstring bcmath opcache pcntl \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /var/www/html/index.html
 
@@ -24,6 +24,7 @@ RUN a2dismod -f mpm_prefork >/dev/null 2>&1 || true; \
     && ln -sfT /dev/stderr /var/log/apache2/error.log
 
 COPY docker/start.sh /usr/local/bin/somi-start
+COPY docker/supervisord.conf /etc/supervisor/somi.conf
 RUN sed -i 's/\r$//' /usr/local/bin/somi-start && chmod +x /usr/local/bin/somi-start
 
 # Concurrent PHP worker limit per container. Budget across replicas and DB tools.
@@ -37,5 +38,5 @@ COPY . /var/www/html/
 RUN chown -R www-data:www-data /var/www/html
 
 EXPOSE 80
-STOPSIGNAL SIGWINCH
+STOPSIGNAL SIGTERM
 CMD ["somi-start"]

@@ -28,6 +28,7 @@ final class EmailService
         $titles=[
             'VERIFY_EMAIL'=>['Mã xác minh email SOMI','Your SOMI email verification code'],
             'RESET_PASSWORD'=>['Đặt lại mật khẩu SOMI','Reset your SOMI password'],
+            'BANK_ACCOUNT_CHANGE'=>['Xác nhận tài khoản nhận tiền SOMI','Confirm your SOMI payout account'],
             'OrderCreated'=>['Đã tạo đơn SOMI','SOMI order created'],
             'PaymentConfirmed'=>['Thanh toán đã được xác nhận','Payment confirmed'],
             'OrderCancelled'=>['Đơn hàng đã hủy','Order cancelled'],
@@ -40,6 +41,7 @@ final class EmailService
         $subject=$titles[$template][$vi?0:1];
         if($template==='VERIFY_EMAIL')$text=$vi?'Mã xác minh SOMI: '.($v['code']??'').'. Có hiệu lực trong 5 phút.':'Your SOMI verification code: '.($v['code']??'').'. Expires in 5 minutes.';
         elseif($template==='RESET_PASSWORD')$text=$vi?'Đặt lại mật khẩu SOMI: '.($v['url']??'')."\nLiên kết có hiệu lực trong 30 phút.":'Reset your SOMI password: '.($v['url']??'')."\nThis link expires in 30 minutes.";
+        elseif($template==='BANK_ACCOUNT_CHANGE')$text=($vi?'Mã xác nhận thay tài khoản nhận tiền kết thúc bằng ':'Confirmation code for payout account ending ').($v['last_four']??'').': '.($v['code']??'').($vi?'. Hết hạn trong 5 phút. Không chia sẻ mã này.':'. Expires in 5 minutes. Do not share this code.');
         else $text=$subject.($code!==''?' — '.$code:'')."\n".($vi?'Xem chi tiết trong tài khoản SOMI của bạn.':'View the details in your SOMI account.');
         return [$subject,$text];
     }

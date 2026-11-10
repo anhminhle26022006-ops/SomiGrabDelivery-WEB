@@ -1,6 +1,7 @@
 "use strict";
-// Offer và trạng thái nhận đơn đã chuyển sang API thật: xem shipper-offers.js.
-// File này còn giữ phần chưa nối backend và các tiện ích giao diện dùng chung.
+// Offer, trạng thái nhận đơn, đơn đang giao và lịch sử đã chuyển sang API thật:
+// xem shipper-offers.js và shipper-active.js. File này chỉ còn phần chưa có backend
+// (thông báo, chat, hỗ trợ) và các tiện ích giao diện dùng chung.
 
 const notices=[
  {id:1,kind:'orders',icon:'▣',tone:'',title:'Có đơn giao mới phù hợp với bạn',desc:'Phú Nhuận → Quận 3 · Thu nhập dự kiến 38.000 ₫',time:'5 phút trước',unread:true,target:'offers'},
@@ -17,7 +18,6 @@ function filterNotices(type){document.querySelectorAll('[data-notice-filter]').f
 function openNotice(id){let n=notices.find(x=>x.id===id);if(!n)return;n.unread=false;renderNotices();if(n.target==='profile'){go('account')}else if(n.target==='policy'){openProfile();toast('Chính sách & điều khoản nằm trong menu avatar')}else go(n.target); }
 
 function closeOrderDetail(){document.getElementById('orderDetailModal')?.classList.add('hidden')}
-function renderHistory(filter){document.querySelectorAll('[data-history-filter]').forEach(b=>b.classList.toggle('selected',b.dataset.historyFilter===filter));let rows=[{id:'SOMI-240126',time:'12/10/2026 14:05',route:'Phú Nhuận → Quận 3',pay:42000,status:'done'},{id:'SOMI-240125',time:'11/10/2026 16:20',route:'Quận 7 → Quận 4',pay:40000,status:'done'},{id:'SOMI-240124',time:'11/10/2026 14:05',route:'Tân Bình → Phú Nhuận',pay:35000,status:'done'},{id:'SOMI-240123',time:'11/10/2026 10:30',route:'Quận 3 → Quận 1',pay:28000,status:'done'},{id:'SOMI-240122',time:'10/10/2026 17:30',route:'Quận 1 → Quận 4',pay:0,status:'cancel'}].filter(r=>filter==='all'||r.status===filter);const target=document.getElementById('historyRows');if(target)target.innerHTML=rows.map(r=>`<tr><td><b>${r.id}</b></td><td>${r.time}</td><td>${r.route}</td><td>${money(r.pay)}</td><td><span class="${r.status==='done'?'statusdone':'tag'}">${r.status==='done'?'Hoàn thành':'Đã hủy'}</span></td></tr>`).join('')}
 function toast(s){let el=document.getElementById('toast');el.textContent=s;el.style.display='block';clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>el.style.display='none',2800)}
 function demoAction(s){toast(s+' — thao tác minh họa trong demo HTML.')}
 function showSupport(){document.getElementById('supportPanel').classList.remove('hidden');document.getElementById('supportPanel').scrollIntoView({behavior:'smooth',block:'nearest'});}
@@ -32,17 +32,11 @@ document.addEventListener('click',e=>{if(!e.target.closest('.profile')){document
 document.getElementById('avatarUpload')?.addEventListener('change',e=>{let f=e.target.files[0];if(!f)return;if(!f.type.startsWith('image/')){toast('Vui lòng chọn file hình ảnh.');return}let reader=new FileReader();reader.onload=ev=>{document.getElementById('avatar').innerHTML=`<img src="${ev.target.result}" alt="Ảnh đại diện">`;document.getElementById('accountAvatar').innerHTML=`<img src="${ev.target.result}" alt="Ảnh đại diện">`;toast('Đã cập nhật ảnh đại diện trong bản demo. Ảnh chưa được lưu lên máy chủ.');};reader.readAsDataURL(f)});
 document.querySelectorAll('[data-profile-action]').forEach(b=>b.addEventListener('click',()=>{let action=b.dataset.profileAction;let actions={account:'Tài khoản & hồ sơ',support:'Trung tâm hỗ trợ',policy:'Chính sách & điều khoản',logout:'Đăng xuất'};document.getElementById('profileDropdown').classList.remove('open');if(action==='account'){go('account');return}toast('Mở mục '+actions[action]+' — màn hình minh họa.')})); 
 document.querySelectorAll('[data-notice-filter]').forEach(b=>b.addEventListener('click',()=>filterNotices(b.dataset.noticeFilter)));
-document.querySelectorAll('[data-history-filter]').forEach(b=>b.addEventListener('click',()=>renderHistory(b.dataset.historyFilter)));
 document.getElementById('markAll')?.addEventListener('click',()=>{notices.forEach(n=>n.unread=false);renderNotices();toast('Đã đánh dấu tất cả thông báo là đã đọc.')});
-function updateActiveProgress(step, terminal=false){const steps=document.querySelectorAll('#activeProgress .step');steps.forEach((s,i)=>{s.classList.toggle('done',i<step);s.classList.toggle('current',i===step&&!terminal);s.querySelector('.stepnum').textContent=i<step?'✓':i+1});}
 function openContactChat(){document.getElementById('contactModal').classList.remove('hidden');}
 function closeContactChat(){document.getElementById('contactModal').classList.add('hidden');}
-document.getElementById('arrivedBtn')?.addEventListener('click',()=>{document.getElementById('arrivalPanel').classList.remove('hidden');document.getElementById('arrivedBtn').textContent='Đã đến nơi ✓';document.getElementById('arrivedBtn').disabled=true;document.getElementById('progressHelp').textContent='Đã ghi nhận đến nơi. Chọn kết quả bàn giao bên dưới.';updateActiveProgress(3);toast('Đã ghi nhận đến điểm giao (demo).');});
-document.getElementById('deliveredBtn')?.addEventListener('click',()=>{const gross=42000, fee=Math.round(gross*.1), net=gross-fee;updateActiveProgress(4,true);document.getElementById('progressHelp').textContent='Đã giao thành công. '+money(net)+' thực nhận (sau phí sàn demo 10%) được chuyển tự động vào tài khoản.';document.getElementById('deliveredBtn').disabled=true;document.getElementById('deliveredBtn').textContent='✓ Đã ghi nhận giao thành công';toast(`Giao thành công · Phí sàn ${money(fee)} · Thực nhận ${money(net)} (demo).`);});
-document.getElementById('failedBtn')?.addEventListener('click',()=>document.getElementById('failedOptions').classList.toggle('hidden'));
-document.getElementById('submitFailure')?.addEventListener('click',()=>{const sel=document.getElementById('failureReason');const labels={no_answer:'Không liên lạc được với người nhận',refused:'Người nhận từ chối nhận hàng',wrong_address:'Sai địa chỉ / không tìm thấy địa chỉ',recipient_absent:'Người nhận vắng mặt',package_issue:'Sự cố với hàng hóa / bao bì',other:'Lý do khác'};const label=labels[sel.value];document.getElementById('progressHelp').textContent='Đã ghi nhận: '+label+'. Đơn cần được Admin/điều phối hướng dẫn bước tiếp theo; không tự đánh dấu giao thành công.';document.getElementById('failedOptions').classList.add('hidden');document.getElementById('failedBtn').textContent='Sự cố đã ghi nhận ✓';document.getElementById('supportPanel').classList.remove('hidden');toast('Đã ghi nhận sự cố giao hàng (demo). Liên hệ Admin để xử lý tiếp.');});
 
-renderNotices();renderHistory('all');
+renderNotices();
 
 // Keep inline actions callable even if deployment wraps scripts differently.
 Object.assign(window,{closeOrderDetail,openNotice,demoAction,showSupport,openProfile,openContactChat,closeContactChat,toast});

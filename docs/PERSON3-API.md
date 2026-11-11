@@ -73,9 +73,9 @@ Giữ `customer/places.php` (search/reverse), `customer/addresses.php` (CRUD/def
 
 `python tests/person3_http.py`: khởi động/dừng PHP trên loopback, kiểm tra 401/403/405; không đăng nhập hoặc ghi DB. Đặt SOMI_TEST_PHP nếu PHP không nằm tại C:/xampp/php/php.exe.
 
-Kết quả kiểm tra workspace 11/11/2026: 112 backend Người 3, 15 Chrome fixture, 24 HTTP và 23 kiểm tra Storage multipart thật (local); hồi quy 37 Admin và 74 Người 1 đạt. Kiểm tra Geoapify autocomplete/maps và auth frontend hiện có cũng đạt. PHP/JS thay đổi không có lỗi cú pháp; git diff --check đạt. Kết quả không thay thế nghiệm thu hosting/provider thật.
+Kết quả rà soát workspace 12/11/2026: 122 backend Người 3, 24 Chrome fixture, 24 HTTP và 23 kiểm tra Storage multipart thật (local); hồi quy 37 Admin và 74 Người 1 đạt. Kiểm tra Geoapify autocomplete/maps và auth frontend hiện có cũng đạt. PHP/JS thay đổi không có lỗi cú pháp; git diff --check đạt. Kết quả không thay thế nghiệm thu hosting/provider thật.
 
-Chưa áp dụng migration thật hoặc gửi tiền/file lên hosting. Nghiệm thu thực tế phải chạy sau migration, cấu hình volume, scheduler, policy và phối hợp Người 2. Không dùng kết quả fixture để khẳng định chuyển tiền hoặc upload thật đã nghiệm thu.
+Ba migration đã áp dụng trên DB được cấu hình; đã thử PDF mẫu trên Supabase private rồi xóa. Chưa nghiệm thu OTP, chuyển tiền và toàn bộ luồng qua website Render sau đăng nhập. Nghiệm thu thực tế phải chạy sau migration, cấu hình volume, scheduler, policy và phối hợp Người 2. Không dùng kết quả fixture để khẳng định chuyển tiền hoặc upload thật đã nghiệm thu.
 
 ## API hoàn thiện thêm ngày 11/11/2026
 
@@ -100,3 +100,52 @@ Kiểm thử upload thật (local, không phải hosting): `python tests/person3
 `GET admin/person3-jobs.php?before_id=` trả metadata lỗi theo event, không lộ payload. ADMIN cần `person3.manage_jobs`. `POST {event_id,reason}` đưa FAILED về PENDING, ghi audit; gọi lại khi DONE/PENDING không tạo công việc trùng. Worker backoff 30 giây tăng dần đến 1 giờ, tối đa 8 lần rồi FAILED, không chặn sự kiện tiếp theo. KYC retention lấy mốc quyết định APPROVED/REJECTED từ audit, không dùng thời điểm sửa hồ sơ về sau.
 
 Đặc tả import được: [person3-openapi.json](person3-openapi.json), OpenAPI 3.1. Unsafe requests yêu cầu same-origin; JSON write mặc định 64 KiB; file multipart tối đa 5 MiB (hosting cần upload_max_filesize/post_max_size phù hợp). Phiên workspace Admin và user được tách quyền ở API kernel, mọi ID từ browser đều phải kiểm quyền lại.
+
+## Supabase Storage — bổ sung
+
+Kiểm tra trực tiếp bằng transaction chỉ đọc xác nhận SOMI_DB_* đang kết nối PostgreSQL Supabase. Project có schema storage, nhưng chưa có bucket tại thời điểm kiểm tra. Không cần tạo lại database/project.
+
+Adapter mới hỗ trợ bucket private Supabase qua REST; quyền tải vẫn kiểm ở SOMI và liên kết tải có chữ ký, ràng buộc user. Secret/service-role key chỉ ở PHP backend; trình duyệt không nhận khóa hoặc đường dẫn public. New sb_secret keys dùng header apikey, JWT service_role cũ thêm Bearer theo tài liệu Supabase.
+
+Cấu hình trên Render:
+
+```dotenv
+SOMI_STORAGE_DRIVER=supabase
+SUPABASE_URL=https://<project-ref>.supabase.co
+SUPABASE_SECRET_KEY=<server-secret-key>
+# Hoặc SUPABASE_SERVICE_ROLE_KEY=<legacy-service-role-jwt>
+SUPABASE_STORAGE_BUCKET=somi-private
+```
+
+Không dùng mật khẩu SOMI_DB_PASSWORD thay cho API key. Không gửi khóa bí mật vào chat hay commit .env. Kết nối PostgreSQL và API Storage là hai cơ chế xác thực khác nhau trong cùng project.
+
+Lệnh khởi tạo/check bucket (CLI server có cấu hình):
+
+```bash
+php database/migrate-customer-orders.php --apply
+php bin/supabase-storage.php --init
+php bin/person3-check.php
+```
+
+Migration 20261111_person3_supabase thêm storage_backend/storage_bucket, giữ file cũ ở local. Adapter không tự di chuyển file cũ; backend/bucket theo từng file được giữ khi đổi driver. Bucket có public=true bị từ chối, không tự thay đổi quyền bucket hiện có. Bucket mới tạo private, giới hạn 5 MiB và MIME whitelist. Với Supabase Storage không cần persistent disk Render cho các upload mới. Worker retention xóa object Supabase qua API rồi đánh dấu metadata. Cleanup orphan filesystem chỉ áp dụng local.
+
+Nguồn: [API keys](https://supabase.com/docs/guides/getting-started/api-keys), [Private downloads](https://supabase.com/docs/guides/storage/serving/downloads), [Storage API](https://supabase.com/docs/reference/self-hosting-storage/v1/upload-a-new-object).
+
+Kiểm thử adapter: `php tests/supabase_storage.php` dùng transport giả, không gửi request thật. Kiểm thử backend có thêm trường hợp kiểm quyền/checksum/retention cho file Supabase qua transport giả. Không dùng kết quả fixture thay cho nghiệm thu bucket thật khi chưa có API credentials.
+
+Kết quả adapter mới: 117 backend fixture, 13 Supabase transport fixture và 23 multipart local đạt. Migration 20261111_person3_supabase đã áp dụng trên DB cấu hình; chưa nghiệm thu bucket Supabase thật khi thiếu API credentials trong tiến trình local.
+
+## Xác minh Storage thật sau khi bổ sung credentials
+
+- SUPABASE_URL và server secret key đã được tiến trình PHP local đọc thành công; không hiển thị/commit giá trị khóa.
+- Đã tạo bucket somi-private ở chế độ private, giới hạn 5 MiB và whitelist MIME.
+- Local chọn SOMI_STORAGE_DRIVER=supabase, SUPABASE_STORAGE_BUCKET=somi-private; person3-check.php trả ready:true, supabase_private_bucket:true.
+- Thử trên Supabase thật bằng PDF tự sinh không có dữ liệu cá nhân: upload, download có xác thực, checksum và xóa đúng file test đều đạt.
+- Đã sửa tương thích REST: bucket không tồn tại có thể trả HTTP400/statusCode404; DELETE không có body không gửi Content-Type application/json. 14 kiểm tra adapter fixture đạt.
+- Chưa xác minh Render đã nhận cấu hình driver/key/bucket và bản code sửa mới; các thay đổi local này chưa tự xuất hiện trên Render.
+
+## Rà soát phát hành 12/11/2026
+
+Đã siết riêng tư file chat draft (không liệt kê/tải bởi Admin trước khi gửi), gom truy vấn metadata đính kèm theo batch và giữ nguyên ký tự mật khẩu khi xác nhận đổi ngân hàng. Hồi quy: 122 backend, 24 browser, 24 HTTP, 23 multipart local, 14 Supabase adapter; Admin 37 và Người 1 74 đạt.
+
+Dùng `scripts/test-person3.ps1` để chạy bộ kiểm tra theo PHP XAMPP, tự bật driver PostgreSQL khi cần; truyền -NodeModules cho thư viện Playwright. Source/fixture đã kiểm tra không thay thế nghiệm thu có đăng nhập, worker Render và giao dịch thật. Bản trạng thái hiện hành: MINH-ANH-STATUS.md; các đoạn ghi kết quả ngày trước chỉ là lịch sử.

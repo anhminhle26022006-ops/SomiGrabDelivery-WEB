@@ -4,7 +4,7 @@ set -e
 if [ "${SOMI_MIGRATE_ON_START:-0}" = "1" ]; then
     php /var/www/html/database/migrate-customer-orders.php --apply
 fi
-if [ -n "${SOMI_STORAGE_ROOT:-}" ]; then
+if [ "${SOMI_STORAGE_DRIVER:-local}" = "local" ] && [ -n "${SOMI_STORAGE_ROOT:-}" ]; then
     php /var/www/html/bin/storage-init.php
 fi
 php-fpm --test >/dev/null

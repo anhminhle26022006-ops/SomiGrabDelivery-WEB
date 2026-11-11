@@ -11,6 +11,8 @@ require_once __DIR__.'/../app/Services/AdminPolicyService.php';
 require_once __DIR__.'/../app/Services/Person1Worker.php';
 require_once __DIR__.'/../app/Services/AuthRateLimiter.php';
 $checks=0;
+// Never let a developer's live Storage configuration select an external transport in fixtures.
+putenv('SOMI_STORAGE_DRIVER=local');
 function check(bool $ok,string $label):void{global $checks;$checks++;if(!$ok)throw new RuntimeException('FAILED: '.$label);}
 function value(PDO $db,string $sql,array $args=[]){$q=$db->prepare($sql);$q->execute($args);return $q->fetchColumn();}
 function tx(PDO $db,callable $fn){$db->beginTransaction();try{$r=$fn();$db->commit();return $r;}catch(Throwable $e){$db->rollBack();throw $e;}}
@@ -28,7 +30,7 @@ try{
     $sql=preg_replace('/^BEGIN;\s*|^COMMIT;\s*|^CREATE SCHEMA[^;]+;\s*|^SET search_path[^;]+;\s*/m','',$sql);
     $sql=preg_replace('/CREATE FUNCTION erase_identity_document_on_account_close\(\).*?(?=CREATE TABLE shipper_score_policies)/s','',$sql);
     $db->exec(str_replace('CREATE TABLE ','CREATE TEMP TABLE ',$sql));
-    foreach(['20261105_customer_orders','20261105_approved_pricing','20261105_distance_weight_pricing','20261106_person1_backend','20261111_person3','20261111_person3_complete'] as $migration){
+    foreach(['20261105_customer_orders','20261105_approved_pricing','20261105_distance_weight_pricing','20261106_person1_backend','20261111_person3','20261111_person3_complete','20261111_person3_supabase'] as $migration){
         $sql=file_get_contents(__DIR__.'/../database/migrations/'.$migration.'.sql');$sql=preg_replace('/^BEGIN;\s*|^COMMIT;\s*|^SET LOCAL search_path[^;]+;\s*/m','',$sql);$db->exec(str_replace('CREATE TABLE ','CREATE TEMP TABLE ',$sql));
     }
     check(value($db,"SELECT current_setting('search_path')")==='pg_temp, pg_catalog','isolated schema');
@@ -137,10 +139,14 @@ try{
     $chatOrder=newOrder($db);$db->prepare("UPDATE orders SET status='SHIPPER_ASSIGNED' WHERE order_id=?")->execute([$chatOrder]);$db->prepare('INSERT INTO order_assignments(order_id,shipper_id) VALUES(?,4)')->execute([$chatOrder]);
     $q=$db->prepare("INSERT INTO private_files(owner_id,order_id,purpose,object_key,original_name,mime_type,byte_size,checksum_sha256) VALUES(2,?,'CHAT',?,'photo.png','image/png',7,?) RETURNING file_id");$q->execute([$chatOrder,bin2hex(random_bytes(32)),hash('sha256','fixture')]);$chatFile=(int)$q->fetchColumn();
     rejects(fn()=>(new PrivateStorageService($db))->signed($chatFile,4,'SHIPPER'),'FILE_NOT_FOUND');
+    $chatTicket=tx($db,fn()=>$svc->tickets(2,'CUSTOMER',['order_id'=>$chatOrder,'category'=>'DELIVERY','subject'=>'Chat support fixture','description'=>'Fixture','client_key'=>'ticket-chat-privacy'],true))['ticket'];
+    check(count(tx($db,fn()=>(new PrivateStorageService($db))->listing(1,['ticket_id'=>$chatTicket['ticket_id']]))['items'])===0,'admin ticket files exclude unshared chat drafts');
+    rejects(fn()=>tx($db,fn()=>(new PrivateStorageService($db))->signed($chatFile,1,'ADMIN')),'FILE_NOT_FOUND');
     $attachment=['order_id'=>$chatOrder,'body'=>'','file_ids'=>[(string)$chatFile],'client_key'=>'attachment-test-1'];
     $attached=tx($db,fn()=>$svc->chat(2,'CUSTOMER',$attachment,true));check(isset($attached['message']['message_id']),'attachment-only message');
     tx($db,fn()=>$svc->chat(2,'CUSTOMER',$attachment,true));check(true,'attachment retry preserves same message');
     check(count(tx($db,fn()=>$svc->chat(4,'SHIPPER',['order_id'=>$chatOrder],false))['items'][0]['attachments'])===1,'peer receives bound attachment metadata');
+    check(count(tx($db,fn()=>(new PrivateStorageService($db))->listing(1,['ticket_id'=>$chatTicket['ticket_id']]))['items'])===1,'admin ticket files include intentionally shared attachment');
     check(isset(tx($db,fn()=>(new PrivateStorageService($db))->signed($chatFile,4,'SHIPPER'))['download_query']),'peer can sign shared attachment');
     rejects(fn()=>tx($db,fn()=>$svc->chat(2,'CUSTOMER',array_replace($attachment,['client_key'=>'attachment-test-2']),true)),'FILE_NOT_ATTACHABLE');
     rejects(fn()=>tx($db,fn()=>(new PrivateStorageService($db))->discard(2,$chatFile)),'FILE_IN_USE');
@@ -210,5 +216,18 @@ try{
     $db->prepare("UPDATE person3_event_failures SET status='PENDING',attempts=0,next_attempt_at=now() WHERE event_id=?")->execute([$poison]);check($w->consumeOne(),'repaired event may be retried');
     check((int)value($db,"SELECT count(*) FROM event_consumer_receipts WHERE consumer='person3' AND event_id=?",[$poison])===1,'retried event is consumed once');
     check((int)value($db,'SELECT count(*) FROM person3_event_failures WHERE event_id=?',[$poison])===0,'successful retry clears failure');
+    $savedUrl=getenv('SUPABASE_URL');$savedSecret=getenv('SUPABASE_SECRET_KEY');putenv('SUPABASE_URL=https://fixtureproject.supabase.co');putenv('SUPABASE_SECRET_KEY=sb_secret_fixture_no_network');
+    $remoteKey=bin2hex(random_bytes(32));$remoteObjects=[$remoteKey=>'fixture'];$remoteCalls=0;
+    $transport=static function($method,$path,$body,$headers,$max)use(&$remoteObjects,&$remoteCalls):array{$remoteCalls++;if(str_starts_with($path,'/bucket/'))return ['status'=>200,'body'=>'{"id":"somi-private","public":false}'];$key=basename($path);if($method==='GET')return ['status'=>isset($remoteObjects[$key])?200:404,'body'=>$remoteObjects[$key]??''];if($method==='DELETE'){unset($remoteObjects[$key]);return ['status'=>200,'body'=>'{}'];}throw new RuntimeException('Unexpected fixture storage call');};
+    $remoteStorage=new PrivateStorageService($db,static fn($bucket)=>new SupabaseStorage($bucket,$transport));
+    $q=$db->prepare("INSERT INTO private_files(owner_id,ticket_id,purpose,object_key,original_name,mime_type,byte_size,checksum_sha256,storage_backend,storage_bucket) VALUES(2,?,'TICKET',?,'fixture.pdf','application/pdf',7,?,'supabase','somi-private') RETURNING file_id");$q->execute([$ticket['ticket_id'],$remoteKey,hash('sha256','fixture')]);$remoteId=(int)$q->fetchColumn();
+    $remoteSigned=$remoteStorage->signed($remoteId,2,'CUSTOMER');parse_str($remoteSigned['download_query'],$remoteQuery);check($remoteStorage->download($remoteId,2,'CUSTOMER',$remoteQuery)['bytes']==='fixture','Supabase file uses stored backend even in local mode');
+    $beforeCalls=$remoteCalls;rejects(fn()=>$remoteStorage->download($remoteId,3,'CUSTOMER',$remoteQuery),'LINK_EXPIRED');check($remoteCalls===$beforeCalls,'foreign signed request never reaches Supabase');
+    $remoteObjects[$remoteKey]='corrupt';rejects(fn()=>$remoteStorage->download($remoteId,2,'CUSTOMER',$remoteQuery),'FILE_INTEGRITY_ERROR');$remoteObjects[$remoteKey]='fixture';
+    $db->prepare("UPDATE private_files SET delete_after=now()-interval '1 second' WHERE file_id=?")->execute([$remoteId]);tx($db,fn()=>$remoteStorage->retain());check(!isset($remoteObjects[$remoteKey]),'retention deletes remote object before marking metadata');
+    putenv($savedUrl===false?'SUPABASE_URL':'SUPABASE_URL='.$savedUrl);putenv($savedSecret===false?'SUPABASE_SECRET_KEY':'SUPABASE_SECRET_KEY='.$savedSecret);
+    $db->prepare('UPDATE users SET password_hash=? WHERE user_id=4')->execute([password_hash('  Fixture spaced!23  ',PASSWORD_DEFAULT)]);$db->exec("UPDATE bank_account_changes SET created_at=now()-interval '2 minutes'");
+    $spacedInput=array_replace($bankInput,['current_password'=>'Fixture spaced!23','client_key'=>'bank-spaced-password']);check(tx($db,fn()=>$bankSvc->request(4,$spacedInput))['code']==='PASSWORD_INCORRECT','bank password comparison does not silently trim');
+    check(isset(tx($db,fn()=>$bankSvc->request(4,array_replace($spacedInput,['current_password'=>'  Fixture spaced!23  '])))['request_id']),'bank supports exact password including leading/trailing spaces');
     echo "Person3 backend: $checks checks passed (isolated TEMP tables).\n";
 }catch(Throwable $e){if(isset($db)&&$db->inTransaction())$db->rollBack();fwrite(STDERR,get_class($e).': '.$e->getMessage()."\n".$e->getTraceAsString()."\n");exit(1);}

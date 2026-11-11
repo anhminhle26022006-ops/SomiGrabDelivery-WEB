@@ -8,7 +8,9 @@ final class PrivateStorageService
 {
     private $storageFactory;
     public function __construct(private PDO $db,?callable $storageFactory=null) {$this->storageFactory=$storageFactory;}
-    public static function driver():string {$driver=getenv('SOMI_STORAGE_DRIVER')?:'local';if(!in_array($driver,['local','supabase'],true))throw new DeliveryApiError(503,'STORAGE_DRIVER_INVALID','Use local or supabase storage.');return $driver;}
+    public static function driver():string {$driver=getenv('SOMI_STORAGE_DRIVER')?:getenv('SOMI_STORAGE_PROVIDER')?:'local';if($driver==='filesystem')$driver='local';if(!in_array($driver,['local','supabase'],true))throw new DeliveryApiError(503,'STORAGE_DRIVER_INVALID','Use local or supabase storage.');return $driver;}
+    public static function provider():string {return self::driver()==='local'?'filesystem':'supabase';}
+    public static function configured():bool {return self::driver()==='supabase'?(bool)getenv('SUPABASE_URL')&&(bool)(getenv('SUPABASE_SECRET_KEY')?:getenv('SUPABASE_SERVICE_ROLE_KEY')):(bool)getenv('SOMI_STORAGE_ROOT');}
     private function remote(?string $bucket=null):SupabaseStorage {return $this->storageFactory?($this->storageFactory)($bucket):new SupabaseStorage($bucket);}
     private static function root():string {
         $root=realpath(getenv('SOMI_STORAGE_ROOT')?:'');$project=realpath(__DIR__.'/../..');

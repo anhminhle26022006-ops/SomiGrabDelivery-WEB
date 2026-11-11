@@ -130,7 +130,7 @@ SomiGrabDelivery-WEB/
 
 ## 7. Database
 
-Main tables include `users`, `shipper_profiles`, `orders`, `order_assignments`, `deliveries`, `payments`, `reviews`, `support_tickets`, `chat_messages` and `private_files`.
+Main tables include `users`, `shipper_profiles`, `customer_addresses`, `orders`, `order_assignments`, `deliveries`, `payments`, `order_reviews`, `support_tickets`, `chat_messages` and `private_files`.
 
 ## 8. Installation
 

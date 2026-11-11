@@ -71,3 +71,16 @@ docker build -t somi-app .
 docker run -d -p 127.0.0.1:8091:80 -e SOMI_DB_HOST=... -e SOMI_DB_SSLMODE=disable ... somi-app
 $env:SOMI_LOAD_BASE='http://127.0.0.1:8091'; node tests/load_test.cjs optimized
 ```
+
+
+## Customer loading improvements — 2026-11-11
+
+Observed from the local machine: a new TLS connection to the configured Supabase database took about 1.3 seconds, and a trivial query about 0.2 seconds. Public hosting requests took around 1.4–1.5 seconds including network latency. These figures are not Render server-side timings and do not isolate CPU, DB region distance or cold starts.
+
+The Customer shell previously waited on deferred Bootstrap and Leaflet CDN scripts. A slow third-party dependency could keep the account name, tabs and order list from initializing. It now uses the existing local Bootstrap assets and vendored Leaflet 1.9.4, whose JS/CSS hashes were verified against their existing integrity values. Map assets are only loaded for create/address screens. Google font stylesheets no longer block application startup.
+
+The common API kernel now obtains the permission grant and Customer-profile existence in the same current-session query, reducing authorization from three DB round trips to one. Account suspension, password-change revocation and permissions still come from current database state on each request; they are not cached across requests. The Customer shell embeds only whitelisted own-profile fields from that same authenticated query using JSON hex escaping, avoiding a redundant profile API call before loading the screen. The API remains the fallback when embedded data is unavailable.
+
+Validation: all 29 existing local suites passed, including Customer, Shipper, Admin and HTTP/security tests. The actual Customer templates passed 30 asset/bootstrap checks. Customer browser tests passed 68 checks, including loading with embedded profile data without a profile API call. No production business records were modified by these tests.
+
+Remaining limitations: each PHP request may still establish a new DB connection (`SOMI_DB_PERSISTENT=0` in the inspected local configuration). Verify the actual Render configuration and connection budget before enabling persistence; do not infer hosting environment settings from local `.env`. The Customer history still fetches every cursor page before rendering the full history, which may be slow for accounts with many orders. Do not describe the hosting speed as improved until this code is deployed and measured there.

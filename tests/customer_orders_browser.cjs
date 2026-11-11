@@ -11,7 +11,7 @@ const server=http.createServer((req,res)=>{
  const view=['create','orders','order'].includes(u.searchParams.get('view'))?u.searchParams.get('view'):'orders';
  const fragment=fs.readFileSync(path.join(root,'app/Views/customer/pages',view+'.php'),'utf8').replace(/<\?php.*?\?>/gs,'');
  const lang=u.searchParams.get('lang')==='en'?'en':'vi';
- res.setHeader('Content-Type','text/html; charset=utf-8');res.end(`<!doctype html><html lang="${lang}"><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/bootstrap.css"><link rel="stylesheet" href="/customer.css"></head><body data-page="customer" data-c-view="${view}"><div class="c-app"><div><span data-locale-current></span><button data-set-currency="VND">VND</button><button data-set-currency="USD">USD</button></div><main class="c-main" data-customer-server data-geoapify-key="${u.searchParams.has('noMap')?'':'fixture-browser-key'}">${fragment}</main></div><script defer src="/maps.js"></script><script defer src="/places.js"></script><script defer src="/create-route.js"></script><script defer src="/server.js"></script></body></html>`);
+ res.setHeader('Content-Type','text/html; charset=utf-8');res.end(`<!doctype html><html lang="${lang}"><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/bootstrap.css"><link rel="stylesheet" href="/customer.css"></head><body data-page="customer" data-c-view="${view}"><div class="c-app"><div><span data-locale-current></span><button data-set-currency="VND">VND</button><button data-set-currency="USD">USD</button></div><main class="c-main" data-customer-server data-geoapify-key="${u.searchParams.has('noMap')?'':'fixture-browser-key'}">${fragment}</main></div>${u.searchParams.has('embedded')?'<script type="application/json" id="customer-profile-data">{"profile":{"user_id":"1","full_name":"Embedded Customer","phone":"0900000001","app_language":"vi"}}</script>':''}<script defer src="/maps.js"></script><script defer src="/places.js"></script><script defer src="/create-route.js"></script><script defer src="/server.js"></script></body></html>`);
 });
 let browser,ws,checks=0;const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const check=(ok,label)=>{assert.ok(ok,label);checks++;};
@@ -84,6 +84,8 @@ const check=(ok,label)=>{assert.ok(ok,label);checks++;};
  await click('[data-tab="done"]');check(await evaluate(`document.querySelectorAll('.c-order-row').length===1&&document.querySelector('.c-order-row').textContent.includes('008')`),'filter delivered orders');
  await click('[data-tab="all"]');await evaluate(`document.querySelector('[data-search]').value='Receiver';document.querySelector('[data-search]').dispatchEvent(new Event('input'))`);
  check(await evaluate(`document.querySelectorAll('.c-order-row').length===1&&document.querySelector('.c-order-row').textContent.includes('007')`),'search recipient');
+ await load('orders&embedded=1');
+ check(await evaluate(`!fixtureRequests.some(r=>r.path.endsWith('/account/profile.php'))&&document.querySelectorAll('.c-order-row').length===2`),'server-rendered profile avoids a redundant authenticated profile API request');
  await load('order&id=7');
  check(await evaluate(`document.querySelector('[data-order]').textContent.includes('Frozen pickup')&&document.querySelector('[data-order]').textContent.includes('Frozen delivery')`),'detail shows frozen addresses');
  check(await evaluate(`document.querySelector('.c-fees-total').textContent.includes('35.970')`),'detail displays accepted total');

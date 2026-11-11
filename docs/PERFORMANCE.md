@@ -17,7 +17,7 @@ Trước tối ưu, một API cần đăng nhập (ví dụ `auth/profile.php`) 
 | `public/api/auth/profile.php` | Dùng lại danh sách role đã tải khi kiểm tra session. |
 | `index.php` (`somi_asset()`) | URL asset tự gắn `?v=<mtime>`, không cần sửa version bằng tay. Thêm favicon inline để bỏ request 404. |
 | `.htaccess` | Asset có `?v=` được cache 1 năm (`immutable`), asset không có version cache 10 phút. Nén gzip cho HTML/CSS/JS/JSON/SVG. Chặn thêm `scripts/`, `docker/`, `*.ps1`. |
-| `Dockerfile`, `docker/` | Chuyển từ `mod_php` + prefork sang **Apache event MPM + PHP-FPM**, dùng `php.ini-production` (tắt `display_errors`), bật OPcache và bỏ kiểm tra timestamp. |
+| `Dockerfile` (cấu hình được nhúng trực tiếp) | Chuyển từ `mod_php` + prefork sang **Apache event MPM + PHP-FPM**, dùng `php.ini-production` (tắt `display_errors`), bật OPcache và bỏ kiểm tra timestamp. |
 | `public/assets/css/modules/customer.css` | Sửa lỗi tràn ngang của Customer ở 761–1024px: thanh menu co lại và cuộn ngang bên trong. |
 
 ## Biến môi trường mới

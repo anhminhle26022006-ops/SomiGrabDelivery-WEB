@@ -16,7 +16,8 @@ final class OrderQuoteService
 
     public function create(int $customerId, array $input): array
     {
-        DeliveryInput::only($input, ['pickup', 'delivery', 'parcel', 'customer_note']);
+        DeliveryInput::only($input, ['pickup', 'delivery', 'parcel', 'customer_note', 'currency_code']);
+        if (array_key_exists('currency_code', $input) && !in_array($input['currency_code'], ['VND', 'USD'], true)) DeliveryInput::invalid('currency_code');
         $pickup = $this->point($customerId, $input['pickup'] ?? null);
         $delivery = $this->point($customerId, $input['delivery'] ?? null);
         if (!isset($input['parcel']) || !is_array($input['parcel'])) DeliveryInput::invalid('parcel');
@@ -38,7 +39,7 @@ final class OrderQuoteService
         $user->execute(['id' => $customerId]);
         $language = $user->fetchColumn();
         if (!in_array($language, ['vi', 'en'], true)) throw new DeliveryApiError(403, 'CUSTOMER_REQUIRED', 'Customer profile required.');
-        $currency = $language === 'vi' ? 'VND' : 'USD';
+        $currency = $input['currency_code'] ?? ($language === 'vi' ? 'VND' : 'USD');
         $now = new DateTimeImmutable('now', new DateTimeZone('UTC'));
         $q = $this->db->prepare('SELECT * FROM pricing_policies WHERE currency_code = :currency AND active AND effective_from <= :at AND (effective_until IS NULL OR effective_until > :until)');
         $q->execute(['currency' => $currency, 'at' => $now->format(DATE_ATOM), 'until' => $now->format(DATE_ATOM)]);

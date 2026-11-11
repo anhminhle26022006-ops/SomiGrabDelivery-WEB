@@ -31,6 +31,7 @@ if (!is_string($customerView) || !array_key_exists($customerView, $customerViews
 $person3View = in_array($customerView, ['report','reports','notifications'], true);
 $liveCustomerView = in_array($customerView, ['dashboard','create','orders','order','payment','account','matching','tracking','addresses'], true);
 $asset = 'public/assets/js/customer/';
+$customerNeedsMap = in_array($customerView,['create','addresses'],true);
 
 $nav = [
     'dashboard' => ['Tổng quan', 'home'],
@@ -52,9 +53,10 @@ function customerIcon(string $paths, int $size = 20): string {
 }
 ?>
 <?php /* Bootstrap 5.3 (CDN) chỉ nạp cho trang Customer, sau đó nạp lại customer.css để màu và bố cục SOMI đè lên Bootstrap. */ ?>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+
+<link rel="stylesheet" href="<?= e(assetUrl('public/assets/vendor/bootstrap/bootstrap.min.css')) ?>">
 <link rel="stylesheet" href="<?= e(assetUrl('public/assets/css/modules/customer.css')) ?>">
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<?php if ($customerNeedsMap): ?><link rel="stylesheet" href="<?= e(assetUrl('public/assets/vendor/leaflet/leaflet.css')) ?>"><?php endif; ?>
 <div class="c-app" data-customer-app>
   <header class="navbar c-top">
     <a class="navbar-brand c-brand" href="?page=customer&amp;view=dashboard" aria-label="SOMI, về trang tổng quan"><strong>SOMI</strong><span>DELIVERY</span></a>
@@ -148,14 +150,19 @@ function customerIcon(string $paths, int $size = 20): string {
   <?php endif; ?>
 </div>
 <script>document.body.dataset.userId = <?= json_encode((string) $sessionUserId) ?>; document.body.dataset.cView = <?= json_encode($customerView) ?>; document.title = <?= json_encode($customerTitle . ' · SOMI') ?>;</script>
-<script defer src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+<script defer src="<?= e(assetUrl('public/assets/vendor/bootstrap/bootstrap.bundle.min.js')) ?>"></script>
 <script defer src="<?= e(assetUrl($asset . 'lang/en.js')) ?>"></script>
 <script defer src="<?= e(assetUrl($asset . 'i18n.js')) ?>"></script>
 <?php if ($liveCustomerView): ?>
-<script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<?php if ($customerNeedsMap): ?>
+<script defer src="<?= e(assetUrl('public/assets/vendor/leaflet/leaflet.js')) ?>"></script>
 <script defer src="<?= e(assetUrl($asset . 'maps.js')) ?>"></script>
 <script defer src="<?= e(assetUrl($asset . 'places.js')) ?>"></script>
+<?php endif; ?>
 <?php if ($customerView === 'create'): ?><script defer src="<?= e(assetUrl($asset . 'create-route.js')) ?>"></script><?php endif; ?>
+<?php if (isset($sessionUser['user_id'],$sessionUser['full_name'],$sessionUser['app_language'])): ?>
+<script type="application/json" id="customer-profile-data"><?= json_encode(['profile'=>array_intersect_key($sessionUser,array_flip(['user_id','full_name','email','phone','nationality_code','app_language','account_status','email_verified_at','phone_verified_at']))],JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_UNESCAPED_UNICODE) ?></script>
+<?php endif; ?>
 <script defer src="<?= e(assetUrl($asset . 'server.js')) ?>"></script>
 <?php elseif (!$person3View): ?>
 <script defer src="<?= e(assetUrl($asset . 'store.js')) ?>"></script>

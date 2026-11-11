@@ -400,8 +400,7 @@ CREATE TABLE orders (
     completed_at                TIMESTAMPTZ,
     closed_at                   TIMESTAMPTZ,
     cancelled_at                TIMESTAMPTZ,
-    updated_at                  TIMESTAMPTZ NOT NULL DEFAULT now(),
-    CHECK ((app_language_at_order = 'vi' AND currency_code = 'VND') OR (app_language_at_order = 'en' AND currency_code = 'USD'))
+    updated_at                  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX ix_orders_customer_status ON orders(customer_id, status, created_at DESC);
 CREATE INDEX ix_orders_status_created ON orders(status, created_at);

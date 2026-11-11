@@ -1,6 +1,6 @@
 # Minh Anh — Người 3: tình trạng nghiệm thu
 
-Cập nhật 12/11/2026, nhánh `MINH-ANH`. Bản chức năng chính: commit `3b6a9ee`; đợt hoàn thiện Supabase/OTP/quyền file là thay đổi tiếp theo.
+Cập nhật 12/11/2026, nhánh `MINH-ANH`. Bản chức năng chính: `3b6a9ee`. Bản hoàn thiện Supabase/OTP/quyền file: `934df4e`, đã commit và đẩy lên origin/MINH-ANH.
 
 ## Đã hoàn thiện trong source
 
@@ -56,7 +56,7 @@ JavaScript public trên site chưa trùng với source local được rà soát.
 
 ## Checklist phát hành/nghiệm thu còn lại
 
-- [ ] Commit/push bản hoàn thiện mới sau khi review diff.
+- [x] Review, quét secret, commit và push bản hoàn thiện `934df4e` lên `MINH-ANH`.
 - [ ] Deploy đúng commit lên service Render đang phục vụ domain; không đổi nhánh tích hợp của nhóm một cách ngầm định.
 - [ ] Xác nhận Environment Render có cấu hình bên dưới và worker chạy định kỳ.
 - [ ] Kiểm thử qua phiên Customer/Shipper/Admin: chat/file/ticket/read receipt/notification và quyền tài nguyên chéo.
@@ -93,3 +93,5 @@ Có thể dùng SUPABASE_SERVICE_ROLE_KEY thay cho SUPABASE_SECRET_KEY. Không t
 Test runner dùng TEMP tables; không gửi mail/chuyển tiền thật. `-SkipBrowser` chỉ bỏ phần Chrome, không có nghĩa bộ UI đã đạt.
 
 Tài liệu chi tiết: [PERSON3-API.md](PERSON3-API.md). Đặc tả import Postman/Swagger: [person3-openapi.json](person3-openapi.json).
+
+Phiên kiểm tra Render hiện mở ở màn hình đăng nhập; chưa có phiên quản trị để xác nhận service/nhánh deploy hoặc thay Environment. Cần người dùng tự đăng nhập để tiếp tục, không gửi mật khẩu qua chat.

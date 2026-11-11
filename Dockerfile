@@ -178,6 +178,7 @@ RUN printf '%s\n' \
     '[program:somi-workers]' \
     'command=/usr/local/bin/php /var/www/html/bin/person3-scheduler.php' \
     user=www-data \
+    'environment=HOME="/var/www",USER="www-data",LOGNAME="www-data"' \
     priority=30 \
     autorestart=true \
     stopasgroup=true \

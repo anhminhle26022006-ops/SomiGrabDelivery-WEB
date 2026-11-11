@@ -27,6 +27,7 @@ check($result['route']['geometry']['type']==='MultiLineString','route geometry')
 check($result['route']['properties']['distance_m']===4500.0,'route distance in meters');
 check($result['route']['properties']['duration_s']===780.0,'route duration in seconds');
 check(str_contains($http->calls[2]['url'],'mode=motorcycle'),'motorcycle route');
+check($result['distance_meters']==='4500.000'&&$result['duration_seconds']==='780.000','shared route metrics');
 fails(fn()=>$service->resolve(['action'=>'reverse','latitude'=>'91','longitude'=>'106']),'VALIDATION_ERROR');
 fails(fn()=>$service->resolve(['action'=>'autocomplete','input'=>'test','extra'=>'x']),'INVALID_FIELDS');
 fails(fn()=>$service->resolve(['action'=>'invalid']),'VALIDATION_ERROR');

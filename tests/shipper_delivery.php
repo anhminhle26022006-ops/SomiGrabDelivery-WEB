@@ -8,6 +8,9 @@ require_once __DIR__ . '/../app/Services/OfferAcceptService.php';
 require_once __DIR__ . '/../app/Services/DeliveryCompletionService.php';
 require_once __DIR__ . '/../app/Services/DeliveryReturnService.php';
 require_once __DIR__ . '/../app/Services/ShipperLocationService.php';
+require_once __DIR__ . '/../app/Services/Person3Worker.php';
+require_once __DIR__ . '/../app/Services/ShipperBankService.php';
+require_once __DIR__ . '/../app/Services/AuthRateLimiter.php';
 
 /** Tạo đơn đã thanh toán và cho Shipper A nhận, trả về order_id. */
 function assigned_order(PDO $db): int
@@ -18,7 +21,7 @@ function assigned_order(PDO $db): int
     tx($db, fn() => (new OfferAcceptService($db))->accept(SHIPPER_A, $offer));
     return $order;
 }
-function photo(string $name): array { return ['pending-upload/evidence/' . $name . '.jpg', 'image/jpeg', 512000, hash('sha256', $name)]; }
+function photo(string $name): array { global $db; $order=(int)value($db,"SELECT order_id FROM order_assignments WHERE shipper_id=3 AND assignment_status='ACTIVE'");return [storage_file($db,SHIPPER_A,'EVIDENCE',$order), 'image/jpeg', 512000, hash('sha256', $name)]; }
 
 try {
     $db = shipper_test_db();
@@ -46,6 +49,14 @@ try {
     rejects(fn() => tx($db, fn() => $completion->addEvidence(SHIPPER_A, $order, 'DELIVERY_PHOTO', 'pending-upload/evidence/x.exe', 'application/x-msdownload', 10, null)), 'VALIDATION_ERROR');
     rejects(fn() => tx($db, fn() => $completion->addEvidence(SHIPPER_B, $order, 'DELIVERY_PHOTO', ...photo('foreign'))), 'ORDER_NOT_FOUND');
     $after = tx($db, fn() => $completion->addEvidence(SHIPPER_A, $order, 'DELIVERY_PHOTO', ...photo('door')));
+    $foreignFile=storage_file($db,SHIPPER_B,'EVIDENCE',$order);
+    rejects(fn()=>tx($db,fn()=>$completion->addEvidence(SHIPPER_A,$order,'DELIVERY_PHOTO',$foreignFile,null,null,null)),'FILE_NOT_FOUND');
+    $wrongPurpose=storage_file($db,SHIPPER_A,'KYC');
+    rejects(fn()=>tx($db,fn()=>$completion->addEvidence(SHIPPER_A,$order,'DELIVERY_PHOTO',$wrongPurpose,null,null,null)),'FILE_NOT_FOUND');
+    $usedFile=(int)value($db,"SELECT file_id FROM private_files WHERE order_id=? AND owner_id=3 ORDER BY file_id DESC LIMIT 1",[$order]);
+    $prior=(int)value($db,'SELECT count(*) FROM delivery_evidence');
+    tx($db,fn()=>$completion->addEvidence(SHIPPER_A,$order,'DELIVERY_PHOTO',$usedFile,'application/pdf',1,null));
+    check((int)value($db,'SELECT count(*) FROM delivery_evidence')===$prior,'same file retry does not duplicate evidence and ignores client metadata');
     check(in_array('DELIVERED', $after['delivery']['next_actions'], true) && !isset($after['delivery']['evidence'][0]['object_key']), 'evidence unlocks completion and hides storage keys');
 
     // --- GPS trong lúc giao ---
@@ -91,6 +102,31 @@ try {
     $db->exec("UPDATE shipper_locations SET recorded_at = now() - interval '9 days', delete_after = now() - interval '2 days'");
     check(tx($db, fn() => $gps->purgeExpired()) === 1 && (int) value($db, 'SELECT count(*) FROM shipper_locations') === 0, 'expired gps points are deleted');
 
+    // Consume actual events emitted above by matching/delivery services, not hand-built event fixtures.
+    putenv('SOMI_STORAGE_DRIVER=local');putenv('SOMI_STORAGE_ROOT=');
+    $worker=new Person3Worker($db);for($i=0;$i<100&&$worker->consumeOne();$i++){}
+    check((int)value($db,"SELECT count(*) FROM notifications WHERE notification_type='OrderDelivered' AND user_id=2")===1,'real delivery event notifies customer once');
+    check((int)value($db,"SELECT count(*) FROM notifications WHERE notification_type='OrderReturned' AND user_id=3")===1,'real return event notifies shipper once');
+    check((int)value($db,"SELECT count(*) FROM notifications WHERE notification_type='OrderDelivering' AND user_id=2")===2,'delivery-start events notify customer for both real deliveries');
+    check(!$worker->consumeOne(),'event replay exhausted without duplicate notifications');
+    $db->exec("INSERT INTO shipper_earning_policies(policy_type,currency_code,percentage_rate,effective_from) VALUES('SUCCESSFUL_DELIVERY_PERCENT','VND',80,now()-interval '1 day')");
+    $earning=tx($db,fn()=>(new ShipperFinanceService($db))->accrue($order));
+    check($earning!==null,'completed paid delivery accrues earning through actual assignment');
+    // Complete the same earning -> queued encrypted OTP -> verified bank -> manual reconciliation.
+    $db->prepare('UPDATE users SET password_hash=? WHERE user_id=3')->execute([password_hash('FixturePassword!234',PASSWORD_DEFAULT)]);
+    $bank=new ShipperBankService($db);$finance=new ShipperFinanceService($db);
+    check(tx($db,fn()=>$finance->reserve((int)$earning['earning_id']))===null,'payout waits for OTP-verified bank');
+    $request=tx($db,fn()=>$bank->request(3,['bank_code'=>'TEST','bank_name'=>'Fixture bank','account_holder'=>'Fixture Shipper','account_number'=>'000009876543','current_password'=>'FixturePassword!234','client_key'=>'delivery-bank-fixture']));
+    $encrypted=value($db,'SELECT encrypted_payload FROM email_messages WHERE deduplication_key=?',['bank-change:'.$request['request_id']]);
+    $mail=EncryptedPayload::open($encrypted);preg_match('/: ([0-9]{6})/',$mail['text'],$match);
+    $confirmed=tx($db,fn()=>$bank->confirm(3,['request_id'=>$request['request_id'],'code'=>$match[1]]));check($confirmed['confirmed'],'OTP confirms bank for delivery earning');
+    $payout=tx($db,fn()=>$finance->reserve((int)$earning['earning_id']));check($payout['status']==='PROCESSING','manual payout awaits evidence, no bank transfer API');
+    $proof=['payout_id'=>$payout['payout_id'],'provider_payout_ref'=>'FIXTURE-TRANSFER-NOT-REAL','evidence_reference'=>'FIXTURE-STATEMENT-NOT-REAL','amount_minor'=>(string)$earning['gross_amount_minor'],'currency_code'=>'VND'];
+    check(tx($db,fn()=>$finance->reconcile(1,$proof))['status']==='SUCCEEDED','manual evidence reconciliation marks completed payout');
+    tx($db,fn()=>$finance->reconcile(1,$proof));check((int)value($db,'SELECT count(*) FROM shipper_payouts WHERE earning_id=?',[$earning['earning_id']])===1,'reconciliation replay never duplicates payout');
+    $db->prepare("UPDATE private_files SET delete_after=now()-interval '1 second' WHERE order_id=? AND purpose='EVIDENCE'")->execute([$order]);
+    $worker->retain();
+    check((bool)value($db,"SELECT bool_and(f.delete_after>=o.closed_at+interval '90 days') FROM private_files f JOIN orders o USING(order_id) WHERE f.purpose='EVIDENCE' AND o.closed_at IS NOT NULL"),'old seven-day storage deadlines extended to 90 days after closing');
     echo "Shipper delivery checks passed: $checks\n";
 } catch (Throwable $e) {
     fwrite(STDERR, $e->getMessage() . "\n" . $e->getFile() . ':' . $e->getLine() . "\n");

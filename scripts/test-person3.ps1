@@ -14,7 +14,7 @@ $previousModules = $env:NODE_PATH
 try {
     $env:SOMI_TEST_PHP = $Php
     if ($NodeModules) { $env:NODE_PATH = $NodeModules }
-    foreach ($file in 'tests/supabase_storage.php','tests/person3_backend.php','tests/geoapify_addresses.php','tests/admin_console.php','tests/person1_backend.php') {
+    foreach ($file in 'tests/supabase_storage.php','tests/person3_backend.php','tests/shipper_matching.php','tests/shipper_delivery.php','tests/geoapify_addresses.php','tests/admin_console.php','tests/person1_backend.php') {
         & $Php @phpFlags $file
         if ($LASTEXITCODE -ne 0) { throw "Failed: $file" }
     }
@@ -25,6 +25,8 @@ try {
     if (-not $SkipBrowser) {
         & node tests/person3_browser.cjs
         if ($LASTEXITCODE -ne 0) { throw 'Person 3 browser checks failed. Supply -NodeModules for your Playwright installation.' }
+        & node tests/shipper_storage_browser.cjs
+        if ($LASTEXITCODE -ne 0) { throw 'Shipper Storage browser checks failed.' }
     }
     Write-Output 'Requested Person 3 checks passed. Fixtures do not prove production delivery or funds movement.'
 } finally {

@@ -21,7 +21,7 @@ return [
     'location_max_age_seconds' => 600,
     // Khoảng cách tối thiểu giữa hai lần gửi GPS của cùng một Shipper.
     'gps_min_interval_seconds' => 5,
-    // Thời gian lưu điểm GPS và ảnh bằng chứng (cần nhóm thống nhất lại trước khi chạy thật).
+    // GPS: 7 days. Evidence: 90 days after order closure, shared with Storage retention.
     'gps_retention_days' => 7,
     'evidence_retention_days' => 90,
 ];

@@ -4,6 +4,8 @@ Cập nhật 12/11/2026, nhánh `MINH-ANH`. Bản chức năng chính: `3b6a9ee`
 
 ## Đã hoàn thiện trong source
 
+Đối chiếu Render ngày 12/11: service `SomiGrabDelivery_website` theo nhánh `dev`, bản Live `cc82c7a`. Hai commit Người 3 mới chưa được deploy. Đã tích hợp `origin/dev` vào `MINH-ANH`, xử lý xung đột Storage/worker/migration và giữ Dockerfile nhúng cùng thay đổi Customer/Shipper. Cần đưa bản tích hợp vào `dev`, cấu hình hosting và nghiệm thu có đăng nhập trước khi kết luận hoàn tất trên production.
+
 - Geoapify/Leaflet, CRUD/default địa chỉ và API địa lý dùng chung Customer/Shipper.
 - Chat theo đơn, phân trang, read receipt, file gắn từng tin nhắn; chỉ người có quyền theo đơn được tham gia.
 - Ticket theo đơn/tài khoản, lịch sử, phản hồi hai chiều và đọc chat/file hỗ trợ có audit.

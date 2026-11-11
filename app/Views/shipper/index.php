@@ -320,3 +320,7 @@ body[data-page="shipper"] .shipper-policy-dialog>.shipper-dialog-body>.shipper-d
   document.getElementById('shipperHelpForm')?.addEventListener('submit', event => { event.preventDefault(); document.getElementById('shipperSupportModal').classList.add('hidden'); window.somiPerson3Open?.('tickets'); });
 })();
 </script>
+<?php // Module giao diện nối API Shipper (Người 2). Chỉ nạp những file đã có trong mã nguồn. ?>
+<?php foreach (['shipper-api', 'shipper-offers', 'shipper-active', 'shipper-account'] as $shipperModule): ?>
+<?php if (is_file(__DIR__ . '/../../../public/assets/js/' . $shipperModule . '.js')): ?><script defer src="<?= e(assetUrl('public/assets/js/' . $shipperModule . '.js')) ?>"></script><?php endif; ?>
+<?php endforeach; ?>

@@ -2,6 +2,14 @@
 declare(strict_types=1);
 if(PHP_SAPI!=='cli'){http_response_code(404);exit;}
 require_once __DIR__.'/../app/Config/environment.php';somi_load_env();
+require_once __DIR__.'/../app/Services/PrivateStorageService.php';
+if(PrivateStorageService::provider()==='supabase'){
+    try{
+        $storage=new SupabaseStorage();
+        $storage->checkBucket(in_array('--create',$argv,true));
+        echo "Supabase private bucket ready.\n";exit(0);
+    }catch(Throwable $error){fwrite(STDERR,"Supabase Storage is not ready. Check server credentials and private bucket configuration.\n");exit(1);}
+}
 $root=rtrim(getenv('SOMI_STORAGE_ROOT')?:'',"/\\");$project=realpath(__DIR__.'/..');
 if($root===''||!preg_match('~^(?:/|[A-Za-z]:[/\\\\])~',$root)||preg_match('~^[A-Za-z]:$~',$root)){fwrite(STDERR,"Private Storage requires a dedicated absolute directory.\n");exit(1);}
 if(!preg_match('/^somi-(files|private)(-[a-z0-9_-]+)?$/iD',basename(str_replace('\\','/',$root)))){fwrite(STDERR,"Use a dedicated directory named somi-files or somi-private.\n");exit(1);}

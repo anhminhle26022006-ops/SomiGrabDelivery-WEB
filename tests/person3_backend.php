@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+putenv('SOMI_STORAGE_PROVIDER=filesystem');
 if(PHP_SAPI!=='cli')exit(1);
 require_once __DIR__.'/../app/Config/database.php';
 require_once __DIR__.'/../app/Services/CustomerOrderService.php';
@@ -95,8 +96,13 @@ try{
     $db->prepare("UPDATE orders SET closed_at=now()-interval '2 months' WHERE order_id=?")->execute([$id]);$w->retain();
     check(value($db,'SELECT body IS NULL FROM chat_messages WHERE message_id=?',[$m['message_id']])===true,'chat purged after retention');
     putenv('SOMI_STORAGE_ROOT=');rejects(fn()=>(new PrivateStorageService($db))->upload(2,'CUSTOMER',['purpose'=>'TICKET','ticket_id'=>$ticket['ticket_id']],[]),'STORAGE_NOT_CONFIGURED');
-    $storage=new PrivateStorageService($db);putenv('SOMI_STORAGE_SIGNING_KEY='.str_repeat('t',40));putenv('SOMI_STORAGE_ROOT='.sys_get_temp_dir());
-    $object=bin2hex(random_bytes(32));$path=sys_get_temp_dir().DIRECTORY_SEPARATOR.$object;file_put_contents($path,'fixture');
+    $storage=new PrivateStorageService($db);putenv('SOMI_STORAGE_SIGNING_KEY='.str_repeat('t',40));
+    // Keep retention/orphan cleanup inside a dedicated fixture directory. Resolve
+    // Windows short temp paths before comparing with the adapter's realpath.
+    $storageRoot=sys_get_temp_dir().DIRECTORY_SEPARATOR.'somi-person3-test-'.bin2hex(random_bytes(8));
+    if(!mkdir($storageRoot,0700))throw new RuntimeException('Cannot create isolated storage fixture.');
+    $storageRoot=realpath($storageRoot);putenv('SOMI_STORAGE_ROOT='.$storageRoot);
+    $object=bin2hex(random_bytes(32));$path=$storageRoot.DIRECTORY_SEPARATOR.$object;file_put_contents($path,'fixture');
     $q=$db->prepare("INSERT INTO private_files(owner_id,ticket_id,purpose,object_key,original_name,mime_type,byte_size,checksum_sha256) VALUES(2,?,'TICKET',?,'fixture.pdf','application/pdf',7,?) RETURNING file_id");$q->execute([$ticket['ticket_id'],$object,hash('sha256','fixture')]);$fileId=(int)$q->fetchColumn();
     $signed=$storage->signed($fileId,2,'CUSTOMER');parse_str($signed['download_query'],$query);
     check($storage->download($fileId,2,'CUSTOMER',$query)['path']===$path,'signed owner download');
@@ -231,3 +237,4 @@ try{
     check(isset(tx($db,fn()=>$bankSvc->request(4,array_replace($spacedInput,['current_password'=>'  Fixture spaced!23  '])))['request_id']),'bank supports exact password including leading/trailing spaces');
     echo "Person3 backend: $checks checks passed (isolated TEMP tables).\n";
 }catch(Throwable $e){if(isset($db)&&$db->inTransaction())$db->rollBack();fwrite(STDERR,get_class($e).': '.$e->getMessage()."\n".$e->getTraceAsString()."\n");exit(1);}
+finally{if(isset($path)&&is_file($path))unlink($path);if(isset($storageRoot)&&is_dir($storageRoot))rmdir($storageRoot);}

@@ -47,7 +47,9 @@ final class InteractionService
             return ['message'=>$message];
         }
         $items=$this->rows('SELECT message_id,sender_id,body,sent_at,read_at FROM chat_messages WHERE order_id=? AND message_id<? AND deleted_at IS NULL AND delete_after>now() ORDER BY message_id DESC LIMIT 50',[$id,$this->cursor($in)]);
-        foreach($items as &$item)$item['attachments']=$this->rows('SELECT file_id,original_name,mime_type,byte_size FROM private_files WHERE message_id=? AND deleted_at IS NULL AND delete_after>now() ORDER BY file_id',[$item['message_id']]);unset($item);
+        $attachments=[];
+        if($items){$ids=array_column($items,'message_id');$placeholders=implode(',',array_fill(0,count($ids),'?'));foreach($this->rows('SELECT message_id,file_id,original_name,mime_type,byte_size FROM private_files WHERE message_id IN ('.$placeholders.') AND deleted_at IS NULL AND delete_after>now() ORDER BY file_id',$ids) as $file){$messageId=(string)$file['message_id'];unset($file['message_id']);$attachments[$messageId][]=$file;}}
+        foreach($items as &$item)$item['attachments']=$attachments[(string)$item['message_id']]??[];unset($item);
         return ['items'=>$items,'next_cursor'=>count($items)===50?(string)end($items)['message_id']:null];
     }
     public function tickets(int $user,string $role,array $in,bool $write):array {

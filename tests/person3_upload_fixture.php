@@ -4,14 +4,26 @@ declare(strict_types=1);
 if(PHP_SAPI!=='cli-server'||getenv('SOMI_PERSON3_UPLOAD_TEST')!=='1'||($_SERVER['REMOTE_ADDR']??'')!=='127.0.0.1'){http_response_code(404);exit;}
 require_once __DIR__.'/../app/Config/database.php';
 require_once __DIR__.'/../app/Services/PrivateStorageService.php';
-$db=null;
+$db=null;$objects=[];$remote=null;
+if(getenv('SOMI_STORAGE_PROVIDER')==='supabase'){
+    // In-memory provider transport: no network and no production storage credentials.
+    putenv('SUPABASE_URL=https://fixture.supabase.co');putenv('SUPABASE_SECRET_KEY=sb_secret_'.str_repeat('f',40));putenv('SUPABASE_STORAGE_BUCKET=somi-private');
+    $remote=new SupabaseObjectStorage(function($method,$path,$body,$headers)use(&$objects):array {
+        if($method==='GET'&&$path==='/bucket/somi-private')return ['status'=>200,'body'=>'{"id":"somi-private","public":false}'];
+        if($method==='POST'&&str_starts_with($path,'/object/somi-private/')){if(($_GET['scenario']??'')==='fail_upload')return ['status'=>503,'body'=>'{}'];$objects[basename($path)]=$body;return ['status'=>200,'body'=>'{}'];}
+        if($method==='GET'&&str_starts_with($path,'/object/authenticated/somi-private/'))return ['status'=>isset($objects[basename($path)])?200:404,'body'=>($_GET['scenario']??'')==='corrupt_download'?'corrupted':($objects[basename($path)]??'')];
+        if($method==='DELETE'&&$path==='/object/somi-private'){if(($_GET['scenario']??'')==='fail_delete')return ['status'=>503,'body'=>'{}'];foreach(json_decode($body,true)['prefixes'] as $key)unset($objects[$key]);return ['status'=>200,'body'=>'[]'];}
+        if($method==='POST'&&$path==='/object/list/somi-private')return ['status'=>200,'body'=>'[]'];
+        throw new RuntimeException('Unexpected fixture storage call.');
+    });
+}
 try {
     $db=somi_db();$db->exec('SET search_path TO pg_temp,pg_catalog');
     $db->exec("CREATE TEMP TABLE orders(order_id bigint,customer_id bigint,status text); INSERT INTO orders VALUES(1,2,'SHIPPER_ASSIGNED'); CREATE TEMP TABLE order_assignments(order_id bigint,shipper_id bigint,assignment_status text); INSERT INTO order_assignments VALUES(1,4,'ACTIVE'); CREATE TEMP TABLE support_tickets(ticket_id bigint,opened_by bigint,status text); INSERT INTO support_tickets VALUES(1,2,'NEW')");
     $db->exec("CREATE TEMP TABLE private_files(file_id bigint GENERATED ALWAYS AS IDENTITY,owner_id bigint,order_id bigint,ticket_id bigint,message_id bigint,purpose text,object_key text,original_name text,mime_type text,byte_size bigint,checksum_sha256 text,created_at timestamptz DEFAULT now(),delete_after timestamptz DEFAULT 'infinity',deleted_at timestamptz)");
-    $db->beginTransaction();$service=new PrivateStorageService($db);$result=$service->upload(2,'CUSTOMER',$_POST,$_FILES['file']??[]);
+    $db->beginTransaction();if(($_GET['scenario']??'')==='fail_metadata')$db->exec('ALTER TABLE private_files ADD CONSTRAINT fixture_fail CHECK (false)');$service=new PrivateStorageService($db,$remote);$result=$service->upload(2,'CUSTOMER',$_POST,$_FILES['file']??[]);
     $signed=$service->signed((int)$result['file_id'],2,'CUSTOMER');parse_str($signed['download_query'],$query);$download=$service->download((int)$result['file_id'],2,'CUSTOMER',$query);
-    $result['download_hash']=hash_file('sha256',$download['path']);$result['download_size']=filesize($download['path']);
-    $db->exec("UPDATE private_files SET delete_after=now()-interval '1 second'");$result['deleted_count']=$service->retain();$result['object_removed']=!is_file($download['path']);$result['orphans_removed']=$service->pruneOrphans();$db->commit();
+    $result['download_hash']=isset($download['content'])?hash('sha256',$download['content']):hash_file('sha256',$download['path']);$result['download_size']=isset($download['content'])?strlen($download['content']):filesize($download['path']);
+    $db->exec("UPDATE private_files SET delete_after=now()-interval '1 second'");$result['deleted_count']=$service->retain();$result['object_removed']=$remote?count($objects)===0:!is_file($download['path']);$result['orphans_removed']=$service->pruneOrphans();$db->commit();
     header('Content-Type: application/json');echo json_encode($result,JSON_THROW_ON_ERROR);
-}catch(Throwable $e){if($db instanceof PDO&&$db->inTransaction())$db->rollBack();http_response_code($e instanceof DeliveryApiError?$e->httpStatus:503);header('Content-Type: application/json');echo json_encode(['code'=>$e instanceof DeliveryApiError?$e->errorCode:'FIXTURE_FAILED']);}
+}catch(Throwable $e){$deletedBeforeRollback=$db instanceof PDO&&$db->inTransaction()&&($_GET['scenario']??'')==='fail_delete'?(int)$db->query('SELECT count(*) FROM private_files WHERE deleted_at IS NOT NULL')->fetchColumn():null;if($db instanceof PDO&&$db->inTransaction())$db->rollBack();http_response_code($e instanceof DeliveryApiError?$e->httpStatus:503);header('Content-Type: application/json');echo json_encode(['code'=>$e instanceof DeliveryApiError?$e->errorCode:'FIXTURE_FAILED','remote_objects'=>count($objects),'metadata_marked_deleted'=>$deletedBeforeRollback]);}

@@ -11,7 +11,7 @@ const server=http.createServer((req,res)=>{
  const view=['create','orders','order'].includes(u.searchParams.get('view'))?u.searchParams.get('view'):'orders';
  const fragment=fs.readFileSync(path.join(root,'app/Views/customer/pages',view+'.php'),'utf8').replace(/<\?php.*?\?>/gs,'');
  const lang=u.searchParams.get('lang')==='en'?'en':'vi';
- res.setHeader('Content-Type','text/html; charset=utf-8');res.end(`<!doctype html><html lang="${lang}"><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/bootstrap.css"><link rel="stylesheet" href="/customer.css"></head><body data-page="customer" data-c-view="${view}"><div class="c-app"><main class="c-main" data-customer-server data-geoapify-key="${u.searchParams.has('noMap')?'':'fixture-browser-key'}">${fragment}</main></div><script defer src="/maps.js"></script><script defer src="/places.js"></script><script defer src="/create-route.js"></script><script defer src="/server.js"></script></body></html>`);
+ res.setHeader('Content-Type','text/html; charset=utf-8');res.end(`<!doctype html><html lang="${lang}"><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/bootstrap.css"><link rel="stylesheet" href="/customer.css"></head><body data-page="customer" data-c-view="${view}"><div class="c-app"><div><span data-locale-current></span><button data-set-currency="VND">VND</button><button data-set-currency="USD">USD</button></div><main class="c-main" data-customer-server data-geoapify-key="${u.searchParams.has('noMap')?'':'fixture-browser-key'}">${fragment}</main></div><script defer src="/maps.js"></script><script defer src="/places.js"></script><script defer src="/create-route.js"></script><script defer src="/server.js"></script></body></html>`);
 });
 let browser,ws,checks=0;const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const check=(ok,label)=>{assert.ok(ok,label);checks++;};
@@ -28,6 +28,7 @@ const check=(ok,label)=>{assert.ok(ok,label);checks++;};
  const click=selector=>evaluate(`document.querySelector(${JSON.stringify(selector)}).click()`);
  await send('Page.enable');await send('Runtime.enable');
  await send('Page.addScriptToEvaluateOnNewDocument',{source:`(${function(){
+  if(new URLSearchParams(location.search).has('resetCurrency'))localStorage.removeItem('somi-currency');
   window.fixtureRequests=[];window.fixtureCancelConflict=false;window.fixtureQuoteError=null;
   window.fixtureGpsMode=new URL(location.href).searchParams.get('gps')||'ready';window.fixtureMarkers=[];window.fixtureMapEvents={};window.fixturePendingReverse=[];window.fixtureHoldReverse=false;window.fixturePendingRoute=[];window.fixtureHoldRoute=false;
   window.fixtureGpsOptions=[];
@@ -44,7 +45,7 @@ const check=(ok,label)=>{assert.ok(ok,label);checks++;};
   window.fixtureOrder={order_id:'7',order_code:'SOMI-FIXTURE-007',status:'PENDING_PAYMENT',currency_code:'VND',total_charge_minor:'35970',pickup_address:'Frozen pickup',delivery_address:'Frozen delivery',sender_name:'Sender',sender_phone:'0900000001',receiver_name:'Receiver',receiver_phone:'0900000002',distance_km:'4.500',estimated_weight_kg:'3.500',parcel_description:'Fixture parcel',created_at:'2026-11-09T01:00:00Z',pricing_snapshot:snapshot,status_history:history};
   window.fetch=async(url,options={})=>{
    const u=new URL(url,location.href),body=options.body?JSON.parse(options.body):null,method=options.method||'GET';fixtureRequests.push({path:u.pathname,search:u.search,method,body,key:options.headers?.['Idempotency-Key']});let data={};
-   if(u.pathname.endsWith('/account/profile.php'))data={profile:{full_name:'Fixture Customer',phone:'0900000001',app_language:'vi'}};
+   if(u.pathname.endsWith('/account/profile.php'))data={profile:{full_name:'Fixture Customer',phone:'0900000001',app_language:new URLSearchParams(location.search).get('accountLang')==='en'?'en':'vi'}};
    else if(u.pathname.endsWith('/addresses.php'))data={items:[{address_id:'1',label:'Home',address_detail:'Saved fixture address',latitude:'10.77',longitude:'106.70',is_default:true}]};
    else if(u.pathname.endsWith('/parcel-categories.php'))data={items:[{category_id:'1',restriction_type:'ALLOWED',name_vi:'Fixture category'}]};
    else if(u.pathname.endsWith('/places.php')){
@@ -56,7 +57,7 @@ const check=(ok,label)=>{assert.ok(ok,label);checks++;};
    }
    else if(u.pathname.endsWith('/quotes.php')){
     if(fixtureQuoteError)return new Response(JSON.stringify({code:fixtureQuoteError}),{status:503});
-    data={quote:{quote_id:'0123456789abcdef0123456789abcdef',expires_at:'2099-01-01T00:00:00Z',snapshot}};
+    data={quote:{quote_id:'0123456789abcdef0123456789abcdef',expires_at:'2099-01-01T00:00:00Z',snapshot:{...snapshot,currency_code:body.currency_code||'VND',components:{...snapshot.components,total_charge_minor:body.currency_code==='USD'?'171':'35970'}}}};
    }else if(u.pathname.endsWith('/cancel-order.php')){
     if(fixtureCancelConflict)return new Response(JSON.stringify({code:'ORDER_NOT_CANCELLABLE'}),{status:409});
     fixtureOrder.status='CANCELLED';history.push({old_status:'PENDING_PAYMENT',new_status:'CANCELLED',note:body.reason,created_at:'2026-11-09T01:02:00Z'});data={order:fixtureOrder};
@@ -73,6 +74,10 @@ const check=(ok,label)=>{assert.ok(ok,label);checks++;};
   window.field=n=>form().elements.namedItem(n);
  }.toString()})();`});
  async function load(view){await send('Page.navigate',{url:'http://127.0.0.1:3063/?view='+view});await waitFor(`document.querySelector('[data-customer-server]')?.dataset.loaded==='true'&&document.body.dataset.cView===${JSON.stringify(view.split('&')[0])}`);}
+ await load('orders&accountLang=en&resetCurrency=1');
+ check(await evaluate(`document.querySelector('[data-locale-current]').textContent==='VI · USD'&&!document.querySelector('[data-set-currency="VND"]').disabled`),'currency defaults to stored profile independently of display language and selector is enabled');
+ await click('[data-set-currency="VND"]');
+ check(await evaluate(`document.querySelector('[data-locale-current]').textContent==='VI · VND'&&localStorage.getItem('somi-currency')==='VND'`),'English account can select and persist VND without changing language');
  await load('orders');
  check(await evaluate(`document.querySelectorAll('.c-order-row').length===2`),'history loads every cursor page');
  check(await evaluate(`fixtureRequests.some(r=>r.search.includes('before_id=8'))`),'history requests next cursor');
@@ -82,6 +87,11 @@ const check=(ok,label)=>{assert.ok(ok,label);checks++;};
  await load('order&id=7');
  check(await evaluate(`document.querySelector('[data-order]').textContent.includes('Frozen pickup')&&document.querySelector('[data-order]').textContent.includes('Frozen delivery')`),'detail shows frozen addresses');
  check(await evaluate(`document.querySelector('.c-fees-total').textContent.includes('35.970')`),'detail displays accepted total');
+ await click('[data-set-currency="USD"]');
+ check(await evaluate(`document.querySelector('.c-fees-total').textContent.includes('35.970')&&fixtureOrder.currency_code==='VND'`),'changing selected currency does not reprice an existing order');
+ await load('order&id=7');
+ check(await evaluate(`document.querySelector('[data-locale-current]').textContent==='VI · USD'&&document.querySelector('.c-fees-total').textContent.includes('35.970')`),'currency selection survives navigation while order retains original money');
+ await click('[data-set-currency="VND"]');
  check(await evaluate(`document.querySelectorAll('.c-tl-item').length===1&&!!document.querySelector('[data-cancel]')`),'initial timeline and cancellation available');
  await evaluate(`fixtureCancelConflict=true;document.querySelector('[name=reason]').value='Changed plans';document.querySelector('[data-cancel]').requestSubmit()`);
  await waitFor(`document.querySelector('[data-cancel-error] [role=alert]')`);
@@ -121,6 +131,14 @@ const check=(ok,label)=>{assert.ok(ok,label);checks++;};
  await submit();await submit();
  await waitFor(`!document.querySelector('[data-step="4"]').hidden`);
  check(await evaluate(`document.querySelector('[data-quote]').textContent.includes('35.970')&&document.querySelector('[data-quote]').textContent.includes('Mưa nhẹ')`),'quote shows accepted price and weather');
+ check(await evaluate(`fixtureRequests.filter(r=>r.path.endsWith('/quotes.php')).at(-1).body.currency_code==='VND'`),'quote request includes selected VND currency');
+ await click('[data-set-currency="USD"]');
+ check(await evaluate(`!document.querySelector('[data-step="3"]').hidden&&!document.querySelector('[data-quote]').textContent.includes('35.970')&&field('delivery-name').value==='Receiver'`),'currency change invalidates quote and preserves form fields');
+ await submit();await waitFor(`!document.querySelector('[data-step="4"]').hidden`);
+ check(await evaluate(`fixtureRequests.filter(r=>r.path.endsWith('/quotes.php')).at(-1).body.currency_code==='USD'&&document.querySelector('[data-quote]').textContent.includes('1,71')`),'USD choice requests its own quote and renders minor units correctly');
+ await click('[data-set-currency="VND"]');await submit();await waitFor(`!document.querySelector('[data-step="4"]').hidden`);
+ check(await evaluate(`document.querySelector('[data-quote]').textContent.includes('35.970')`),'switching back obtains a new VND quote before order creation');
+
  await evaluate(`field('agree').checked=true`);await submit();
  await waitFor(`fixtureRequests.filter(r=>r.path.endsWith('/orders.php')&&r.method==='POST').length===1&&!document.querySelector('[data-next]').disabled`);
  await submit();await waitFor(`fixtureRequests.filter(r=>r.path.endsWith('/orders.php')&&r.method==='POST').length===2`);

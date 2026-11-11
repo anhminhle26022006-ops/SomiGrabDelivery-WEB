@@ -89,11 +89,12 @@ QuoteRequest (ID dưới đây minh họa, phải lấy ID thật từ API; khô
     "description": "Mô tả kiện hàng",
     "length_cm": "20.00", "width_cm": "15.00", "height_cm": "10.00"
   },
+  "currency_code": "VND",
   "customer_note": "Ghi chú"
 }
 ```
 
-Mỗi point chọn **một** `saved_address_id` thuộc mình hoặc `address` inline; không truyền cả hai. Contact bắt buộc, tên tối đa 150; số điện thoại 8–15 chữ số, cho phép dấu + đầu. category phải active và ALLOWED; RESTRICTED/PROHIBITED bị từ chối. Với policy hiện hành, khối lượng >0, tối đa 30.000 kg/3 decimals; kích thước tùy chọn >0, tối đa 9999999.99 cm/2 decimals. Description và customer_note tối đa 2000 ký tự. Trường tiền tệ, quãng đường, thời tiết, giá và status do client gửi bị từ chối. Currency lấy từ `users.app_language`: vi → VND, en → USD, khớp constraint hiện tại; API không cho đổi currency theo từng đơn.
+Mỗi point chọn **một** `saved_address_id` thuộc mình hoặc `address` inline; không truyền cả hai. Contact bắt buộc, tên tối đa 150; số điện thoại 8–15 chữ số, cho phép dấu + đầu. category phải active và ALLOWED; RESTRICTED/PROHIBITED bị từ chối. Với policy hiện hành, khối lượng >0, tối đa 30.000 kg/3 decimals; kích thước tùy chọn >0, tối đa 9999999.99 cm/2 decimals. Description và customer_note tối đa 2000 ký tự. Client có thể chọn `currency_code` là `VND` hoặc `USD` cho mỗi báo giá; bỏ trống trường này thì mặc định theo `users.app_language` (vi → VND, en → USD) để tương thích client cũ. Ngôn ngữ email vẫn theo hồ sơ, độc lập tiền tệ. Quãng đường, thời tiết, giá và status do client gửi bị từ chối. Server chọn bảng giá độc lập của tiền tệ đã chọn; không quy đổi ngoại tệ. Đơn đã tạo giữ nguyên snapshot và tiền tệ. Migration `20261111_customer_currency_choice` bỏ ràng buộc ngôn ngữ/tiền tệ cũ; cần áp dụng trước khi triển khai frontend/backend mới. Thanh toán USD qua SePay vẫn tạm khóa.
 
 ## Báo giá hiện hành — Người 1
 

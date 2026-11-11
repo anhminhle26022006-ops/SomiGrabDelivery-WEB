@@ -43,6 +43,7 @@
     <p class="muted" id="availabilityHelp">Bạn sẽ nhận được các đơn phù hợp khi trực tuyến.</p>
   </div>
   <?php require __DIR__ . '/pages/' . $shipperPage . '.php'; ?>
+  <?php require __DIR__.'/../shared/person3-panel.php'; ?>
 </main>
 <div id="contactModal" class="modalback hidden" role="dialog" aria-modal="true" aria-labelledby="contactTitle">
   <div class="modal">
@@ -70,14 +71,7 @@
           <details><summary><span class="shipper-copy-en">When will delivery earnings be paid?</span><span class="shipper-copy-vi">Khi nào thu nhập giao hàng được thanh toán?</span></summary><p><span class="shipper-copy-en">Earnings are held while delivery is in progress. After successful completion, the platform fee is deducted and the net amount is sent to your verified bank account.</span><span class="shipper-copy-vi">Thu nhập được giữ trong quá trình vận chuyển. Khi giao thành công, phí sàn được khấu trừ và số tiền thực nhận được chuyển vào tài khoản ngân hàng đã xác minh.</span></p></details>
           <details><summary><span class="shipper-copy-en">How do I report a safety or parcel issue?</span><span class="shipper-copy-vi">Báo sự cố an toàn hoặc hàng hóa như thế nào?</span></summary><p><span class="shipper-copy-en">Use the active order support form and include the order number, issue type, and a short description. For urgent danger, contact local emergency services first.</span><span class="shipper-copy-vi">Dùng biểu mẫu hỗ trợ trong đơn đang giao, ghi mã đơn, loại sự cố và mô tả ngắn. Nếu có nguy hiểm khẩn cấp, hãy liên hệ cơ quan cứu hộ địa phương trước.</span></p></details>
         </div>
-        <form id="shipperHelpForm" class="shipper-help-form">
-          <h3><span class="shipper-copy-en">Send a support request</span><span class="shipper-copy-vi">Gửi yêu cầu hỗ trợ</span></h3>
-          <label><span class="shipper-copy-en">Topic</span><span class="shipper-copy-vi">Chủ đề</span><select id="shipperHelpTopic" required><option value="delivery" data-en="Delivery issue" data-vi="Sự cố giao hàng">Delivery issue</option><option value="account" data-en="Account" data-vi="Tài khoản">Account</option><option value="payment" data-en="Payment" data-vi="Thanh toán">Payment</option><option value="other" data-en="Other" data-vi="Khác">Other</option></select></label>
-          <label><span class="shipper-copy-en">Order number (optional)</span><span class="shipper-copy-vi">Mã đơn (không bắt buộc)</span><input id="shipperHelpOrder" data-en-placeholder="e.g. SOMI-240126" data-vi-placeholder="VD: SOMI-240126" placeholder="e.g. SOMI-240126"></label>
-          <label><span class="shipper-copy-en">How can we help?</span><span class="shipper-copy-vi">Bạn cần hỗ trợ nội dung gì?</span><textarea id="shipperHelpMessage" rows="4" required data-en-placeholder="Describe your issue" data-vi-placeholder="Mô tả vấn đề" placeholder="Describe your issue"></textarea></label>
-          <button type="submit" class="primary blue"><span class="shipper-copy-en">Submit request</span><span class="shipper-copy-vi">Gửi yêu cầu</span></button>
-          <p class="shipper-demo-note"><span class="shipper-copy-en">Demo only: requests are not sent to a server.</span><span class="shipper-copy-vi">Bản demo: yêu cầu chưa được gửi đến máy chủ.</span></p>
-        </form>
+        <button type="button" class="primary blue" onclick="document.getElementById('shipperSupportModal').classList.add('hidden');window.somiPerson3Open?.('tickets')"><span class="shipper-copy-en">Open support tickets</span><span class="shipper-copy-vi">Mở yêu cầu hỗ trợ</span></button>
       </div>
       <div class="shipper-support-footer"><div><b><span class="shipper-copy-en">Still need help?</span><span class="shipper-copy-vi">Bạn vẫn cần trợ giúp?</span></b><span><span class="shipper-copy-en">Our support team is available for delivery and account questions.</span><span class="shipper-copy-vi">Đội ngũ hỗ trợ tiếp nhận câu hỏi về giao hàng và tài khoản.</span></span></div><a class="outline" href="mailto:support@somi.example">✉ support@somi.example</a></div>
     </div>
@@ -323,14 +317,7 @@ body[data-page="shipper"] .shipper-policy-dialog>.shipper-dialog-body>.shipper-d
   document.addEventListener('DOMContentLoaded', scheduleShipperTranslation);
   const shipperLanguageObserver = new MutationObserver(scheduleShipperTranslation);
   shipperLanguageObserver.observe(document.body, {subtree:true,childList:true,characterData:true});
-  document.getElementById('shipperHelpForm')?.addEventListener('submit', event => {
-    event.preventDefault();
-    const message = locale === 'vi' ? 'Đã ghi nhận yêu cầu hỗ trợ trong bản demo.' : 'Your support request has been recorded in this demo.';
-    document.getElementById('shipperSupportModal').classList.add('hidden');
-    const toast = document.getElementById('toast');
-    if (toast) { toast.textContent = message; toast.style.display = 'block'; clearTimeout(window.toastTimer); window.toastTimer = setTimeout(() => toast.style.display = 'none', 2800); }
-    event.currentTarget.reset();
-  });
+  document.getElementById('shipperHelpForm')?.addEventListener('submit', event => { event.preventDefault(); document.getElementById('shipperSupportModal').classList.add('hidden'); window.somiPerson3Open?.('tickets'); });
 })();
 </script>
 <?php // Module giao diện nối API Shipper (Người 2). Chỉ nạp những file đã có trong mã nguồn. ?>

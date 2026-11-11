@@ -1,7 +1,7 @@
 "use strict";
 // Offer, trạng thái nhận đơn, đơn đang giao và lịch sử đã chuyển sang API thật:
 // xem shipper-offers.js và shipper-active.js. File này chỉ còn phần chưa có backend
-// (thông báo, chat, hỗ trợ) và các tiện ích giao diện dùng chung.
+// và các tiện ích giao diện dùng chung; chat/thông báo/hỗ trợ dùng person3.js.
 
 const notices=[
  {id:1,kind:'orders',icon:'▣',tone:'',title:'Có đơn giao mới phù hợp với bạn',desc:'Phú Nhuận → Quận 3 · Thu nhập dự kiến 38.000 ₫',time:'5 phút trước',unread:true,target:'offers'},
@@ -20,23 +20,24 @@ function openNotice(id){let n=notices.find(x=>x.id===id);if(!n)return;n.unread=f
 function closeOrderDetail(){document.getElementById('orderDetailModal')?.classList.add('hidden')}
 function toast(s){let el=document.getElementById('toast');el.textContent=s;el.style.display='block';clearTimeout(window.toastTimer);window.toastTimer=setTimeout(()=>el.style.display='none',2800)}
 function demoAction(s){toast(s+' — thao tác minh họa trong demo HTML.')}
-function showSupport(){document.getElementById('supportPanel').classList.remove('hidden');document.getElementById('supportPanel').scrollIntoView({behavior:'smooth',block:'nearest'});}
+function showSupport(){window.somiPerson3Open?.('tickets');}
 function openProfile(){document.getElementById('profileDropdown').classList.add('open');document.getElementById('profileBtn').setAttribute('aria-expanded','true')}
 // Sidebar navigation is handled once by shipper-navigation.js.
 // Header branding/navigation may also carry data-page; do not let it hide every view.
 document.getElementById('bellBtn')?.addEventListener('click',()=>go('notifications'));
-document.getElementById('chatForm')?.addEventListener('submit',e=>{e.preventDefault();const input=document.getElementById('chatInput');const text=input.value.trim();if(!text)return;const bubble=document.createElement('div');bubble.className='bubble mine';bubble.textContent=text;document.getElementById('chatMessages').appendChild(bubble);input.value='';document.getElementById('chatMessages').scrollTop=document.getElementById('chatMessages').scrollHeight;toast('Tin nhắn được thêm vào khung chat demo.');});
-document.getElementById('supportForm')?.addEventListener('submit',e=>{e.preventDefault();const type=document.getElementById('supportType').selectedOptions[0].text;const note=document.getElementById('supportMessage').value.trim();if(!note)return;document.getElementById('supportForm').reset();document.getElementById('supportPanel').classList.add('hidden');toast(`Đã ghi nhận yêu cầu “${type}” cho SOMI-240126 (demo).`);});
+document.getElementById('chatForm')?.addEventListener('submit',e=>{e.preventDefault();window.somiPerson3Open?.('chat');});
+document.getElementById('supportForm')?.addEventListener('submit',e=>{e.preventDefault();window.somiPerson3Open?.('tickets');});
+
 document.getElementById('profileBtn')?.addEventListener('click',e=>{e.stopPropagation();let d=document.getElementById('profileDropdown');d.classList.toggle('open');e.currentTarget.setAttribute('aria-expanded',d.classList.contains('open')?'true':'false')});
 document.addEventListener('click',e=>{if(!e.target.closest('.profile')){document.getElementById('profileDropdown')?.classList.remove('open');document.getElementById('profileBtn')?.setAttribute('aria-expanded','false')}});
 document.getElementById('avatarUpload')?.addEventListener('change',e=>{let f=e.target.files[0];if(!f)return;if(!f.type.startsWith('image/')){toast('Vui lòng chọn file hình ảnh.');return}let reader=new FileReader();reader.onload=ev=>{document.getElementById('avatar').innerHTML=`<img src="${ev.target.result}" alt="Ảnh đại diện">`;document.getElementById('accountAvatar').innerHTML=`<img src="${ev.target.result}" alt="Ảnh đại diện">`;toast('Đã cập nhật ảnh đại diện trong bản demo. Ảnh chưa được lưu lên máy chủ.');};reader.readAsDataURL(f)});
 document.querySelectorAll('[data-profile-action]').forEach(b=>b.addEventListener('click',()=>{let action=b.dataset.profileAction;let actions={account:'Tài khoản & hồ sơ',support:'Trung tâm hỗ trợ',policy:'Chính sách & điều khoản',logout:'Đăng xuất'};document.getElementById('profileDropdown').classList.remove('open');if(action==='account'){go('account');return}toast('Mở mục '+actions[action]+' — màn hình minh họa.')})); 
 document.querySelectorAll('[data-notice-filter]').forEach(b=>b.addEventListener('click',()=>filterNotices(b.dataset.noticeFilter)));
 document.getElementById('markAll')?.addEventListener('click',()=>{notices.forEach(n=>n.unread=false);renderNotices();toast('Đã đánh dấu tất cả thông báo là đã đọc.')});
-function openContactChat(){document.getElementById('contactModal').classList.remove('hidden');}
+function openContactChat(){window.somiPerson3Open?.('chat');}
 function closeContactChat(){document.getElementById('contactModal').classList.add('hidden');}
 
-renderNotices();
+// Offers/history load through shipper-offers.js and shipper-active.js; notifications use person3.js.
 
 // Keep inline actions callable even if deployment wraps scripts differently.
 Object.assign(window,{closeOrderDetail,openNotice,demoAction,showSupport,openProfile,openContactChat,closeContactChat,toast});

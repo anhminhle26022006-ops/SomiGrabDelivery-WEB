@@ -49,12 +49,12 @@ final class GeoapifyAddressService
             if(!$feature)throw new DeliveryApiError(422,'ROUTE_NOT_FOUND','No motorcycle route found.');
             $geometry=$feature['geometry']??null;
             if(!is_array($geometry)||!in_array($geometry['type']??'', ['LineString','MultiLineString'],true)||!is_array($geometry['coordinates']??null))$this->unavailable();
-            $distance=$feature['properties']['distance']??null;
-            $duration=$feature['properties']['time']??null;
-            if(!is_numeric($distance)||!is_numeric($duration)||!is_finite((float)$distance)||!is_finite((float)$duration)||(float)$distance<0||(float)$duration<0)$this->unavailable();
+            $meters=$feature['properties']['distance']??null;$seconds=$feature['properties']['time']??null;
+            if(!is_numeric($meters)||!is_numeric($seconds)||!is_finite((float)$meters)||!is_finite((float)$seconds)||(float)$meters<0||(float)$seconds<0||($feature['properties']['distance_units']??'meters')!=='meters'||($feature['properties']['time_units']??'seconds')!=='seconds')$this->unavailable();
+            // Customer map preview and shared geo callers both retain their wire contract.
             return ['route'=>['type'=>'Feature','geometry'=>$geometry,'properties'=>[
-                'distance_m'=>(float)$distance,'duration_s'=>(float)$duration,
-            ]]];
+                'distance_m'=>(float)$meters,'duration_s'=>(float)$seconds,
+            ]],'distance_meters'=>number_format((float)$meters,3,'.',''),'duration_seconds'=>number_format((float)$seconds,3,'.',''),'provider'=>'Geoapify','mode'=>'motorcycle'];
         }
         DeliveryInput::invalid('action');
     }

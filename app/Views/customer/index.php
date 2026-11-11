@@ -28,6 +28,7 @@ if (!is_string($customerView) || !array_key_exists($customerView, $customerViews
     $customerView = 'dashboard';
 }
 [$customerTitle, $customerSection] = $customerViews[$customerView];
+$person3View = in_array($customerView, ['report','reports','notifications'], true);
 $liveCustomerView = in_array($customerView, ['dashboard','create','orders','order','payment','account','matching','tracking','addresses'], true);
 $asset = 'public/assets/js/customer/';
 
@@ -125,7 +126,8 @@ function customerIcon(string $paths, int $size = 20): string {
   </div>
   <?php endif; ?>
 <?php endif; ?>
-    <?php require __DIR__ . '/pages/' . $customerView . '.php'; ?>
+    <?php if ($person3View): require __DIR__.'/../shared/person3-panel.php'; else: require __DIR__ . '/pages/' . $customerView . '.php'; endif; ?>
+    <?php if (in_array($customerView,['order','tracking'],true)) require __DIR__.'/../shared/person3-panel.php'; ?>
   </main>
 
   <nav class="c-tabbar d-md-none" aria-label="Điều hướng nhanh">
@@ -138,7 +140,7 @@ function customerIcon(string $paths, int $size = 20): string {
     <?php endforeach; ?>
   </nav>
 
-  <?php if (!$liveCustomerView): ?>
+  <?php if (!$liveCustomerView && !$person3View): ?>
   <aside class="c-demo" data-demo <?= $liveCustomerView ? 'hidden' : '' ?>>
     <button type="button" class="c-demo-toggle" data-demo-toggle aria-expanded="false"><?= customerIcon('<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>', 18) ?><span>Mô phỏng demo</span></button>
     <div class="c-demo-body" data-demo-body hidden></div>
@@ -155,7 +157,7 @@ function customerIcon(string $paths, int $size = 20): string {
 <script defer src="<?= e(assetUrl($asset . 'places.js')) ?>"></script>
 <?php if ($customerView === 'create'): ?><script defer src="<?= e(assetUrl($asset . 'create-route.js')) ?>"></script><?php endif; ?>
 <script defer src="<?= e(assetUrl($asset . 'server.js')) ?>"></script>
-<?php else: ?>
+<?php elseif (!$person3View): ?>
 <script defer src="<?= e(assetUrl($asset . 'store.js')) ?>"></script>
 <script defer src="<?= e(assetUrl($asset . 'ui.js')) ?>"></script>
 <?php if ($customerView !== 'backend'): ?><script defer src="<?= e(assetUrl($asset . 'pages/' . $customerView . '.js')) ?>"></script><?php endif; ?>

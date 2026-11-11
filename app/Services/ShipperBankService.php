@@ -17,7 +17,7 @@ final class ShipperBankService
         DeliveryInput::only($in,['bank_code','bank_name','account_holder','account_number','current_password','client_key']);
         $bank=['bank_code'=>DeliveryInput::text($in['bank_code']??null,'bank_code',40),'bank_name'=>DeliveryInput::text($in['bank_name']??null,'bank_name',120),'account_holder'=>DeliveryInput::text($in['account_holder']??null,'account_holder',150),'account_number'=>DeliveryInput::text($in['account_number']??null,'account_number',34)];
         if(!preg_match('/^[0-9]{6,34}$/D',$bank['account_number']))DeliveryInput::invalid('account_number');
-        $password=DeliveryInput::text($in['current_password']??null,'current_password',1024);$key=InteractionService::key($in);
+        $password=$in['current_password']??null;if(!is_string($password)||$password===''||strlen($password)>1024)DeliveryInput::invalid('current_password');$key=InteractionService::key($in);
         $u=$this->rows('SELECT password_hash,email_verified_at,account_status FROM users WHERE user_id=? FOR UPDATE',[$user])[0]??null;
         if(!$u||$u['account_status']!=='ACTIVE'||!$u['email_verified_at'])throw new DeliveryApiError(403,'VERIFIED_ACCOUNT_REQUIRED','Verified active account required.');
         // This counter commits even when credentials fail; the API returns the error object.

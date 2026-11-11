@@ -11,7 +11,7 @@ import urllib.error
 import urllib.request
 
 root = tempfile.mkdtemp(prefix='somi-person3-upload-')
-env = dict(os.environ, SOMI_PERSON3_UPLOAD_TEST='1', SOMI_STORAGE_ROOT=root, SOMI_STORAGE_SIGNING_KEY=secrets.token_hex(32), SOMI_STORAGE_PRUNE_ORPHANS='1')
+env = dict(os.environ, SOMI_PERSON3_UPLOAD_TEST='1', SOMI_STORAGE_DRIVER='local', SOMI_STORAGE_ROOT=root, SOMI_STORAGE_SIGNING_KEY=secrets.token_hex(32), SOMI_STORAGE_PRUNE_ORPHANS='1')
 server = subprocess.Popen([os.environ.get('SOMI_TEST_PHP', 'C:/xampp/php/php.exe'), '-d', 'extension=pdo_pgsql', '-S', '127.0.0.1:3081', 'tests/person3_upload_fixture.php'], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 checks = 0
 

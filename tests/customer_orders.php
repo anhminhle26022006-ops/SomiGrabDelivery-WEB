@@ -128,6 +128,12 @@ try {
     $q2 = $quotes->create(1, $input); $o2 = $orders->create(1, $q2['quote_id'], 'test-create-0004')['order']; $id2 = (int) $o2['order_id'];
     $usd = $quotes->create(2, $input);
     check($usd['snapshot']['currency_code'] === 'USD' && $usd['snapshot']['components']['total_charge_minor'] === '53', 'currency derived from stored account language');
+    $chosenUsd = $quotes->create(1, array_replace($input, ['currency_code'=>'USD']));
+    check($chosenUsd['snapshot']['currency_code']==='USD' && $chosenUsd['snapshot']['app_language']==='vi' && $chosenUsd['snapshot']['components']['total_charge_minor']==='53', 'Vietnamese account can select the independent USD price policy');
+    $chosenVnd = $quotes->create(2, array_replace($input, ['currency_code'=>'VND']));
+    check($chosenVnd['snapshot']['currency_code']==='VND' && $chosenVnd['snapshot']['app_language']==='en' && $chosenVnd['snapshot']['components']['total_charge_minor']===$q2['snapshot']['components']['total_charge_minor'], 'English account can select VND without changing account language');
+    foreach(['EUR','vnd','',null,[],100] as $invalidCurrency) rejects(fn()=>$quotes->create(1,array_replace($input,['currency_code'=>$invalidCurrency])), 'VALIDATION_ERROR');
+    check($orders->detail(1,$id2)['currency_code']==='VND','new currency selection preserves existing order currency');
     check($orders->list(1, null, 1, null)['items'][0]['receiver_name'] === 'Receiver', 'list includes owned recipient name for search');
     check($orders->list(1, null, 1, null)['next_before_id'] === (string) $id2, 'keyset cursor');
     check((int) $orders->list(1, $id2, 1, null)['items'][0]['order_id'] === $id, 'keyset next page');
@@ -227,6 +233,16 @@ try {
     $input['parcel']['weight_kg'] = '1.000'; $provider->distance = '40.000';
     rejects(fn()=>$quotes->create(1,$input),'OUTSIDE_SERVICE_AREA');
     check((int) scalar($db,"SELECT count(*) FROM audit_logs WHERE action = 'DISTANCE_WEIGHT_PRICING_RELEASE'") === 2, 'new policy release audit');
+    // Model an existing deployment constraint, then verify the versioned migration twice.
+    $db->exec("ALTER TABLE orders ADD CONSTRAINT legacy_language_currency CHECK ((app_language_at_order='vi' AND currency_code='VND') OR (app_language_at_order='en' AND currency_code='USD'))");
+    $currencyMigration=file_get_contents(__DIR__.'/../database/migrations/20261111_customer_currency_choice.sql');
+    $currencyMigration=preg_replace('/^BEGIN;\s*|^COMMIT;\s*|^SET LOCAL search_path[^;]+;\s*/m','',$currencyMigration);
+    $db->exec($currencyMigration);$db->exec($currencyMigration);
+    check((int)scalar($db,"SELECT count(*) FROM pg_constraint WHERE conrelid='orders'::regclass AND conname='legacy_language_currency'")===0,'currency choice migration removes only legacy coupling and is repeatable');
+    $mixedUsd=$orders->create(1,$chosenUsd['quote_id'],'test-mixed-language-usd')['order'];
+    $mixedVnd=$orders->create(2,$chosenVnd['quote_id'],'test-mixed-language-vnd')['order'];
+    check($mixedUsd['currency_code']==='USD' && $mixedUsd['app_language_at_order']==='vi','Vietnamese account creates USD order with Vietnamese email language');
+    check($mixedVnd['currency_code']==='VND' && $mixedVnd['app_language_at_order']==='en','English account creates VND order with English email language');
     $db->rollBack();
     echo json_encode(['result' => 'PASS', 'checks' => $checks, 'isolation' => 'temporary tables only; rolled back', 'persistent_business_writes' => 0], JSON_PRETTY_PRINT) . PHP_EOL;
 } catch (Throwable $e) {

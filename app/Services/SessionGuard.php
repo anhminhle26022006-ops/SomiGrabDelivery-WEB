@@ -10,7 +10,9 @@ require_once __DIR__ . '/../Config/database.php';
 function somi_require_active_session(?array &$sessionUser = null, ?string $permission = null): bool
 {
     $query = somi_db()->prepare(
-        "SELECT u.account_status, u.password_changed_at,
+        "SELECT u.user_id,u.full_name,u.email,u.phone,u.nationality_code,u.app_language,
+                u.email_verified_at,u.phone_verified_at,u.account_status,u.password_changed_at,
+                EXISTS (SELECT 1 FROM customer_profiles cp WHERE cp.user_id=u.user_id) AS has_customer_profile,
                 (SELECT max(h.created_at) FROM account_status_history h
                  WHERE h.user_id = u.user_id AND h.new_status = 'SUSPENDED') AS last_suspended_at,
                 COALESCE((SELECT json_agg(r.role_code) FROM user_roles ur

@@ -32,11 +32,11 @@ function somi_run_api(array $methods,array $roles,string $permission,bool $write
         $id=$_SESSION['somi_user_id']??null;
         if(!is_int($id)||$id<1||empty($_SESSION['somi_authenticated_at']))throw new DeliveryApiError(401,'AUTHENTICATION_REQUIRED','Please sign in again.');
         $db=somi_db();$user=null;
-        if(!somi_require_active_session($user))throw new DeliveryApiError(401,'AUTHENTICATION_REQUIRED','Please sign in again.');
+        if(!somi_require_active_session($user,$permission))throw new DeliveryApiError(401,'AUTHENTICATION_REQUIRED','Please sign in again.');
         $role=strtoupper((string)($_SESSION['somi_role']??''));
         if(!in_array($role,$roles,true))throw new DeliveryApiError(403,$roles===['CUSTOMER']?'CUSTOMER_REQUIRED':'ROLE_REQUIRED','Switch to an authorized workspace.');
-        AccessControl::requirePermission($db,$id,$role,$permission);
-        if($role==='CUSTOMER'){$q=$db->prepare('SELECT 1 FROM customer_profiles WHERE user_id=?');$q->execute([$id]);if(!$q->fetchColumn())throw new DeliveryApiError(403,'CUSTOMER_REQUIRED','Customer profile required.');}
+        if(!in_array($user['has_permission'],[true,'t','1',1],true))throw new DeliveryApiError(403,'PERMISSION_DENIED','Permission denied.');
+        if($role==='CUSTOMER'&&!in_array($user['has_customer_profile'],[true,'t','1',1],true))throw new DeliveryApiError(403,'CUSTOMER_REQUIRED','Customer profile required.');
         session_write_close();
         if($write){$db->beginTransaction();if($repeatableRead)$db->exec('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');}
         [$status,$payload]=$handler($db,$id,$role);

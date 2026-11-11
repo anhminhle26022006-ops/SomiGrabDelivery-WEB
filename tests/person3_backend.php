@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+putenv('SOMI_STORAGE_PROVIDER=filesystem');
 if(PHP_SAPI!=='cli')exit(1);
 require_once __DIR__.'/../app/Config/database.php';
 require_once __DIR__.'/../app/Services/CustomerOrderService.php';

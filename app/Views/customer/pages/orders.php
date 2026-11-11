@@ -24,5 +24,5 @@
 </div>
 
 <section class="card card-body">
-  <div class="c-orders" data-list></div>
+  <div class="c-orders" data-list><p class="c-muted" role="status" data-copy-vi="Đang tải đơn hàng…" data-copy-en="Loading orders…">Đang tải đơn hàng…</p></div>
 </section>

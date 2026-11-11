@@ -8,6 +8,7 @@
   const link = (view,label,id) => `<a class="btn btn-outline-dark" href="${h(url(view,id))}">${h(label)}</a>`;
   const view = document.body.dataset.cView, params = new URLSearchParams(location.search);
   let profile, currency='VND', pendingKey=null;
+  function embeddedProfile(){try{const data=JSON.parse(document.getElementById('customer-profile-data')?.textContent||'null');if(data?.profile&&typeof data.profile.full_name==='string'&&['vi','en'].includes(data.profile.app_language))return data.profile;}catch{}return null;}
   function savedCurrency(){try{const saved=localStorage.getItem('somi-currency');if(['VND','USD'].includes(saved))return saved;}catch{}return profile?.app_language==='en'?'USD':'VND';}
   let mapHandles=[],lookupHandles=[];
   const resetMaps=()=>{mapHandles.forEach(m=>m?.destroy());mapHandles=[];lookupHandles.forEach(l=>l.destroy());lookupHandles=[];};
@@ -209,5 +210,5 @@
   if(!window.bootstrap?.Dropdown)document.querySelectorAll('[data-bs-toggle=dropdown]').forEach(button=>button.addEventListener('click',()=>{const menu=button.parentElement.querySelector('.dropdown-menu');if(menu){const open=menu.classList.toggle('show');button.setAttribute('aria-expanded',String(open));}}));
   document.querySelectorAll('[data-copy-vi][data-copy-en]').forEach(el=>el.textContent=vi?el.dataset.copyVi:el.dataset.copyEn);
   const flag=document.querySelector('[data-locale-flag]'),selectedFlag=document.querySelector(`[data-set-lang="${vi?'vi':'en'}"] .language-flag-svg`);if(flag&&selectedFlag)flag.replaceChildren(selectedFlag.cloneNode(true));
-  run(async()=>{profile=(await api('account/profile.php')).profile;currency=savedCurrency();header();if(view==='dashboard')await dashboard();else if(view==='orders')await orders();else if(view==='create')await create();else if(view==='account')await account();else if(view==='addresses')await addresses();else await detail();});
+  run(async()=>{profile=embeddedProfile()||(await api('account/profile.php')).profile;currency=savedCurrency();header();if(view==='dashboard')await dashboard();else if(view==='orders')await orders();else if(view==='create')await create();else if(view==='account')await account();else if(view==='addresses')await addresses();else await detail();});
 })();

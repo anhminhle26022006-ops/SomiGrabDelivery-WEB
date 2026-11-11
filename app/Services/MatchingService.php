@@ -51,10 +51,12 @@ final class MatchingService
 
         $q = $this->db->prepare(
             'INSERT INTO order_match_offers (order_id, shipper_id, distance_to_pickup_km, match_score, sent_at, expires_at)
-             VALUES (?, ?, ?, ?, now(), now() + make_interval(secs => ?))'
+             VALUES (?, ?, ?, ?, now(), now() + make_interval(secs => ?)) RETURNING offer_id'
         );
         foreach ($candidates as $candidate) {
             $q->execute([$orderId, $candidate['user_id'], $candidate['distance_km'], $candidate['match_score'], ShipperInput::config('offer_ttl_seconds')]);
+            $offerId=(int)$q->fetchColumn();
+            OrderLifecycleService::event($this->db,$order,'OfferCreated','offer-created:'.$offerId,['offer_id'=>(string)$offerId]);
         }
         return ['result' => 'OFFERED', 'offers' => count($candidates)];
     }

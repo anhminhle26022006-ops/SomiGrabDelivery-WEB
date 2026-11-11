@@ -74,6 +74,12 @@
     profile: () => request("profile.php"),
     updateVehicle: (vehicle) => request("profile.php", "PUT", vehicle),
     kyc: () => request("kyc.php"),
+    resubmitKyc: (body) => request("kyc.php", "POST", body),
+    uploadPrivate: async (file, purpose, orderId) => {
+      const body=new FormData();body.append('file',file);body.append('purpose',purpose);if(orderId)body.append('order_id',String(orderId));
+      const response=await fetch('public/api/storage.php',{method:'POST',credentials:'same-origin',body,headers:{Accept:'application/json'}});
+      const result=await response.json().catch(()=>({}));if(!response.ok)throw new Error(result.error||'Không tải được file.');return result;
+    },
     availability: () => request("availability.php"),
     setAvailability: (body) => request("availability.php", "POST", body),
     offers: () => request("offers.php"),

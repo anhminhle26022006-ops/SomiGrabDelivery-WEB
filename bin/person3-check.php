@@ -8,7 +8,7 @@ foreach(['pdo_pgsql','mbstring','bcmath','fileinfo','openssl','curl'] as $extens
 $checks['payout_mode_manual']=getenv('SOMI_PAYOUT_MODE')==='manual';
 $checks['storage_signing_key']=strlen(getenv('SOMI_STORAGE_SIGNING_KEY')?:'')>=32;
 $root=getenv('SOMI_STORAGE_ROOT')?:'';$real=$root!==''?realpath($root):false;$project=realpath(__DIR__.'/..');
-if((getenv('SOMI_STORAGE_DRIVER')?:'local')==='supabase'){
+if(PrivateStorageService::driver()==='supabase'){
     try{$checks['supabase_private_bucket']=(new SupabaseStorage())->checkBucket()['private'];}catch(Throwable $e){$checks['supabase_private_bucket']=false;}
 }else $checks['private_storage_root']=$real&&is_dir($real)&&is_writable($real)&&!str_starts_with(strtolower(str_replace('\\','/',$real)).'/',strtolower(str_replace('\\','/',$project)).'/');
 $key=base64_decode(getenv('SOMI_MESSAGE_ENCRYPTION_KEY')?:getenv('SOMI_IDENTITY_ENCRYPTION_KEY')?:'',true);$checks['encryption_key']=$key!==false&&strlen($key)===32;

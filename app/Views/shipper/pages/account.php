@@ -52,7 +52,8 @@
         <div><label class="muted" for="emergencyName">Họ tên người liên hệ</label><input id="emergencyName" placeholder="Nhập họ tên" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" /></div>
         <div><label class="muted" for="emergencyPhone">Số điện thoại người liên hệ</label><input id="emergencyPhone" type="tel" placeholder="Nhập số điện thoại" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" /></div>
       </div>
-      <p class="muted" style="font-size:12px;margin-top:18px">Trạng thái xác minh giấy tờ và phương tiện: <strong>Demo — chưa kết nối hệ thống xác minh.</strong> Không nhập thông tin thật khi thử bản demo.</p>
-      <button class="primary" onclick="demoAction('Lưu thông tin tài khoản và phương tiện')">Lưu thay đổi</button>
+      <p class="muted" style="font-size:12px;margin-top:18px">Trạng thái xác minh hồ sơ: <strong id="kycStatusLine">Đang tải…</strong></p>
+      <p class="muted" id="kycHint" style="font-size:12px"></p>
+      <button class="primary" type="button" id="saveVehicleBtn">Lưu thông tin phương tiện</button>
     </section>
   </section>

@@ -127,7 +127,7 @@ function linkTo(string $page, array $params = []): string {
   <title><?= e($pageTitles[$page]) ?></title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
   <?php if ($page === 'admin'): ?>
   <link rel="stylesheet" href="<?= e(assetUrl('public/assets/vendor/bootstrap/bootstrap.min.css')) ?>">
   <script defer src="<?= e(assetUrl('public/assets/vendor/bootstrap/bootstrap.bundle.min.js')) ?>"></script>
@@ -137,7 +137,7 @@ function linkTo(string $page, array $params = []): string {
   <link rel="stylesheet" href="<?= e(assetUrl('public/assets/css/modules/' . $page . '.css')) ?>">
   <?php endif; ?>
   <?php if ($page === 'admin'): ?>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet" media="print" onload="this.media='all'">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <script defer src="<?= e(assetUrl('public/assets/js/admin.js')) ?>"></script>
   <?php endif; ?>

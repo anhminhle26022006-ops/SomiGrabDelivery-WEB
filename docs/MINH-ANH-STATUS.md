@@ -60,7 +60,7 @@ Asset public đã đối chiếu khớp bản triển khai sau chuẩn hóa CRLF
 
 - [x] Review, quét secret, commit và push bản hoàn thiện `934df4e` lên `MINH-ANH`.
 - [x] Deploy bản tích hợp và sửa worker lên service Render theo nhánh dev đã được người dùng xác nhận.
-- [ ] Xác nhận Environment Render có cấu hình bên dưới và worker chạy định kỳ.
+- [x] Render `7820697` báo ready:true; payout_mode_manual, storage_signing_key, supabase_private_bucket và migrations_applied đều true. Worker hoàn thành chu kỳ lúc 03:06:18 GMT+7 ngày 12/11, không có lỗi.
 - [ ] Kiểm thử qua phiên Customer/Shipper/Admin: chat/file/ticket/read receipt/notification và quyền tài nguyên chéo.
 - [ ] Nhận OTP đổi ngân hàng trong hộp thư test; kiểm tra sai mã, mã hết hạn và xin mã mới.
 - [ ] Chạy luồng matching/giao/hoàn bằng assignment và sự kiện thật của Người 2.

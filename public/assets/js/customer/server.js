@@ -7,7 +7,9 @@
   const money = (minor,currency) => new Intl.NumberFormat(vi?'vi-VN':'en-US',{style:'currency',currency}).format(Number(minor)/(currency==='USD'?100:1));
   const link = (view,label,id) => `<a class="btn btn-outline-dark" href="${h(url(view,id))}">${h(label)}</a>`;
   const view = document.body.dataset.cView, params = new URLSearchParams(location.search);
-  let profile, pendingKey=null;
+  let profile, currency='VND', pendingKey=null;
+  function embeddedProfile(){try{const data=JSON.parse(document.getElementById('customer-profile-data')?.textContent||'null');if(data?.profile&&typeof data.profile.full_name==='string'&&['vi','en'].includes(data.profile.app_language))return data.profile;}catch{}return null;}
+  function savedCurrency(){try{const saved=localStorage.getItem('somi-currency');if(['VND','USD'].includes(saved))return saved;}catch{}return profile?.app_language==='en'?'USD':'VND';}
   let mapHandles=[],lookupHandles=[];
   const resetMaps=()=>{mapHandles.forEach(m=>m?.destroy());mapHandles=[];lookupHandles.forEach(l=>l.destroy());lookupHandles=[];};
   function addressMap(container,input,apply,invalidate){
@@ -135,11 +137,11 @@
     form.addEventListener('input',invalidate);form.addEventListener('change',invalidate);$('[data-prev]',form).onclick=()=>{if(!busy)show(Math.max(1,step-1));};
     function point(side){const saved=$(`[data-side="${side}"] [data-saved]`).value,name=field(side+'-name').value.trim(),phone=field(side+'-phone').value.replace(/\s/g,'');if(!name||!/^\+?[0-9]{8,15}$/.test(phone))throw new Error(t('Kiểm tra tên và số điện thoại người gửi/người nhận.','Check sender/recipient names and phone numbers.'));const p={contact_name:name,contact_phone:phone};if(saved)p.saved_address_id=saved;else{const lat=field(side+'-latitude').value,lng=field(side+'-longitude').value,address=field(side+'-detail').value.trim();if(!address||!lat||!lng||!field(side+'-latitude').checkValidity()||!field(side+'-longitude').checkValidity()){$(`[data-side="${side}"] details`).open=true;throw new Error(t('Tìm và chọn một địa chỉ hoặc ghim hợp lệ cho điểm lấy/giao.','Search and select a valid pickup/delivery address or map pin.'));}p.address=routePicker.address(side);}return p;}
     function parcel(){const weight=field('pkg-weight').value,quantity=field('pkg-quantity').value;if(!/^\d+(?:\.\d{1,3})?$/.test(weight)||!/^\d+$/.test(quantity)||Number(quantity)<1||Number(quantity)>1000)throw new Error(t('Kiểm tra khối lượng và số kiện.','Check parcel weight and quantity.'));const [whole,fraction='']=weight.split('.'),grams=(BigInt(whole)*1000n+BigInt(fraction.padEnd(3,'0')))*BigInt(quantity);if(grams<=0n||grams>30000n)throw new Error(t('Tổng khối lượng phải lớn hơn 0 và không vượt 30 kg.','Combined weight must be greater than 0 and at most 30 kg.'));return {category_id:form.elements.type.value,weight_kg:`${grams/1000n}.${String(grams%1000n).padStart(3,'0')}`,description:(quantity==='1'?'':`[${quantity} ${t('kiện','parcels')}] `)+field('pkg-description').value};}
-    function setBusy(value){busy=value;for(const control of form.elements)control.disabled=value;if(!value)later.disabled=true;}
+    function setBusy(value){busy=value;document.querySelectorAll('[data-set-currency]').forEach(el=>el.disabled=value);for(const control of form.elements)control.disabled=value;if(!value)later.disabled=true;}
     form.onsubmit=async e=>{e.preventDefault();if(busy)return;error.innerHTML='';try{
       if(step===1){point('pickup');point('delivery');if(await routePicker.confirmPickup())show(2);return;}
       if(step===2){parcel();show(3);return;}
-      if(step===3){point('pickup');point('delivery');if(!await routePicker.confirmPickup())return;const body={pickup:point('pickup'),delivery:point('delivery'),parcel:parcel(),customer_note:field('pkg-note').value};const version=revision;setBusy(true);try{const data=await api('customer/quotes.php','POST',body);if(version!==revision)return;quote=data.quote;key=crypto.randomUUID();$('[data-summary]').innerHTML=route({pickup_address:field('pickup-detail').value,delivery_address:field('delivery-detail').value,sender_name:body.pickup.contact_name,sender_phone:body.pickup.contact_phone,receiver_name:body.delivery.contact_name,receiver_phone:body.delivery.contact_phone})+`<p class="c-panel-sub">${h(body.parcel.description)} · ${h(body.parcel.weight_kg)} kg</p>`;quoteView();show(4);}finally{setBusy(false);}return;}
+      if(step===3){point('pickup');point('delivery');if(!await routePicker.confirmPickup())return;const body={currency_code:currency,pickup:point('pickup'),delivery:point('delivery'),parcel:parcel(),customer_note:field('pkg-note').value};const version=revision;setBusy(true);try{const data=await api('customer/quotes.php','POST',body);if(version!==revision)return;quote=data.quote;key=crypto.randomUUID();$('[data-summary]').innerHTML=route({pickup_address:field('pickup-detail').value,delivery_address:field('delivery-detail').value,sender_name:body.pickup.contact_name,sender_phone:body.pickup.contact_phone,receiver_name:body.delivery.contact_name,receiver_phone:body.delivery.contact_phone})+`<p class="c-panel-sub">${h(body.parcel.description)} · ${h(body.parcel.weight_kg)} kg</p>`;quoteView();show(4);}finally{setBusy(false);}return;}
       if(!quote||Date.parse(quote.expires_at)<=Date.now()){invalidate();throw new Error(t('Báo giá đã hết hạn. Vui lòng lấy báo giá mới.','Quote expired. Please request a new quote.'));}
       if(!field('agree').checked)throw new Error(t('Vui lòng xác nhận điều kiện kiện hàng.','Please confirm the parcel declaration.'));
       if(!await routePicker.confirmPickup())return;
@@ -147,6 +149,7 @@
     }catch(err){report(err,error);}};
     // Agreement does not affect the quote or the creation idempotency key.
     field('agree').addEventListener('input',e=>e.stopPropagation());field('agree').addEventListener('change',e=>e.stopPropagation());
+    root.addEventListener('currencychange',invalidate);
     quoteView();show(1);
   }
   async function account(){
@@ -156,7 +159,7 @@
     $('[data-profile-cancel]').onclick=()=>{form.elements.fullName.value=profile.full_name;actions.hidden=true;profileError.innerHTML='';};
     form.onsubmit=async e=>{e.preventDefault();const button=$('[type=submit]',form);if(button.disabled)return;button.disabled=true;try{profile=(await api('account/profile.php','PUT',{full_name:form.elements.fullName.value})).profile;await account();header();}catch(err){report(err,profileError);}finally{button.disabled=false;}};
     $('[data-phone-panel]').innerHTML=`<h2>${h(t('Số điện thoại','Phone number'))}</h2><p>${h(profile.phone)}</p><p class="c-panel-sub">${h(profile.phone_verified_at?t('Đã xác minh','Verified'):t('Chưa xác minh','Not verified'))}</p>`;
-    $('[data-fx-note]').textContent=t('Tiền tệ của đơn mới theo hồ sơ tài khoản. Thay đổi quốc tịch cần được duyệt.','New order currency follows your account profile. Nationality changes require review.');
+    $('[data-fx-note]').textContent=t('Tiền tệ áp dụng cho báo giá và đơn mới. Đơn đã tạo giữ nguyên tiền tệ lúc đặt.','Currency applies to quotes and new orders. Existing orders keep their original currency.');
     $('[data-password-meta]').textContent=t('Sau khi đổi mật khẩu, bạn cần đăng nhập lại.','Sign in again after changing your password.');
     const password=$('[data-password-form]'),passwordError=document.createElement('div');password.append(passwordError);
     password.onsubmit=async e=>{e.preventDefault();const button=$('[type=submit]',password);if(button.disabled)return;const next=$('#newPassword').value;if(next.length<8||next!==$('#confirmPassword').value){report(new Error(t('Mật khẩu mới phải có ít nhất 8 ký tự và khớp xác nhận.','Use at least 8 characters and matching confirmation.')),passwordError);return;}button.disabled=true;try{await api('account/change-password.php','POST',{current_password:$('#currentPassword').value,password:next});await api('auth/logout.php','POST',{});location.href='?page=auth';}catch(err){report(err,passwordError);}finally{button.disabled=false;}};
@@ -188,18 +191,24 @@
   }
   function header(){
     document.querySelectorAll('[data-set-lang]').forEach(el=>el.classList.toggle('active',el.dataset.setLang===(vi?'vi':'en')));
-    document.querySelectorAll('[data-set-currency]').forEach(el=>el.classList.toggle('active',el.dataset.setCurrency===(profile.app_language==='vi'?'VND':'USD')));
+    document.querySelectorAll('[data-set-currency]').forEach(el=>el.classList.toggle('active',el.dataset.setCurrency===currency));
     document.querySelectorAll('[data-account-name]').forEach(el=>el.textContent=profile.full_name);
     document.querySelectorAll('[data-account-initials]').forEach(el=>el.textContent=profile.full_name.trim().split(/\s+/).slice(-2).map(n=>n[0]).join('').toUpperCase());
-    document.querySelectorAll('[data-locale-current]').forEach(el=>el.textContent=(vi?'VI':'EN')+' · '+(profile.app_language==='vi'?'VND':'USD'));
-    document.querySelectorAll('[data-set-currency]').forEach(el=>{el.disabled=true;el.title=t('Tiền tệ theo hồ sơ tài khoản','Currency follows the account profile');});
+    document.querySelectorAll('[data-locale-current]').forEach(el=>el.textContent=(vi?'VI':'EN')+' · '+currency);
+    document.querySelectorAll('[data-set-currency]').forEach(el=>{el.disabled=false;el.setAttribute('aria-pressed',String(el.dataset.setCurrency===currency));el.title=t('Áp dụng cho báo giá và đơn mới','Applies to quotes and new orders');});
     document.querySelectorAll('[data-unread]').forEach(el=>el.hidden=true);
   }
   async function run(fn){root.setAttribute('aria-busy','true');try{await fn();}catch(err){report(err);}finally{root.setAttribute('aria-busy','false');root.dataset.loaded='true';}}
   $$('form').forEach(form=>form.addEventListener('submit',e=>e.preventDefault()));
   document.querySelectorAll('[data-set-lang]').forEach(button=>button.addEventListener('click',()=>{try{localStorage.setItem('somi-language',button.dataset.setLang);}catch{}location.reload();}));
+  document.querySelectorAll('[data-set-currency]').forEach(button=>button.addEventListener('click',()=>{
+    const next=button.dataset.setCurrency;if(!profile||button.disabled||!['VND','USD'].includes(next)||next===currency)return;
+    currency=next;try{localStorage.setItem('somi-currency',currency);}catch{}
+    if(window.SomiI18n)window.SomiI18n.currency=currency;
+    header();root.dispatchEvent(new Event('currencychange'));
+  }));
   if(!window.bootstrap?.Dropdown)document.querySelectorAll('[data-bs-toggle=dropdown]').forEach(button=>button.addEventListener('click',()=>{const menu=button.parentElement.querySelector('.dropdown-menu');if(menu){const open=menu.classList.toggle('show');button.setAttribute('aria-expanded',String(open));}}));
   document.querySelectorAll('[data-copy-vi][data-copy-en]').forEach(el=>el.textContent=vi?el.dataset.copyVi:el.dataset.copyEn);
   const flag=document.querySelector('[data-locale-flag]'),selectedFlag=document.querySelector(`[data-set-lang="${vi?'vi':'en'}"] .language-flag-svg`);if(flag&&selectedFlag)flag.replaceChildren(selectedFlag.cloneNode(true));
-  run(async()=>{profile=(await api('account/profile.php')).profile;header();if(view==='dashboard')await dashboard();else if(view==='orders')await orders();else if(view==='create')await create();else if(view==='account')await account();else if(view==='addresses')await addresses();else await detail();});
+  run(async()=>{profile=embeddedProfile()||(await api('account/profile.php')).profile;currency=savedCurrency();header();if(view==='dashboard')await dashboard();else if(view==='orders')await orders();else if(view==='create')await create();else if(view==='account')await account();else if(view==='addresses')await addresses();else await detail();});
 })();

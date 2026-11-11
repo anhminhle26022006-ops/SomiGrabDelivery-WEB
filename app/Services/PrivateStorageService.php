@@ -1,11 +1,21 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__.'/InteractionService.php';
+require_once __DIR__.'/SupabaseObjectStorage.php';
 
-/** Optional private filesystem adapter. A shared persistent volume is required on hosting. */
+/** Authorized private files in Supabase Storage; filesystem is retained for migration/tests. */
 final class PrivateStorageService
 {
-    public function __construct(private PDO $db) {}
+    public function __construct(private PDO $db, private ?SupabaseObjectStorage $objects=null) {}
+    private function remote():SupabaseObjectStorage { return $this->objects??=new SupabaseObjectStorage(); }
+    public static function provider():string {
+        $provider=getenv('SOMI_STORAGE_PROVIDER')?:'supabase';
+        if(!in_array($provider,['supabase','filesystem'],true))throw new DeliveryApiError(503,'STORAGE_NOT_CONFIGURED','Invalid storage provider.');
+        return $provider;
+    }
+    public static function configured():bool {
+        return self::provider()==='supabase' ? (bool)getenv('SUPABASE_URL')&&(bool)getenv('SUPABASE_SECRET_KEY') : (bool)getenv('SOMI_STORAGE_ROOT');
+    }
     private static function root():string {
         $root=realpath(getenv('SOMI_STORAGE_ROOT')?:'');$project=realpath(__DIR__.'/../..');
         if(!$root||!getenv('SOMI_STORAGE_ROOT')||str_starts_with(strtolower(str_replace('\\','/',$root)).'/',strtolower(str_replace('\\','/',$project)).'/'))throw new DeliveryApiError(503,'STORAGE_NOT_CONFIGURED','Configure a private storage directory outside the web project.');
@@ -56,15 +66,16 @@ final class PrivateStorageService
         }elseif($purpose==='TICKET'){
             $ticket=DeliveryInput::id($in['ticket_id']??null);$q=$this->db->prepare("SELECT 1 FROM support_tickets WHERE ticket_id=? AND opened_by=? AND status<>'CLOSED'");$q->execute([$ticket,$user]);if(!$q->fetchColumn())throw new DeliveryApiError(404,'TICKET_NOT_FOUND','Ticket not found.');
         }elseif($role!=='SHIPPER')throw new DeliveryApiError(403,'SHIPPER_REQUIRED','Shipper required.');
-        $root=self::root();self::secret();
+        $remote=self::provider()==='supabase'?$this->remote():null;$root=$remote?null:self::root();self::secret();
         if(in_array($file['error']??null,[UPLOAD_ERR_INI_SIZE,UPLOAD_ERR_FORM_SIZE],true))throw new DeliveryApiError(422,'FILE_SIZE_INVALID','Maximum file size is 5 MiB (also check PHP upload limits).');
         if(($file['error']??UPLOAD_ERR_NO_FILE)!==UPLOAD_ERR_OK||!is_uploaded_file($file['tmp_name']??''))DeliveryInput::invalid('file');
         $size=filesize($file['tmp_name']);if($size<1||$size>5*1024*1024)throw new DeliveryApiError(422,'FILE_SIZE_INVALID','Maximum file size is 5 MiB.');
         $mime=(new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
         if(!in_array($mime,['image/jpeg','image/png','image/webp','application/pdf'],true))throw new DeliveryApiError(422,'FILE_TYPE_INVALID','Only JPEG, PNG, WebP and PDF are supported.');
-        $name=DeliveryInput::text(basename((string)$file['name']),'name',255);$key=bin2hex(random_bytes(32));$hash=hash_file('sha256',$file['tmp_name']);$path=$root.DIRECTORY_SEPARATOR.$key;
-        if(!move_uploaded_file($file['tmp_name'],$path))throw new RuntimeException('Private upload failed.');chmod($path,0600);
-        try{$q=$this->db->prepare("INSERT INTO private_files(owner_id,order_id,ticket_id,purpose,object_key,original_name,mime_type,byte_size,checksum_sha256,delete_after) VALUES(?,?,?,?,?,?,?,?,?,CASE WHEN ?='CHAT' THEN now()+interval '1 day' ELSE 'infinity'::timestamptz END) RETURNING file_id");$q->execute([$user,$order,$ticket,$purpose,$key,$name,$mime,$size,$hash,$purpose]);return ['file_id'=>(string)$q->fetchColumn(),'mime_type'=>$mime,'byte_size'=>$size,'checksum_sha256'=>$hash];}catch(Throwable $e){unlink($path);throw $e;}
+        $name=DeliveryInput::text(basename((string)$file['name']),'name',255);$key=bin2hex(random_bytes(32));$hash=hash_file('sha256',$file['tmp_name']);$path=$root?($root.DIRECTORY_SEPARATOR.$key):null;
+        if($remote){$bytes=file_get_contents($file['tmp_name']);if($bytes===false)throw new RuntimeException('Private upload failed.');$remote->put($key,$bytes,$mime);}
+        else {if(!move_uploaded_file($file['tmp_name'],$path))throw new RuntimeException('Private upload failed.');chmod($path,0600);}
+        try{$q=$this->db->prepare("INSERT INTO private_files(owner_id,order_id,ticket_id,purpose,object_key,original_name,mime_type,byte_size,checksum_sha256,delete_after) VALUES(?,?,?,?,?,?,?,?,?,CASE WHEN ?='CHAT' THEN now()+interval '1 day' ELSE 'infinity'::timestamptz END) RETURNING file_id");$q->execute([$user,$order,$ticket,$purpose,$key,$name,$mime,$size,$hash,$purpose]);return ['file_id'=>(string)$q->fetchColumn(),'mime_type'=>$mime,'byte_size'=>$size,'checksum_sha256'=>$hash];}catch(Throwable $e){try{if($remote)$remote->delete($key);else unlink($path);}catch(Throwable $cleanup){error_log('Private upload cleanup failed.');}throw $e;}
     }
     /** Person 2 calls this in the delivery/KYC transaction before persisting a file reference. */
     public function reference(int $user,string $role,array $in):array {
@@ -86,15 +97,36 @@ final class PrivateStorageService
     public function download(int $id,int $user,string $role,array $in):array {
         $expiry=(string)($in['expires']??'');$signature=$in['signature']??'';
         if(!ctype_digit($expiry)||(int)$expiry<time()||(int)$expiry>time()+300||!is_string($signature)||!hash_equals(hash_hmac('sha256',"$id:$user:$expiry",self::secret()),$signature))throw new DeliveryApiError(403,'LINK_EXPIRED','Download link expired or invalid.');
-        $file=$this->row($id);$this->authorize($file,$user,$role);$file['path']=self::root().DIRECTORY_SEPARATOR.$file['object_key'];if(!is_file($file['path']))throw new DeliveryApiError(404,'FILE_NOT_FOUND','File not found.');return $file;
+        $file=$this->row($id);$this->authorize($file,$user,$role);
+        if(self::provider()==='supabase'){
+            $file['content']=$this->remote()->get($file['object_key']);
+            if(strlen($file['content'])!==(int)$file['byte_size']||!hash_equals($file['checksum_sha256'],hash('sha256',$file['content'])))throw new DeliveryApiError(503,'STORAGE_INTEGRITY_FAILED','Private file integrity check failed.');
+        }else{$file['path']=self::root().DIRECTORY_SEPARATOR.$file['object_key'];if(!is_file($file['path']))throw new DeliveryApiError(404,'FILE_NOT_FOUND','File not found.');}
+        return $file;
     }
     public function retain(int $limit=100):int {
-        $root=self::root();$q=$this->db->prepare('SELECT file_id,object_key FROM private_files WHERE deleted_at IS NULL AND delete_after<=now() ORDER BY file_id LIMIT ? FOR UPDATE SKIP LOCKED');$q->bindValue(1,$limit,PDO::PARAM_INT);$q->execute();$n=0;
-        foreach($q->fetchAll() as $f){$path=$root.DIRECTORY_SEPARATOR.$f['object_key'];if(is_file($path)&&!unlink($path))throw new RuntimeException('Private file deletion failed.');$this->db->prepare('UPDATE private_files SET deleted_at=now() WHERE file_id=?')->execute([$f['file_id']]);$n++;}return $n;
+        $remote=self::provider()==='supabase'?$this->remote():null;$root=$remote?null:self::root();$q=$this->db->prepare('SELECT file_id,object_key FROM private_files WHERE deleted_at IS NULL AND delete_after<=now() ORDER BY file_id LIMIT ? FOR UPDATE SKIP LOCKED');$q->bindValue(1,$limit,PDO::PARAM_INT);$q->execute();$n=0;
+        foreach($q->fetchAll() as $f){$path=$root?($root.DIRECTORY_SEPARATOR.$f['object_key']):null;if($remote)$remote->delete($f['object_key']);elseif(is_file($path)&&!unlink($path))throw new RuntimeException('Private file deletion failed.');$this->db->prepare('UPDATE private_files SET deleted_at=now() WHERE file_id=?')->execute([$f['file_id']]);$n++;}return $n;
     }
-    /** Only enable for a dedicated SOMI volume. Never follow symlinks or remove other names. */
+    /** Only enable for a dedicated SOMI bucket/directory. Preserve unrelated names and fresh objects. */
     public function pruneOrphans(int $limit=100):int {
-        if(getenv('SOMI_STORAGE_PRUNE_ORPHANS')!=='1')return 0;$root=self::root();$n=0;$seen=0;
+        if(getenv('SOMI_STORAGE_PRUNE_ORPHANS')!=='1')return 0;
+        if(self::provider()==='supabase'){
+            $remote=$this->remote();$candidates=[];
+            for($offset=0;$offset<10000;$offset+=100){
+                $items=$remote->objects($offset);
+                foreach($items as $item){
+                    $name=$item['name']??'';$created=strtotime($item['created_at']??'');
+                    if(!preg_match('/^[a-f0-9]{64}$/D',$name)||!$created||$created>time()-86400)continue;
+                    $q=$this->db->prepare('SELECT 1 FROM private_files WHERE object_key=?');$q->execute([$name]);
+                    if(!$q->fetchColumn())$candidates[]=$name;
+                    if(count($candidates)>=$limit)break 2;
+                }
+                if(count($items)<100)break;
+            }
+            foreach($candidates as $key)$remote->delete($key);return count($candidates);
+        }
+        $root=self::root();$n=0;$seen=0;
         foreach(new DirectoryIterator($root) as $entry){
             if($entry->isDot()||$entry->isLink()||!$entry->isFile()||!preg_match('/^[a-f0-9]{64}$/D',$entry->getFilename()))continue;
             if(++$seen>10000||$n>=$limit)break;if($entry->getMTime()>time()-86400)continue;

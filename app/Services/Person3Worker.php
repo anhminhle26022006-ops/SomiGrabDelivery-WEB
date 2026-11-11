@@ -64,7 +64,7 @@ final class Person3Worker
             $db->exec("UPDATE private_files f SET delete_after=t.closed_at+interval '3 months' FROM support_tickets t WHERE f.ticket_id=t.ticket_id AND t.closed_at IS NOT NULL AND f.delete_after='infinity'");
             $db->exec("UPDATE private_files f SET delete_after=(SELECT min(a.created_at)+interval '6 months' FROM audit_logs a WHERE a.entity_type='SHIPPER_PROFILE' AND a.entity_id::text=f.owner_id::text AND a.action IN ('SHIPPER_APPLICATION_APPROVED','SHIPPER_APPLICATION_REJECTED') AND a.created_at>=f.created_at) WHERE f.purpose='KYC' AND f.delete_after='infinity' AND EXISTS(SELECT 1 FROM audit_logs a WHERE a.entity_type='SHIPPER_PROFILE' AND a.entity_id::text=f.owner_id::text AND a.action IN ('SHIPPER_APPLICATION_APPROVED','SHIPPER_APPLICATION_REJECTED') AND a.created_at>=f.created_at)");
             $db->exec('UPDATE bank_account_changes SET encrypted_payload=NULL WHERE encrypted_payload IS NOT NULL AND (consumed_at IS NOT NULL OR expires_at<=now())');
-            if(getenv('SOMI_STORAGE_ROOT')){$storage=new PrivateStorageService($db);$storage->retain();$storage->pruneOrphans();}
+            if(PrivateStorageService::configured()){$storage=new PrivateStorageService($db);$storage->retain();$storage->pruneOrphans();}
             $db->commit();
         }catch(Throwable $e){$db->rollBack();throw $e;}
     }

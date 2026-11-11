@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require_once __DIR__ . '/ShipperProfileService.php';
 require_once __DIR__ . '/IdentityDocumentVault.php';
+require_once __DIR__ . '/PrivateStorageService.php';
 
 /**
  * Nộp lại hồ sơ KYC và xem trạng thái duyệt.
@@ -11,7 +12,7 @@ final class ShipperKycService
 {
     private const DOCUMENT_TYPES = ['IDENTITY_FRONT', 'IDENTITY_BACK', 'DRIVER_LICENSE', 'VEHICLE_REGISTRATION', 'PORTRAIT'];
     private const MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
-    private const MAX_BYTES = 10 * 1024 * 1024;
+    private const MAX_BYTES = 5 * 1024 * 1024;
 
     public function __construct(private PDO $db) {}
 
@@ -36,7 +37,7 @@ final class ShipperKycService
     /**
      * Nộp lại hồ sơ sau khi Admin trả về (NEEDS_INFO) hoặc từ chối (REJECTED).
      * $identity = null nghĩa là giữ nguyên giấy tờ định danh, chỉ bổ sung tài liệu.
-     * $documents là danh sách THAM CHIẾU file; upload thật sẽ nối khi Storage của Người 3 sẵn sàng.
+     * $documents contains private Storage file IDs, validated for owner and purpose.
      */
     public function resubmit(int $shipperId, ?array $identity, array $documents): array
     {
@@ -86,16 +87,15 @@ final class ShipperKycService
     private function storeDocument(int $shipperId, mixed $document): void
     {
         if (!is_array($document)) DeliveryInput::invalid('documents');
-        DeliveryInput::only($document, ['document_type', 'file_reference', 'original_name', 'mime_type', 'byte_size', 'checksum_sha256']);
+        DeliveryInput::only($document, ['document_type', 'reference_file_id']);
         $type = ShipperInput::choice($document['document_type'] ?? null, 'document_type', self::DOCUMENT_TYPES);
-        $reference = self::fileReference($document['file_reference'] ?? null);
-        $mime = ShipperInput::choice($document['mime_type'] ?? null, 'mime_type', self::MIME_TYPES);
-        $size = $document['byte_size'] ?? null;
+        $file=(new PrivateStorageService($this->db))->reference($shipperId,'SHIPPER',['reference_file_id'=>$document['reference_file_id']??null,'purpose'=>'KYC'])['file'];
+        $reference=$file['object_key'];$mime=$file['mime_type'];$size=(int)$file['byte_size'];
         if (!is_int($size) || $size < 1 || $size > self::MAX_BYTES) DeliveryInput::invalid('byte_size');
-        $checksum = DeliveryInput::text($document['checksum_sha256'] ?? null, 'checksum_sha256', 64, false);
+        $checksum = $file['checksum_sha256'];
         if ($checksum !== null && !preg_match('/^[a-f0-9]{64}$/D', $checksum)) DeliveryInput::invalid('checksum_sha256');
         $q = $this->db->prepare('INSERT INTO shipper_documents (shipper_id, document_type, object_key, original_name, mime_type, byte_size, checksum_sha256) VALUES (?, ?, ?, ?, ?, ?, ?)');
-        $q->execute([$shipperId, $type, $reference, DeliveryInput::text($document['original_name'] ?? null, 'original_name', 255, false), $mime, $size, $checksum]);
+        $q->execute([$shipperId, $type, $reference, $file['original_name'], $mime, $size, $checksum]);
     }
 
     /** Tham chiếu file do tầng Storage cấp. Chặn URL và đường dẫn "leo thư mục". */

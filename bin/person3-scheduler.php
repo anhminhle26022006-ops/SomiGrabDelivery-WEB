@@ -11,7 +11,7 @@ passthru(escapeshellarg(PHP_BINARY).' '.escapeshellarg(__DIR__.'/person3-check.p
 if($readinessCode!==0)fwrite(STDERR,"Scheduler: Person 3 readiness checks failed; inspect the boolean checks above.\n");
 do {
     $started=microtime(true);
-    foreach(['person1-worker.php','person3-worker.php'] as $script){if($stopping)break;$command=escapeshellarg(PHP_BINARY).' '.escapeshellarg(__DIR__.'/'.$script).' --limit=20';passthru($command,$code);if($code!==0)fwrite(STDERR,'Scheduler: '.$script.' failed with exit '.$code."\n");}
+    foreach(['person1-worker.php','shipper-worker.php','person3-worker.php'] as $script){if($stopping)break;$command=escapeshellarg(PHP_BINARY).' '.escapeshellarg(__DIR__.'/'.$script).($script==='shipper-worker.php'?' --seconds=0':' --limit=20');passthru($command,$code);if($code!==0)fwrite(STDERR,'Scheduler: '.$script.' failed with exit '.$code."\n");}
     if($once)break;
     while(!$stopping&&microtime(true)-$started<60)sleep(1);
 }while(!$stopping);

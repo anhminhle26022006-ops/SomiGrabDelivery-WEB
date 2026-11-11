@@ -4,6 +4,8 @@ Cập nhật 12/11/2026, nhánh `MINH-ANH`. Bản chức năng chính: `3b6a9ee`
 
 ## Đã hoàn thiện trong source
 
+Đợt nối Người 2/3: xem [PERSON3-INTEGRATION.md](PERSON3-INTEGRATION.md). Đã thay tham chiếu ảnh tự tạo bằng private file ID, kiểm owner/purpose/order, bắt buộc ảnh Storage hợp lệ trước hoàn tất giao/hoàn, nối upload KYC thật và bỏ form ngân hàng demo. Retention bằng chứng thống nhất 90 ngày sau đóng đơn. Scheduler thêm matching worker bằng tham số CLI phù hợp. Kiểm thử TEMP cùng một đơn: 58 kiểm tra giao/hoàn → notification → earning → OTP queued → payout/đối soát; matching/KYC 53, browser Storage 7. Những kết quả này không chứng minh giao dịch hoặc inbox thật.
+
 Đối chiếu Render ngày 12/11: service `SomiGrabDelivery_website` theo nhánh `dev`. Bản tích hợp `cb11408` đã deploy và asset public khớp source. Bản sửa worker `32a57d7` đã Live: Supervisor đặt HOME đúng cho www-data, khắc phục lỗi libpq tìm chứng chỉ trong /root. Log xác nhận Person3 xử lý 4 events, 0 earnings và worker email thử 5 jobs. Chưa coi số jobs đã thử là email đã đến inbox hoặc có thu nhập phát sinh.
 
 - Geoapify/Leaflet, CRUD/default địa chỉ và API địa lý dùng chung Customer/Shipper.

@@ -3,13 +3,7 @@
 // xem shipper-offers.js và shipper-active.js. File này chỉ còn phần chưa có backend
 // và các tiện ích giao diện dùng chung; chat/thông báo/hỗ trợ dùng person3.js.
 
-const notices=[
- {id:1,kind:'orders',icon:'▣',tone:'',title:'Có đơn giao mới phù hợp với bạn',desc:'Phú Nhuận → Quận 3 · Thu nhập dự kiến 38.000 ₫',time:'5 phút trước',unread:true,target:'offers'},
- {id:2,kind:'orders',icon:'✓',tone:'green',title:'Đơn SOMI-240126 đã được giao thành công',desc:'Bạn đã nhận được 42.000 ₫',time:'10 phút trước',unread:true,target:'history'},
- {id:3,kind:'account',icon:'!',tone:'orange',title:'Yêu cầu xác minh tài khoản',desc:'Vui lòng cập nhật giấy tờ tùy thân để hoàn tất hồ sơ.',time:'1 giờ trước',unread:true,target:'profile'},
- {id:4,kind:'account',icon:'↗',tone:'',title:'Cập nhật chính sách phí giao hàng',desc:'Xem các thay đổi có hiệu lực trong tuần này.',time:'2 giờ trước',unread:false,target:'policy'},
- {id:5,kind:'orders',icon:'▤',tone:'green',title:'Tin nhắn từ khách hàng',desc:'“Vui lòng giao giúp trước 17h nhé.”',time:'3 giờ trước',unread:false,target:'active'}
-];
+const notices=[]; // Notifications are loaded by person3.js from the authenticated API.
 // Shared VND formatter defined by the Shipper page script (app/Views/shipper/index.php).
 function money(n){return window.formatShipperMoney(n)}
 function noticeCard(n){return `<div class="notice ${n.unread?'unread':''}" data-id="${n.id}"><div class="noticeicon ${n.tone}">${n.icon}</div><div style="flex:1;min-width:0"><div class="noticetitle">${n.title}</div><div class="noticedesc">${n.desc}</div><div class="noticetime">${n.time}</div></div><button class="outline" style="padding:6px 9px;font-size:10px;align-self:center" onclick="openNotice(${n.id})">Xem</button></div>`}

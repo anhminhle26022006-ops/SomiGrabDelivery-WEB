@@ -30,7 +30,7 @@ function shipper_test_db(): PDO
     $sql = preg_replace('/^BEGIN;\s*|^COMMIT;\s*|^CREATE SCHEMA[^;]+;\s*|^SET search_path[^;]+;\s*/m', '', $sql);
     $sql = preg_replace('/CREATE FUNCTION erase_identity_document_on_account_close\(\).*?(?=CREATE TABLE shipper_score_policies)/s', '', $sql);
     $db->exec(str_replace('CREATE TABLE ', 'CREATE TEMP TABLE ', $sql));
-    foreach (['20261105_customer_orders', '20261106_person1_backend', '20261110_shipper_delivery'] as $migration) {
+    foreach (['20261105_customer_orders', '20261106_person1_backend', '20261110_shipper_delivery', '20261111_person3', '20261111_person3_complete', '20261111_person3_supabase'] as $migration) {
         $sql = file_get_contents(__DIR__ . '/../database/migrations/' . $migration . '.sql');
         $sql = preg_replace('/^BEGIN;\s*|^COMMIT;\s*|^SET LOCAL search_path[^;]+;\s*/m', '', $sql);
         $db->exec(str_replace('CREATE TABLE ', 'CREATE TEMP TABLE ', $sql));
@@ -71,4 +71,10 @@ function paid_order(PDO $db): int
     $db->prepare("INSERT INTO order_status_history (order_id, old_status, new_status, actor_kind) VALUES (?, 'PENDING_PAYMENT', 'SEARCHING_SHIPPER', 'PROVIDER')")->execute([$id]);
     $db->prepare("INSERT INTO order_events (order_id, event_type, deduplication_key, payload) VALUES (?, 'OrderReadyForMatching', ?, '{}')")->execute([$id, 'matching:paid:' . $id]);
     return $id;
+}
+
+/** Metadata fixture only: every insert remains in this connection's TEMP schema. */
+function storage_file(PDO $db,int $owner,string $purpose,?int $order=null,string $mime='image/jpeg'):int {
+    $q=$db->prepare("INSERT INTO private_files(owner_id,order_id,purpose,object_key,original_name,mime_type,byte_size,checksum_sha256) VALUES(?,?,?,?,?,?,?,?) RETURNING file_id");
+    $key=bin2hex(random_bytes(32));$q->execute([$owner,$order,$purpose,$key,'fixture.jpg',$mime,512000,hash('sha256',$key)]);return (int)$q->fetchColumn();
 }

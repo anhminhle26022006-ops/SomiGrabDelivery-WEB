@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require_once __DIR__.'/ShipperFinanceService.php';
 require_once __DIR__.'/PrivateStorageService.php';
+require_once __DIR__.'/ShipperInput.php';
 
 final class Person3Worker
 {
@@ -26,6 +27,7 @@ final class Person3Worker
                 'OrderReturning'=>['Đang hoàn hàng','Order returning'], 'OrderReturned'=>['Đã hoàn hàng','Order returned'],
                 'RefundSucceeded'=>['Đã hoàn tiền','Refund completed'], 'ShipperAssigned'=>['Đã có người giao','Shipper assigned'],
                 'OrderPickedUp'=>['Đã lấy hàng','Order picked up'], 'OrderDelivering'=>['Đang giao hàng','Order delivering']
+                ,'NoShipperFound'=>['Chưa tìm được người giao','No shipper found']
             ];
             if($o&&isset($templates[$event['event_type']])){
                 [$vi,$en]=$templates[$event['event_type']];$recipients=[(int)$o['customer_id']];
@@ -60,7 +62,9 @@ final class Person3Worker
         $db=$this->db;$db->beginTransaction();try{
             $db->exec("UPDATE chat_messages m SET delete_after=o.closed_at+interval '1 month' FROM orders o WHERE o.order_id=m.order_id AND o.closed_at IS NOT NULL AND m.delete_after='infinity'");
             $db->exec("UPDATE chat_messages SET body=NULL,message_type='SYSTEM',deleted_at=now() WHERE deleted_at IS NULL AND delete_after<=now()");
-            $db->exec("UPDATE private_files f SET delete_after=o.closed_at+CASE WHEN f.purpose='CHAT' THEN interval '1 month' ELSE interval '7 days' END FROM orders o WHERE f.order_id=o.order_id AND o.closed_at IS NOT NULL AND f.delete_after='infinity'");
+            $days=(int)ShipperInput::config('evidence_retention_days');
+            $db->exec("UPDATE private_files f SET delete_after=o.closed_at+CASE WHEN f.purpose='CHAT' THEN interval '1 month' ELSE make_interval(days=>$days) END FROM orders o WHERE f.order_id=o.order_id AND o.closed_at IS NOT NULL AND f.purpose IN ('CHAT','EVIDENCE') AND (f.delete_after='infinity' OR (f.purpose='EVIDENCE' AND f.delete_after<o.closed_at+make_interval(days=>$days)))");
+            $db->exec("UPDATE delivery_evidence e SET delete_after=o.closed_at+make_interval(days=>$days) FROM deliveries d JOIN orders o ON o.order_id=d.order_id WHERE e.delivery_id=d.delivery_id AND o.closed_at IS NOT NULL AND (e.delete_after='infinity' OR e.delete_after<o.closed_at+make_interval(days=>$days))");
             $db->exec("UPDATE private_files f SET delete_after=t.closed_at+interval '3 months' FROM support_tickets t WHERE f.ticket_id=t.ticket_id AND t.closed_at IS NOT NULL AND f.delete_after='infinity'");
             $db->exec("UPDATE private_files f SET delete_after=(SELECT min(a.created_at)+interval '6 months' FROM audit_logs a WHERE a.entity_type='SHIPPER_PROFILE' AND a.entity_id::text=f.owner_id::text AND a.action IN ('SHIPPER_APPLICATION_APPROVED','SHIPPER_APPLICATION_REJECTED') AND a.created_at>=f.created_at) WHERE f.purpose='KYC' AND f.delete_after='infinity' AND EXISTS(SELECT 1 FROM audit_logs a WHERE a.entity_type='SHIPPER_PROFILE' AND a.entity_id::text=f.owner_id::text AND a.action IN ('SHIPPER_APPLICATION_APPROVED','SHIPPER_APPLICATION_REJECTED') AND a.created_at>=f.created_at)");
             $db->exec('UPDATE bank_account_changes SET encrypted_payload=NULL WHERE encrypted_payload IS NOT NULL AND (consumed_at IS NOT NULL OR expires_at<=now())');

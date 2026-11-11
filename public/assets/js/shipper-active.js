@@ -143,20 +143,16 @@
   }
 
   // ---------- Ảnh bằng chứng ----------
-  // Hiện tại chỉ gửi thông tin mô tả ảnh (loại, dung lượng, mã băm SHA-256) kèm một tham chiếu tạm.
-  // Khi Storage của nhóm sẵn sàng, bước upload file sẽ chạy trước và trả về tham chiếu thật.
+  // Upload ảnh riêng tư trước; backend nhận file_id và tự xác minh owner/đơn.
   async function submitEvidence(file) {
     if (!file || !delivery || !pendingEvidenceType) return;
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) return toast("Chỉ nhận ảnh JPG, PNG hoặc WEBP.");
-    if (file.size > 10 * 1024 * 1024) return toast("Ảnh không được lớn hơn 10 MB.");
+    if (file.size > 5 * 1024 * 1024) return toast("Ảnh không được lớn hơn 5 MiB.");
     try {
-      const digest = await crypto.subtle.digest("SHA-256", await file.arrayBuffer());
-      const checksum = [...new Uint8Array(digest)].map((byte) => byte.toString(16).padStart(2, "0")).join("");
-      const extension = { "image/jpeg": "jpg", "image/png": "png", "image/webp": "webp" }[file.type];
+      const uploaded=await api.uploadPrivate(file,'EVIDENCE',delivery.order_id);
       show(await api.addEvidence({
         order_id: String(delivery.order_id), evidence_type: pendingEvidenceType,
-        file_reference: `pending-upload/evidence/${delivery.order_id}/${checksum.slice(0, 24)}.${extension}`,
-        mime_type: file.type, byte_size: file.size, checksum_sha256: checksum,
+        reference_file_id: uploaded.file_id,
       }));
       toast("Đã ghi nhận ảnh bằng chứng.");
     } catch (error) {

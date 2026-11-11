@@ -76,11 +76,12 @@ final class PrivateStorageService
     }
     /** Person 2 calls this in the delivery/KYC transaction before persisting a file reference. */
     public function reference(int $user,string $role,array $in):array {
-        $file=$this->row(DeliveryInput::id($in['reference_file_id']??null));$purpose=DeliveryInput::text($in['purpose']??null,'purpose',20);
+        $id=DeliveryInput::id($in['reference_file_id']??null);$this->db->prepare('SELECT file_id FROM private_files WHERE file_id=? FOR UPDATE')->execute([$id]);
+        $file=$this->row($id);$purpose=DeliveryInput::text($in['purpose']??null,'purpose',20);
         if((int)$file['owner_id']!==$user||$file['purpose']!==$purpose||!in_array($purpose,['KYC','EVIDENCE'],true)||$role!=='SHIPPER')throw new DeliveryApiError(404,'FILE_NOT_FOUND','File not found.');
         if($purpose==='EVIDENCE')AccessControl::requireOrder($this->db,$user,$role,DeliveryInput::id($in['order_id']??null));
         if($purpose==='EVIDENCE'&&(int)$file['order_id']!==DeliveryInput::id($in['order_id']??null))throw new DeliveryApiError(404,'FILE_NOT_FOUND','File not found.');
-        return ['file'=>array_intersect_key($file,array_flip(['file_id','owner_id','order_id','purpose','object_key','mime_type','byte_size','checksum_sha256','delete_after','storage_backend','storage_bucket']))];
+        return ['file'=>array_intersect_key($file,array_flip(['file_id','owner_id','order_id','purpose','object_key','original_name','mime_type','byte_size','checksum_sha256','delete_after','storage_backend','storage_bucket']))];
     }
     public function discard(int $user,int $id):array {
         $q=$this->db->prepare('SELECT file_id FROM private_files WHERE file_id=? FOR UPDATE');$q->execute([$id]);

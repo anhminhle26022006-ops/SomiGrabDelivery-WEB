@@ -19,7 +19,7 @@ const {chromium}=require('playwright');
    if(body){createdTicket=true;data={ticket:{ticket_id:'1'}};}else if(url.searchParams.has('id'))data={ticket:{ticket_id:'1',status:'NEW',description:'Fixture ticket'},events:[]};else data={items:createdTicket?[{ticket_id:'1',ticket_code:'TK-FIXTURE',subject:'Account help',status:'NEW'}]:[],next_cursor:null};
   }else if(url.pathname.endsWith('/support/replies.php')){if(body)replies.push({reply_id:'1',sender_role:'CUSTOMER',body:body.body,created_at:'now'});data={items:replies,next_cursor:null};
   }else if(url.pathname.endsWith('/shipper/bank-account.php')){if(body?.action==='REQUEST')data={request_id:'10',delivery_mode:'EMAIL_QUEUE'};else if(body?.action==='CONFIRM'){bankConfirmed=true;data={confirmed:true,bank_account_id:'11'};}else data={bank_account:bankConfirmed?{bank_name:'Fixture bank',account_holder:'Fixture',account_number_masked:'••••6543'}:null};
-  }else if(url.pathname.endsWith('/storage.php')){data=req.method()==='POST'?{file_id:'42'}:{items:[],next_cursor:null};} 
+  }else if(url.pathname.endsWith('/storage.php')){data=req.method()==='POST'?{file_id:'42'}:{items:[],next_cursor:null};}
   return route.fulfill({status,contentType:'application/json',body:JSON.stringify(data)});
  });
  await page.goto('http://person3.test/');await page.getByRole('heading',{name:'Tạo yêu cầu hỗ trợ'}).waitFor();check(true,'ticket form loaded');

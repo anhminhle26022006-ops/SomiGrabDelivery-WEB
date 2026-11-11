@@ -11,11 +11,11 @@ import urllib.error
 import urllib.request
 
 root = tempfile.mkdtemp(prefix='somi-person3-upload-')
-env = dict(os.environ, SOMI_PERSON3_UPLOAD_TEST='1', SOMI_STORAGE_ROOT=root, SOMI_STORAGE_SIGNING_KEY=secrets.token_hex(32), SOMI_STORAGE_PRUNE_ORPHANS='1')
+env = dict(os.environ, SOMI_PERSON3_UPLOAD_TEST='1', SOMI_STORAGE_PROVIDER=os.environ.get('SOMI_TEST_STORAGE_PROVIDER','filesystem'), SOMI_STORAGE_ROOT=root, SOMI_STORAGE_SIGNING_KEY=secrets.token_hex(32), SOMI_STORAGE_PRUNE_ORPHANS='1')
 server = subprocess.Popen([os.environ.get('SOMI_TEST_PHP', 'C:/xampp/php/php.exe'), '-d', 'extension=pdo_pgsql', '-S', '127.0.0.1:3081', 'tests/person3_upload_fixture.php'], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 checks = 0
 
-def upload(payload, expected=200, purpose='TICKET', extra=None):
+def upload(payload, expected=200, purpose='TICKET', extra=None, scenario=''):
     global checks
     boundary = secrets.token_hex(16)
     fields = {'purpose': purpose, **({'ticket_id': '1'} if purpose == 'TICKET' else {}), **(extra or {})}
@@ -23,7 +23,7 @@ def upload(payload, expected=200, purpose='TICKET', extra=None):
     for key, value in fields.items():
         data += f'--{boundary}\r\nContent-Disposition: form-data; name="{key}"\r\n\r\n{value}\r\n'.encode()
     data += f'--{boundary}\r\nContent-Disposition: form-data; name="file"; filename="fixture.pdf"\r\nContent-Type: application/pdf\r\n\r\n'.encode() + payload + f'\r\n--{boundary}--\r\n'.encode()
-    req = urllib.request.Request('http://127.0.0.1:3081/', data=data, headers={'Content-Type': 'multipart/form-data; boundary=' + boundary})
+    req = urllib.request.Request('http://127.0.0.1:3081/?scenario='+scenario, data=data, headers={'Content-Type': 'multipart/form-data; boundary=' + boundary})
     try:
         response = urllib.request.urlopen(req, timeout=30)
     except urllib.error.HTTPError as error:
@@ -57,17 +57,26 @@ try:
     r = upload(pdf, purpose='CHAT', extra={'order_id': '1'})
     assert r['object_removed']; checks += 1
     assert not os.listdir(root), 'Fixture leaves no objects behind'; checks += 1
-    orphan = os.path.join(root, secrets.token_hex(32))
-    fresh = os.path.join(root, secrets.token_hex(32))
-    ignored = os.path.join(root, 'keep-this.txt')
-    for path in [orphan, fresh, ignored]:
-        with open(path, 'wb') as handle:
-            handle.write(b'fixture')
-    os.utime(orphan, (time.time()-172800, time.time()-172800))
-    r = upload(pdf)
-    assert r['orphans_removed'] == 1 and not os.path.exists(orphan); checks += 1
-    assert os.path.isfile(fresh) and os.path.isfile(ignored); checks += 1
-    print(f'Person3 real multipart Storage: {checks} checks passed; TEMP metadata and temporary private volume only.')
+    if env['SOMI_STORAGE_PROVIDER'] == 'filesystem':
+        orphan = os.path.join(root, secrets.token_hex(32))
+        fresh = os.path.join(root, secrets.token_hex(32))
+        ignored = os.path.join(root, 'keep-this.txt')
+        for path in [orphan, fresh, ignored]:
+            with open(path, 'wb') as handle:
+                handle.write(b'fixture')
+        os.utime(orphan, (time.time()-172800, time.time()-172800))
+        r = upload(pdf)
+        assert r['orphans_removed'] == 1 and not os.path.exists(orphan); checks += 1
+        assert os.path.isfile(fresh) and os.path.isfile(ignored); checks += 1
+    if env['SOMI_STORAGE_PROVIDER'] == 'supabase':
+        assert upload(pdf, 503, scenario='corrupt_download')['code'] == 'STORAGE_INTEGRITY_FAILED'; checks += 1
+        r = upload(pdf, 503, scenario='fail_upload')
+        assert r['code'] == 'STORAGE_UNAVAILABLE' and r['remote_objects'] == 0; checks += 1
+        r = upload(pdf, 503, scenario='fail_metadata')
+        assert r['code'] == 'FIXTURE_FAILED' and r['remote_objects'] == 0; checks += 1
+        r = upload(pdf, 503, scenario='fail_delete')
+        assert r['code'] == 'STORAGE_UNAVAILABLE' and r['remote_objects'] == 1 and r['metadata_marked_deleted'] == 0; checks += 1
+    print(f'Person3 real multipart Storage: {checks} checks passed; TEMP metadata; backend={env['SOMI_STORAGE_PROVIDER']}; provider network calls=0.')
 finally:
     server.terminate()
     server.wait(timeout=5)

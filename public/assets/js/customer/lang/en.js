@@ -5,6 +5,10 @@
  * you add new Vietnamese text to the customer pages.
  */
 window.SomiLangEN = {
+  "Chọn điểm lấy và điểm giao. Xem báo giá trước khi xác nhận đơn hàng.": "Choose pickup and delivery locations. Review the quote before confirming your order.",
+  "Địa chỉ lấy hàng": "Pickup address",
+  "Địa chỉ giao hàng": "Delivery address",
+  "Chọn điểm trên bản đồ": "Choose a map location",
   /* ---------- Shell and navigation ---------- */
   "SOMI, về trang tổng quan": "SOMI, back to overview",
   "Điều hướng khách hàng": "Customer navigation",

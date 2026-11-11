@@ -9,7 +9,7 @@ final class GeoFixture implements PricingHttpTransport {
  public function request(string $method,string $url,array $headers,?array $body,int $timeoutMs):array {
   $this->calls[]=compact('method','url','headers','body','timeoutMs');
   if($this->broken)throw new RuntimeException('provider secret');
-  if(str_contains($url,'/routing?'))return ['features'=>[['properties'=>['distance'=>15234.5,'time'=>1234.1],'geometry'=>['type'=>'MultiLineString','coordinates'=>[[[106.7,10.7],[106.8,10.8]]]]]]];
+  if(str_contains($url,'/routing?'))return ['features'=>[['geometry'=>['type'=>'MultiLineString','coordinates'=>[[[106.7,10.7],[106.8,10.8]]]],'properties'=>['distance'=>4500,'time'=>780]]]];
   return ['results'=>[['formatted'=>'Test, Vietnam','country_code'=>$this->country,'state'=>'Ho Chi Minh City','lat'=>10.776912345,'lon'=>106.700912345]]];
  }
 }
@@ -24,8 +24,10 @@ $result=$service->resolve(['action'=>'reverse','latitude'=>'10.7000000','longitu
 check($result['address']['latitude']==='10.7000000','retain exact selected pin');
 $result=$service->resolve(['action'=>'route','pickup'=>['latitude'=>'10.7','longitude'=>'106.7'],'delivery'=>['latitude'=>'10.8','longitude'=>'106.8']]);
 check($result['route']['geometry']['type']==='MultiLineString','route geometry');
+check($result['route']['properties']['distance_m']===4500.0,'route distance in meters');
+check($result['route']['properties']['duration_s']===780.0,'route duration in seconds');
 check(str_contains($http->calls[2]['url'],'mode=motorcycle'),'motorcycle route');
-check($result['distance_meters']==='15234.500'&&$result['duration_seconds']==='1234.100','shared route metrics');
+check($result['distance_meters']==='4500.000'&&$result['duration_seconds']==='780.000','shared route metrics');
 fails(fn()=>$service->resolve(['action'=>'reverse','latitude'=>'91','longitude'=>'106']),'VALIDATION_ERROR');
 fails(fn()=>$service->resolve(['action'=>'autocomplete','input'=>'test','extra'=>'x']),'INVALID_FIELDS');
 fails(fn()=>$service->resolve(['action'=>'invalid']),'VALIDATION_ERROR');

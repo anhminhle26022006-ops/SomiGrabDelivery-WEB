@@ -59,11 +59,29 @@ hoặc bài viết không thuộc nghiệp vụ giao hàng.
 - `node tests/admin_browser.cjs`: 248 kiểm tra qua, 15 view ở 3 kích thước.
 - `python tests/person3_http.py`: 33 kiểm tra HTTP guard qua, không đăng nhập.
 - Cú pháp PHP toàn bộ `app`, `public/api`, `tests` và `index.php` qua.
-- Tích hợp `tests/shipper_matching.php` chưa chạy được vì máy không phân giải
-  hostname Supabase. Với XAMPP cần bật extension:
-  `php -d extension=pdo_pgsql tests/shipper_matching.php`.
-  Chưa có bằng chứng chạy lại DB/nhà cung cấp thật cho thay đổi này;
-  không chạy migration thật.
+- Kiểm tra lại kết nối: DNS Supabase hoạt động ngoài sandbox; lỗi trước đó
+  do sandbox chặn mạng. PHP CLI XAMPP chưa bật `pdo_pgsql` mặc định.
+  Chạy `php -d extension=pdo_pgsql tests/shipper_matching.php` ngoài sandbox
+  đã qua 53 kiểm tra DB; `tests/shipper_delivery.php` qua 58 kiểm tra.
+  Chỉ dùng bảng TEMP, không chạy migration hoặc sửa dữ liệu nghiệp vụ thật.
+- Chạy lại DB sau khi khắc phục môi trường: `tests/customer_orders.php` qua
+  113 kiểm tra, `tests/person1_backend.php` qua 74, `tests/admin_console.php`
+  qua 37, `tests/shipper_policy_workflows.php` qua 62 và
+  `tests/person3_backend.php` qua 122 kiểm tra. Tổng cộng 519 kiểm tra DB qua.
+
+## Chẩn đoán môi trường DB
+
+`somi_db()` báo rõ khi chưa nạp `pdo_pgsql`, thay vì lỗi hằng số PDO không tồn tại.
+Hai script `scripts/test-person1.ps1` và `scripts/test-person3.ps1` tự truyền
+`-d extension=pdo_pgsql` nếu PHP CLI chưa bật extension. Không cần sửa php.ini
+toàn máy, DNS, IP hay thông tin Supabase trong `.env` để chạy kiểm thử này.
+Đã kiểm tra nhánh thiếu driver bằng `php -n`, cơ chế tự nạp driver của runner,
+10 kiểm tra chẩn đoán DB và 136 kiểm tra thực thể; tất cả qua.
+
+Trong môi trường sandbox bị hạn chế mạng, cần cấp quyền chạy kiểm thử DB
+ngoài sandbox. Đổi hostname hoặc hardcode IP không khắc phục nguyên nhân
+hạn chế quyền truy cập. Kết quả DB dùng provider thanh toán/email giả lập;
+không chứng minh giao dịch hoặc gửi thư thật.
 
 Playwright dùng môi trường có sẵn qua `NODE_PATH`. Ứng dụng không cần thêm
 package hoặc build frontend.

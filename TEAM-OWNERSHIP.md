@@ -6,6 +6,8 @@ Cập nhật **06/11/2026**, theo bản phân công backend điều chỉnh ngư
 
 > Theo yêu cầu Admin ngày 09/11/2026 trên MINH-ANH: Người 1 tích hợp giao diện quản trị thật, gồm API xử lý ticket/Admin chat có kiểm tra ticket + audit. Luồng Customer/Shipper tạo ticket/chat, GPS và payout giữ phần module tương ứng; bàn giao API tại [ADMIN-LIVE.md](docs/ADMIN-LIVE.md).
 
+> Cập nhật tích hợp theo yêu cầu người dùng ngày 12/11/2026: điểm/thu nhập đã được duyệt, hoàn tiền Customer và payout Shipper giữ thủ công. Code các luồng liên module và bản release policy: [SHIPPER-POLICY-WORKFLOWS.md](docs/SHIPPER-POLICY-WORKFLOWS.md). Các ghi chú “chưa chốt” bên dưới mô tả trạng thái cũ.
+
 ## Ownership hiện hành
 
 | Phạm vi | Chủ trì | Phối hợp và ranh giới |

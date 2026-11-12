@@ -13,6 +13,6 @@ if(PrivateStorageService::driver()==='supabase'){
 }else $checks['private_storage_root']=$real&&is_dir($real)&&is_writable($real)&&!str_starts_with(strtolower(str_replace('\\','/',$real)).'/',strtolower(str_replace('\\','/',$project)).'/');
 $key=base64_decode(getenv('SOMI_MESSAGE_ENCRYPTION_KEY')?:getenv('SOMI_IDENTITY_ENCRYPTION_KEY')?:'',true);$checks['encryption_key']=$key!==false&&strlen($key)===32;
 $checks['email_provider']=(getenv('RESEND_API_KEY')?:'')!=='';
-try{$db=somi_db();$q=$db->query("SELECT count(*) FROM somi.backend_migrations WHERE version IN ('20261111_person3','20261111_person3_complete','20261111_person3_supabase')");$checks['migrations_applied']=(int)$q->fetchColumn()===3;}catch(Throwable $e){$checks['migrations_applied']=false;}
+try{$db=somi_db();$q=$db->query("SELECT count(*) FROM somi.backend_migrations WHERE version IN ('20261111_person3','20261111_person3_complete','20261111_person3_supabase','20261112_no_shipper_refund','20261112_shipper_policy_workflows')");$checks['migrations_applied']=(int)$q->fetchColumn()===5;}catch(Throwable $e){$checks['migrations_applied']=false;}
 echo json_encode(['checks'=>$checks,'ready'=>!in_array(false,$checks,true)],JSON_PRETTY_PRINT|JSON_UNESCAPED_SLASHES).PHP_EOL;
 exit(in_array(false,$checks,true)?1:0);

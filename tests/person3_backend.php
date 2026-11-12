@@ -31,7 +31,7 @@ try{
     $sql=preg_replace('/^BEGIN;\s*|^COMMIT;\s*|^CREATE SCHEMA[^;]+;\s*|^SET search_path[^;]+;\s*/m','',$sql);
     $sql=preg_replace('/CREATE FUNCTION erase_identity_document_on_account_close\(\).*?(?=CREATE TABLE shipper_score_policies)/s','',$sql);
     $db->exec(str_replace('CREATE TABLE ','CREATE TEMP TABLE ',$sql));
-    foreach(['20261105_customer_orders','20261105_approved_pricing','20261105_distance_weight_pricing','20261106_person1_backend','20261111_person3','20261111_person3_complete','20261111_person3_supabase'] as $migration){
+    foreach(['20261105_customer_orders','20261105_approved_pricing','20261105_distance_weight_pricing','20261106_person1_backend','20261111_person3','20261111_person3_complete','20261111_person3_supabase','20261112_shipper_policy_workflows'] as $migration){
         $sql=file_get_contents(__DIR__.'/../database/migrations/'.$migration.'.sql');$sql=preg_replace('/^BEGIN;\s*|^COMMIT;\s*|^SET LOCAL search_path[^;]+;\s*/m','',$sql);$db->exec(str_replace('CREATE TABLE ','CREATE TEMP TABLE ',$sql));
     }
     check(value($db,"SELECT current_setting('search_path')")==='pg_temp, pg_catalog','isolated schema');

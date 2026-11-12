@@ -3,6 +3,8 @@ declare(strict_types=1);
 require_once __DIR__ . '/DeliveryService.php';
 require_once __DIR__ . '/ShipperKycService.php';
 require_once __DIR__ . '/PrivateStorageService.php';
+require_once __DIR__.'/ShipperScoreService.php';
+require_once __DIR__.'/ShipperFinanceService.php';
 
 /** Bằng chứng giao nhận và xác nhận giao thành công. */
 final class DeliveryCompletionService
@@ -64,6 +66,8 @@ final class DeliveryCompletionService
         $this->db->prepare("UPDATE order_assignments SET assignment_status = 'COMPLETED', ended_at = now(), ended_reason = 'DELIVERED' WHERE assignment_id = ?")->execute([$ctx['assignment']['assignment_id']]);
         OrderLifecycleService::event($this->db, $ctx['order'], 'OrderDelivered', 'delivered:' . $orderId,
             ['assignment_id' => (string) $ctx['assignment']['assignment_id'], 'shipper_id' => (string) $shipperId]);
-        return ['order_id' => $orderId, 'status' => 'DELIVERED'];
+        (new ShipperScoreService($this->db))->recovery($orderId);
+        $settlement=(new ShipperFinanceService($this->db))->settleOrder($orderId);
+        return ['order_id' => $orderId, 'status' => 'DELIVERED','settlement'=>$settlement];
     }
 }

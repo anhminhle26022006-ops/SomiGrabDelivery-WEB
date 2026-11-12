@@ -21,7 +21,8 @@ final class AdminConsoleService
           (SELECT count(*) FROM orders WHERE status NOT IN ('DELIVERED','RETURNED','CANCELLED')) AS active_orders,
           (SELECT count(*) FROM shipper_profiles WHERE verification_status IN ('PENDING','NEEDS_INFO')) AS pending_shippers,
           (SELECT count(*) FROM support_tickets WHERE status IN ('NEW','IN_PROGRESS')) AS open_tickets,
-          (SELECT count(*) FROM background_jobs WHERE status='FAILED') AS failed_jobs")[0];
+          (SELECT count(*) FROM background_jobs WHERE status='FAILED') AS failed_jobs,
+          (SELECT count(*) FROM orders o JOIN users du ON du.user_id=o.customer_id WHERE du.email LIKE '%@demo.somi.invalid') AS demo_orders")[0];
         $money=$this->rows("SELECT currency_code,COALESCE(sum(amount_minor),0) AS collected_minor,count(*) AS payments FROM payments WHERE status IN ('PAID','PARTIALLY_REFUNDED','REFUNDED') GROUP BY currency_code ORDER BY currency_code");
         $days=$this->rows("SELECT d::date AS day,count(o.order_id) AS orders FROM generate_series((now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date-6,(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date,interval '1 day')d LEFT JOIN orders o ON (o.created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date=d::date GROUP BY d ORDER BY d");
         return ['stats'=>$stats,'collected'=>$money,'days'=>$days,
@@ -105,8 +106,8 @@ final class AdminConsoleService
         $old=$this->rows('SELECT reliability_score FROM shipper_profiles WHERE user_id=? FOR UPDATE',[$id])[0]??null;
         if(!$old)throw new DeliveryApiError(404,'SHIPPER_NOT_FOUND','Shipper not found.');
         if(bccomp($score,(string)$old['reliability_score'],2)<=0)throw new DeliveryApiError(422,'SCORE_MUST_INCREASE','Restoration must increase reliability.');
-        $policies=$this->rows('SELECT lock_threshold FROM shipper_score_policies WHERE effective_from<=now() AND (effective_until IS NULL OR effective_until>now())');
-        if(count($policies)!==1||bccomp($score,(string)$policies[0]['lock_threshold'],2)<0)throw new DeliveryApiError(422,'SCORE_POLICY_REQUIRED','Restore to at least the configured threshold.');
+        $policies=$this->rows('SELECT lock_threshold,max_score FROM shipper_score_policies WHERE effective_from<=now() AND (effective_until IS NULL OR effective_until>now())');
+        if(count($policies)!==1||bccomp($score,(string)$policies[0]['lock_threshold'],2)<0||bccomp($score,(string)$policies[0]['max_score'],2)>0)throw new DeliveryApiError(422,'SCORE_POLICY_REQUIRED','Restore within the configured threshold and maximum score.');
         $this->db->prepare('UPDATE shipper_profiles SET reliability_score=?,availability=FALSE,updated_at=now() WHERE user_id=?')->execute([$score,$id]);
         $this->db->prepare("INSERT INTO shipper_score_events(shipper_id,event_type,points_delta,score_after,reason,actor_id) VALUES(?,'ADMIN_ADJUSTMENT',?,?,?,?)")->execute([$id,bcsub($score,(string)$old['reliability_score'],2),$score,$reason,$admin]);
         AuditService::record($this->db,$admin,'ADMIN','SHIPPER_RELIABILITY_RESTORED','SHIPPER_PROFILE',$id,$old,['reliability_score'=>$score,'reason'=>$reason]);return ['shipper_id'=>$id,'reliability_score'=>$score];
@@ -115,7 +116,7 @@ final class AdminConsoleService
         $this->guard($admin,'order.cancel_admin');$reason=DeliveryInput::text($reason,'reason',1000);$order=OrderLifecycleService::lock($this->db,$id);
         if(!in_array($order['status'],['PENDING_PAYMENT','SEARCHING_SHIPPER','NO_SHIPPER_FOUND','SHIPPER_ASSIGNED'],true))throw new DeliveryApiError(409,'ORDER_NOT_CANCELLABLE','Only orders before pickup can be cancelled here.');
         if($this->rows('SELECT 1 FROM deliveries d JOIN order_assignments a USING(assignment_id) WHERE a.order_id=? AND d.picked_up_at IS NOT NULL LIMIT 1',[$id]))throw new DeliveryApiError(409,'ORDER_NOT_CANCELLABLE','Pickup evidence already exists.');
-        $snapshot=json_decode($order['pricing_snapshot'],true,512,JSON_THROW_ON_ERROR);$fee=(string)($snapshot['cancellation_fees'][$order['status']]??'0');
+        $snapshot=json_decode($order['pricing_snapshot'],true,512,JSON_THROW_ON_ERROR);$fee=$order['status']==='NO_SHIPPER_FOUND'?'0':(string)($snapshot['cancellation_fees'][$order['status']]??'0');
         $q=$this->db->prepare("UPDATE orders SET status='CANCELLED',cancellation_fee_minor=?,cancelled_at=now(),closed_at=now(),updated_at=now() WHERE order_id=?");$q->execute([$fee,$id]);
         $this->db->prepare("UPDATE order_match_offers SET status='CANCELLED',responded_at=now() WHERE order_id=? AND status='PENDING'")->execute([$id]);
         $this->db->prepare("UPDATE order_assignments SET assignment_status='ADMIN_CANCELLED',ended_at=now(),ended_reason='ADMIN_CANCELLATION' WHERE order_id=? AND assignment_status='ACTIVE'")->execute([$id]);

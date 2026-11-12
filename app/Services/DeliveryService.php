@@ -30,6 +30,7 @@ final class DeliveryService
         $q = $this->db->prepare("SELECT e.evidence_id,e.evidence_type,e.mime_type,e.byte_size,e.uploaded_at,f.file_id FROM delivery_evidence e JOIN private_files f ON f.object_key=e.object_key AND f.owner_id=e.uploaded_by AND f.order_id=? AND f.purpose='EVIDENCE' WHERE e.delivery_id=? AND e.deleted_at IS NULL AND f.deleted_at IS NULL AND f.delete_after>now() ORDER BY e.evidence_id");
         $q->execute([$delivery['order_id'],$delivery['delivery_id']]);
         $delivery['evidence'] = $q->fetchAll();
+        $q=$this->db->prepare("SELECT cancellation_request_id,decision,reason,decision_note FROM cancellation_requests WHERE assignment_id=? AND requester_role='SHIPPER' ORDER BY cancellation_request_id DESC LIMIT 1");$q->execute([$delivery['assignment_id']]);$delivery['cancellation_request']=$q->fetch()?:null;
         $delivery['next_actions'] = self::nextActions($delivery);
         return ['delivery' => $delivery];
     }

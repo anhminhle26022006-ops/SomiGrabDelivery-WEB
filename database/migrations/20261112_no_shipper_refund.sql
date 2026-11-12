@@ -1,0 +1,3 @@
+SET LOCAL search_path TO somi, public;
+ALTER TABLE refunds DROP CONSTRAINT refunds_reason_check;
+ALTER TABLE refunds ADD CONSTRAINT refunds_reason_check CHECK (reason IN ('CUSTOMER_CANCELLATION','RETURN_FEE_DEDUCTION','ADMIN_ADJUSTMENT','NO_SHIPPER_FOUND'));

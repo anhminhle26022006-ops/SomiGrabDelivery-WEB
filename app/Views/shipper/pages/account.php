@@ -19,22 +19,15 @@
         <div><label class="muted" for="shipperWard">Phường / xã</label><input id="shipperWard" placeholder="Nhập phường / xã" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" /></div>
         <div><label class="muted" for="shipperCity">Tỉnh / thành phố</label><input id="shipperCity" value="TP. Hồ Chí Minh" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" /></div>
       </div>
-      <div class="sectiontitle" style="margin-top:26px"><div><h2>Tài khoản nhận thanh toán</h2><p>Tiền của đơn hoàn thành sẽ được đối soát, trừ phí dịch vụ rồi chuyển vào tài khoản đã xác minh.</p></div></div>
-      <div style="padding:14px 16px;border:1px solid #cfe9dc;background:#f0fbf5;border-radius:12px;margin-bottom:14px">
-        <strong style="color:#087443">● Quy trình xác minh tài khoản ngân hàng</strong>
-        <p class="muted" style="font-size:12px;margin:6px 0 0">Bản demo chưa kết nối ngân hàng. Khi triển khai thật, tài khoản chỉ được nhận tiền sau khi xác minh tên chủ tài khoản và thông tin tài khoản; hệ thống chỉ hiển thị số tài khoản đã che.</p>
-      </div>
-      <div class="cards" style="grid-template-columns:repeat(2,minmax(0,1fr))">
-        <div><label class="muted" for="payoutBank">Ngân hàng</label><select id="payoutBank" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px;background:#fff"><option value="">Chọn ngân hàng</option><option>Vietcombank</option><option>VietinBank</option><option>BIDV</option><option>MB Bank</option><option>Techcombank</option><option>ACB</option><option>TPBank</option><option>Ngân hàng khác</option></select></div>
-        <div><label class="muted" for="payoutName">Tên chủ tài khoản</label><input id="payoutName" placeholder="Tên chủ tài khoản như trên ngân hàng" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" /></div>
-        <div><label class="muted" for="payoutNumber">Số tài khoản</label><input id="payoutNumber" inputmode="numeric" autocomplete="off" placeholder="Nhập số tài khoản" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" /><small class="muted">Sau khi lưu, giao diện chỉ hiển thị dạng che số, ví dụ •••• 1234.</small></div>
-        <div><label class="muted" for="payoutBranch">Chi nhánh (không bắt buộc)</label><input id="payoutBranch" placeholder="Nhập chi nhánh" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" /></div>
-      </div>
-      <div style="margin-top:12px;padding:13px 15px;background:#fff8e8;border:1px solid #f3dfae;border-radius:12px">
-        <strong style="color:#875500">Bảo mật khi đổi tài khoản nhận tiền</strong>
-        <p class="muted" style="font-size:12px;margin:6px 0 10px">Khi thay đổi tài khoản, yêu cầu xác thực lại bằng OTP gửi đến số điện thoại đã xác minh và kiểm tra tên chủ tài khoản. Tạm giữ khoản thanh toán chưa chuyển trong thời gian kiểm tra; gửi thông báo khi thay đổi và lưu nhật ký thao tác. Không cho đổi chỉ bằng cách sửa hồ sơ thông thường.</p>
-        <button class="outline" type="button" onclick="demoAction('Bắt đầu quy trình xác minh OTP và đổi tài khoản nhận tiền')">🔐 Yêu cầu đổi tài khoản nhận tiền</button>
-      </div>
+      <div class="sectiontitle" style="margin-top:26px"><div><h2>Tài khoản nhận thanh toán</h2><p>Đổi tài khoản bằng mật khẩu hiện tại và OTP gửi đến email đã xác minh. Admin chuyển khoản và đối soát chứng từ.</p></div></div>
+      <button class="outline" type="button" onclick="window.somiPerson3Open('bank')">Quản lý tài khoản nhận tiền</button>
+      <form id="kycResubmitForm" hidden style="margin-top:24px">
+        <h3>Bổ sung giấy tờ KYC</h3>
+        <label>Loại giấy tờ <select name="document_type"><option value="IDENTITY_FRONT">Mặt trước giấy tờ định danh</option><option value="IDENTITY_BACK">Mặt sau giấy tờ định danh</option><option value="DRIVER_LICENSE">Giấy phép lái xe</option><option value="VEHICLE_REGISTRATION">Đăng ký xe</option><option value="PORTRAIT">Ảnh chân dung</option></select></label>
+        <label>File (tối đa 5 MiB) <input type="file" name="document_file" accept="image/jpeg,image/png,image/webp,application/pdf" required></label>
+        <button type="submit" class="primary">Tải giấy tờ và nộp lại hồ sơ</button>
+        <p role="status" id="kycUploadStatus"></p>
+      </form>
       <div class="sectiontitle" style="margin-top:26px"><div><h2>Thông tin phương tiện</h2><p>Thông tin dùng để xác minh phương tiện và ghép đơn phù hợp.</p></div></div>
       <div class="cards" style="grid-template-columns:repeat(2,minmax(0,1fr))">
         <div><label class="muted" for="vehicleType">Loại phương tiện</label><select id="vehicleType" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px"><option>Xe máy</option><option>Xe máy điện</option><option>Ô tô</option><option>Xe tải nhỏ</option></select></div>

@@ -40,7 +40,7 @@ final class DeliveryContext
 
     public static function evidenceCount(PDO $db, int $deliveryId, string $type): int
     {
-        $q = $db->prepare('SELECT count(*) FROM delivery_evidence WHERE delivery_id = ? AND evidence_type = ? AND deleted_at IS NULL');
+        $q = $db->prepare("SELECT count(*) FROM delivery_evidence e JOIN deliveries d USING(delivery_id) JOIN private_files f ON f.object_key=e.object_key AND f.order_id=d.order_id AND f.owner_id=e.uploaded_by AND f.purpose='EVIDENCE' WHERE e.delivery_id=? AND e.evidence_type=? AND e.deleted_at IS NULL AND f.deleted_at IS NULL AND f.delete_after>now()");
         $q->execute([$deliveryId, $type]);
         return (int) $q->fetchColumn();
     }

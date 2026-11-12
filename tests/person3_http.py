@@ -36,11 +36,13 @@ try:
     else:
         raise RuntimeError('Local PHP server did not start')
     assert server.poll() is None, 'PHP test server exited; refusing to test another process'
-    for path in ['interactions.php?resource=chat&order_id=1', 'interactions.php?resource=notifications', 'storage.php', 'shipper/earnings.php', 'admin/payouts.php', 'shipper/bank-account.php', 'support/replies.php?ticket_id=1', 'admin/person3-jobs.php']:
+    for path in ['interactions.php?resource=chat&order_id=1', 'interactions.php?resource=notifications', 'storage.php', 'shipper/earnings.php', 'admin/payouts.php', 'shipper/bank-account.php', 'support/replies.php?ticket_id=1', 'admin/person3-jobs.php', 'admin/shipper-cancellations.php']:
         request(path, 401)
-    for path in ['interactions.php?resource=tickets', 'storage.php', 'admin/payouts.php', 'shipper/bank-account.php', 'support/replies.php', 'geo/places.php', 'admin/person3-jobs.php']:
+    for path in ['interactions.php?resource=tickets', 'storage.php', 'admin/payouts.php', 'shipper/bank-account.php', 'support/replies.php', 'geo/places.php', 'admin/person3-jobs.php', 'shipper/cancellation.php', 'admin/shipper-cancellations.php', 'admin/shipper-violation.php']:
         request(path, 403, method='POST')
         request(path, 401, method='POST', origin=base)
+    request('shipper/cancellation.php', 405)
+    request('admin/shipper-violation.php', 405)
     request('shipper/earnings.php', 405, method='POST', origin=base)
     print(f'Person3 HTTP: {checks} checks passed (unauthenticated, loopback only).')
 finally:

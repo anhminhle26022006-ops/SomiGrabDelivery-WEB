@@ -5,7 +5,7 @@ require_once __DIR__ . '/../../../app/Services/ShipperKycService.php';
 
 // GET: trạng thái duyệt, lý do bị trả về và tài liệu đã nộp.
 // POST {identity?: {document_type, document_country_code, identity_number},
-//       documents?: [{document_type, file_reference, original_name?, mime_type, byte_size, checksum_sha256?}]}
+//       documents?: [{document_type, reference_file_id}]}
 //      nộp lại hồ sơ khi đang NEEDS_INFO hoặc REJECTED.
 $method = $_SERVER['REQUEST_METHOD'] ?? '';
 shipper_run(['GET', 'POST'], $method === 'POST' ? 'profile.update_own' : 'profile.read_own', $method === 'POST',

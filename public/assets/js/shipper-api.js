@@ -18,6 +18,8 @@
     INVALID_ORDER_STATE: "Thao tác không phù hợp với trạng thái hiện tại của đơn.",
     VEHICLE_REGISTRATION_TAKEN: "Biển số này đã thuộc về một hồ sơ khác.",
     KYC_NOT_RESUBMITTABLE: "Hồ sơ chỉ nộp lại được khi Admin yêu cầu bổ sung.",
+    CANCELLATION_PENDING: "Yêu cầu đang chờ Admin xem xét. Vui lòng tải lại đơn.",
+    IDEMPOTENCY_CONFLICT: "Nội dung yêu cầu đã thay đổi. Vui lòng tải lại và kiểm tra trạng thái.",
     CONCURRENT_CHANGE: "Dữ liệu vừa thay đổi. Vui lòng thử lại.",
     VALIDATION_ERROR: "Thông tin gửi lên chưa hợp lệ.",
   };
@@ -74,12 +76,19 @@
     profile: () => request("profile.php"),
     updateVehicle: (vehicle) => request("profile.php", "PUT", vehicle),
     kyc: () => request("kyc.php"),
+    resubmitKyc: (body) => request("kyc.php", "POST", body),
+    uploadPrivate: async (file, purpose, orderId) => {
+      const body=new FormData();body.append('file',file);body.append('purpose',purpose);if(orderId)body.append('order_id',String(orderId));
+      const response=await fetch('public/api/storage.php',{method:'POST',credentials:'same-origin',body,headers:{Accept:'application/json'}});
+      const result=await response.json().catch(()=>({}));if(!response.ok)throw new Error(result.error||'Không tải được file.');return result;
+    },
     availability: () => request("availability.php"),
     setAvailability: (body) => request("availability.php", "POST", body),
     offers: () => request("offers.php"),
     rejectOffer: (offerId) => request("offers.php", "POST", { offer_id: String(offerId) }),
     acceptOffer: (offerId) => request("accept-offer.php", "POST", { offer_id: String(offerId) }),
     currentDelivery: () => request("deliveries.php"),
+    requestCancellation: (body) => request("cancellation.php", "POST", body),
     history: () => request("deliveries.php?history=1&limit=50"),
     deliveryAction: (orderId, action) => request("deliveries.php", "POST", { order_id: String(orderId), action }),
     addEvidence: (evidence) => request("evidence.php", "POST", evidence),

@@ -23,8 +23,8 @@ try {
     rejects(fn() => tx($db, fn() => $profiles->updateVehicle(SHIPPER_B, 'Xe máy', ' 59x1-00003 ')), 'VEHICLE_REGISTRATION_TAKEN');
     rejects(fn() => tx($db, fn() => $kyc->resubmit(SHIPPER_A, null, [])), 'KYC_NOT_RESUBMITTABLE');
     rejects(fn() => tx($db, fn() => $kyc->resubmit(SHIPPER_PENDING, null, [])), 'VALIDATION_ERROR');
-    $document = ['document_type' => 'IDENTITY_FRONT', 'file_reference' => 'pending-upload/kyc/front-0001.jpg', 'mime_type' => 'image/jpeg', 'byte_size' => 204800];
-    rejects(fn() => tx($db, fn() => $kyc->resubmit(SHIPPER_PENDING, null, [array_replace($document, ['file_reference' => 'https://evil.example/../x.jpg'])])), 'VALIDATION_ERROR');
+    $document = ['document_type' => 'IDENTITY_FRONT', 'reference_file_id' => storage_file($db,SHIPPER_PENDING,'KYC')];
+    rejects(fn() => tx($db, fn() => $kyc->resubmit(SHIPPER_PENDING, null, [array_replace($document, ['reference_file_id' => 'https://evil.example/../x.jpg'])])), 'VALIDATION_ERROR');
     $status = tx($db, fn() => $kyc->resubmit(SHIPPER_PENDING, ['document_type' => 'NATIONAL_ID', 'document_country_code' => 'vn', 'identity_number' => '079200001234'], [$document]));
     check($status['verification_status'] === 'PENDING' && $status['identity_review_status'] === 'PENDING' && $status['rejection_reason'] === null, 'resubmission returns to PENDING review');
     check(count($status['documents']) === 1 && !$status['can_resubmit'], 'document reference stored once');

@@ -2,19 +2,21 @@
 declare(strict_types=1);
 require_once __DIR__ . '/DeliveryService.php';
 require_once __DIR__ . '/ShipperKycService.php';
+require_once __DIR__ . '/PrivateStorageService.php';
+require_once __DIR__.'/ShipperScoreService.php';
+require_once __DIR__.'/ShipperFinanceService.php';
 
 /** Bằng chứng giao nhận và xác nhận giao thành công. */
 final class DeliveryCompletionService
 {
     private const MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-    private const MAX_BYTES = 10 * 1024 * 1024;
+    private const MAX_BYTES = 5 * 1024 * 1024;
     private const MAX_PER_TYPE = 5;
 
     public function __construct(private PDO $db) {}
 
     /**
-     * Ghi nhận một ảnh bằng chứng. Hiện tại lưu THAM CHIẾU file; khi Storage của Người 3
-     * sẵn sàng, tham chiếu này sẽ là object key của file đã upload riêng tư.
+     * Link a private Storage file ID. Client-supplied file metadata is never trusted.
      * Ảnh giao hàng chỉ nhận khi đang giao, ảnh hoàn hàng chỉ nhận khi đang hoàn.
      */
     public function addEvidence(int $shipperId, int $orderId, string $type, mixed $reference, mixed $mime, mixed $size, mixed $checksum): array
@@ -24,20 +26,23 @@ final class DeliveryCompletionService
         if ($ctx['order']['status'] !== $requiredStatus) {
             throw new DeliveryApiError(409, 'INVALID_ORDER_STATE', "$type can only be added while the order is $requiredStatus.");
         }
-        $reference = ShipperKycService::fileReference($reference);
+        $file=(new PrivateStorageService($this->db))->reference($shipperId,'SHIPPER',['reference_file_id'=>$reference,'purpose'=>'EVIDENCE','order_id'=>$orderId])['file'];
+        $reference=$file['object_key'];$mime=$file['mime_type'];$size=(int)$file['byte_size'];$checksum=$file['checksum_sha256'];
         $mime = ShipperInput::choice($mime, 'mime_type', self::MIME_TYPES);
         if (!is_int($size) || $size < 1 || $size > self::MAX_BYTES) DeliveryInput::invalid('byte_size');
         $checksum = DeliveryInput::text($checksum, 'checksum_sha256', 64, false);
         if ($checksum !== null && !preg_match('/^[a-f0-9]{64}$/D', $checksum)) DeliveryInput::invalid('checksum_sha256');
         $deliveryId = (int) $ctx['delivery']['delivery_id'];
+        $existing=$this->db->prepare('SELECT 1 FROM delivery_evidence WHERE delivery_id=? AND evidence_type=? AND object_key=?');$existing->execute([$deliveryId,$type,$reference]);
+        if($existing->fetchColumn())return (new DeliveryService($this->db))->current($shipperId);
         if (DeliveryContext::evidenceCount($this->db, $deliveryId, $type) >= self::MAX_PER_TYPE) {
             throw new DeliveryApiError(409, 'EVIDENCE_LIMIT_REACHED', 'Too many evidence files for this delivery.');
         }
         $q = $this->db->prepare(
             'INSERT INTO delivery_evidence (delivery_id, evidence_type, object_key, mime_type, byte_size, checksum_sha256, uploaded_by, delete_after)
-             VALUES (?, ?, ?, ?, ?, ?, ?, now() + make_interval(days => ?))'
+             VALUES (?, ?, ?, ?, ?, ?, ?, \'infinity\'::timestamptz)'
         );
-        $q->execute([$deliveryId, $type, $reference, $mime, $size, $checksum, $shipperId, ShipperInput::config('evidence_retention_days')]);
+        $q->execute([$deliveryId, $type, $reference, $mime, $size, $checksum, $shipperId]);
         return (new DeliveryService($this->db))->current($shipperId);
     }
 
@@ -61,6 +66,8 @@ final class DeliveryCompletionService
         $this->db->prepare("UPDATE order_assignments SET assignment_status = 'COMPLETED', ended_at = now(), ended_reason = 'DELIVERED' WHERE assignment_id = ?")->execute([$ctx['assignment']['assignment_id']]);
         OrderLifecycleService::event($this->db, $ctx['order'], 'OrderDelivered', 'delivered:' . $orderId,
             ['assignment_id' => (string) $ctx['assignment']['assignment_id'], 'shipper_id' => (string) $shipperId]);
-        return ['order_id' => $orderId, 'status' => 'DELIVERED'];
+        (new ShipperScoreService($this->db))->recovery($orderId);
+        $settlement=(new ShipperFinanceService($this->db))->settleOrder($orderId);
+        return ['order_id' => $orderId, 'status' => 'DELIVERED','settlement'=>$settlement];
     }
 }

@@ -110,7 +110,7 @@ final class CustomerOrderService
         $q->execute(['id' => $id]);
         if ($q->fetchColumn()) throw new DeliveryApiError(409, 'ORDER_NOT_CANCELLABLE', 'Order already has an active assignment.');
         $snapshot=json_decode($order['pricing_snapshot'],true,512,JSON_THROW_ON_ERROR);
-        $fee=(string)($snapshot['cancellation_fees'][$order['status']]??'0');
+        $fee=$order['status']==='NO_SHIPPER_FOUND'?'0':(string)($snapshot['cancellation_fees'][$order['status']]??'0');
         $q = $this->db->prepare("UPDATE orders SET status = 'CANCELLED', cancellation_fee_minor = :fee, cancelled_at = now(), closed_at = now(), updated_at = now() WHERE order_id = :id");
         $q->execute(['id' => $id,'fee'=>$fee]);
         $q = $this->db->prepare("UPDATE order_match_offers SET status = 'CANCELLED', responded_at = now() WHERE order_id = :id AND status = 'PENDING'");

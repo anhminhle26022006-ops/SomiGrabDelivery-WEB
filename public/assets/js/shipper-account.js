@@ -8,6 +8,7 @@
   };
 
   function fill(data, kyc) {
+    document.getElementById('kycResubmitForm').hidden=!kyc.can_resubmit;
     const profile = data.profile;
     const name = document.getElementById("shipperName");
     if (name) { name.value = profile.full_name; name.readOnly = true; } // đổi họ tên đi qua account/profile.php của nền tảng
@@ -58,6 +59,14 @@
   document.addEventListener("DOMContentLoaded", () => {
     if (!document.getElementById("page-account")) return;
     document.getElementById("saveVehicleBtn")?.addEventListener("click", saveVehicle);
+    document.getElementById('kycResubmitForm')?.addEventListener('submit',async event=>{
+      event.preventDefault();const form=event.currentTarget,button=form.querySelector('button'),status=document.getElementById('kycUploadStatus');button.disabled=true;
+      try{const file=form.elements.document_file.files[0];if(!file||file.size>5*1024*1024)throw new Error('Chọn file tối đa 5 MiB.');
+        status.textContent='Đang tải giấy tờ…';const uploaded=await api.uploadPrivate(file,'KYC');
+        await api.resubmitKyc({documents:[{document_type:form.elements.document_type.value,reference_file_id:uploaded.file_id}]});
+        form.reset();status.textContent='Đã nộp hồ sơ. Đang chờ Admin duyệt.';await load();
+      }catch(error){status.textContent=error.message;}finally{button.disabled=false;}
+    });
     load();
   });
 })();

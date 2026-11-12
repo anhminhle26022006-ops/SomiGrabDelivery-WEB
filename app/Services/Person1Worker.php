@@ -18,7 +18,7 @@ final class Person1Worker
         $data=$job['payload'];$kind=$job['kind'];
         if($kind==='EMAIL'){$this->email((int)$data['email_id']);return;}
         if(in_array($kind,['PAYMENT_CHECKOUT','PAYMENT_RECONCILE'],true)){
-            $q=$this->db->prepare('SELECT * FROM payments WHERE payment_id=?');$q->execute([$data['payment_id']]);$p=$q->fetch();if(!$p)throw new RuntimeException('Payment missing.');
+            $q=$this->db->prepare('SELECT * FROM payments WHERE payment_id=?');$q->execute([$data['payment_id']]);$p=$q->fetch();if(!$p)throw new RuntimeException('Payment missing.');if($p['provider']==='DEMO')return;
             if(in_array($p['status'],['PAID','PARTIALLY_REFUNDED','REFUNDED'],true))return;
             if($kind==='PAYMENT_RECONCILE'){
                 $event=$this->provider->reconcile($p);
@@ -36,6 +36,7 @@ final class Person1Worker
         if($kind==='REFUND'){
             $q=$this->db->prepare('SELECT * FROM refunds WHERE refund_id=?');$q->execute([$data['refund_id']]);$r=$q->fetch();if(!$r)throw new RuntimeException('Refund missing.');if($r['status']==='SUCCEEDED')return;
             $q=$this->db->prepare('SELECT * FROM payments WHERE payment_id=?');$q->execute([$r['payment_id']]);$p=$q->fetch();
+            if($p['provider']==='DEMO'){$this->db->prepare("UPDATE refunds SET status='PROCESSING',failure_code='DEMO_NO_MONEY_MOVED' WHERE refund_id=? AND status<>'SUCCEEDED'")->execute([$r['refund_id']]);return;}
             if($p['provider']==='MANUAL_BANK'){$this->db->prepare("UPDATE refunds SET status='PROCESSING',failure_code='MANUAL_ORIGINAL_METHOD_REQUIRED' WHERE refund_id=? AND status<>'SUCCEEDED'")->execute([$r['refund_id']]);return;}
             if($p['provider']==='SEPAY'){$this->db->prepare("UPDATE refunds SET status='PROCESSING',failure_code='SEPAY_REFUND_REVIEW_REQUIRED' WHERE refund_id=? AND status<>'SUCCEEDED'")->execute([$r['refund_id']]);return;}
             $event=$this->provider->refund($r,$p,'refund:'.$r['refund_id']);

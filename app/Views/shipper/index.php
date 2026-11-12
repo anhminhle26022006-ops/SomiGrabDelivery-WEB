@@ -21,7 +21,7 @@
         <button type="button" class="language-option" data-language-option="vi"><svg class="language-flag-svg" viewBox="0 0 30 20" aria-hidden="true" focusable="false"><rect width="30" height="20" rx="2" fill="#da251d"/><path d="M15 3.5L16.8 8.4L22 8.5L17.9 11.6L19.4 16.5L15 13.6L10.6 16.5L12.1 11.6L8 8.5L13.2 8.4Z" fill="#ffde00"/></svg><span>Tiếng Việt</span><span class="language-code">VI</span></button>
       </div>
     </div>
-    <button class="iconbtn" id="bellBtn" title="Thông báo" aria-label="Thông báo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 9a6 6 0 0 0-12 0c0 6-2.5 7.5-2.5 7.5h17S18 15 18 9"/><path d="M10.5 20a1.7 1.7 0 0 0 3 0"/></svg><span class="badge-count" id="bellCount">3</span></button>
+    <button class="iconbtn" id="bellBtn" title="Thông báo" aria-label="Thông báo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 9a6 6 0 0 0-12 0c0 6-2.5 7.5-2.5 7.5h17S18 15 18 9"/><path d="M10.5 20a1.7 1.7 0 0 0 3 0"/></svg><span class="badge-count" id="bellCount" data-unread hidden>0</span></button>
     <div class="profile">
       <button class="profilebtn" id="profileBtn" aria-expanded="false">
         <span class="avatar" id="avatar"><span>NA</span></span>

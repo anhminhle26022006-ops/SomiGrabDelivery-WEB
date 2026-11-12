@@ -27,9 +27,10 @@ final class DeliveryService
         $q->execute([$shipperId]);
         $delivery = $q->fetch();
         if (!$delivery) return ['delivery' => null];
-        $q = $this->db->prepare('SELECT evidence_id, evidence_type, mime_type, byte_size, uploaded_at FROM delivery_evidence WHERE delivery_id = ? AND deleted_at IS NULL ORDER BY evidence_id');
-        $q->execute([$delivery['delivery_id']]);
+        $q = $this->db->prepare("SELECT e.evidence_id,e.evidence_type,e.mime_type,e.byte_size,e.uploaded_at,f.file_id FROM delivery_evidence e JOIN private_files f ON f.object_key=e.object_key AND f.owner_id=e.uploaded_by AND f.order_id=? AND f.purpose='EVIDENCE' WHERE e.delivery_id=? AND e.deleted_at IS NULL AND f.deleted_at IS NULL AND f.delete_after>now() ORDER BY e.evidence_id");
+        $q->execute([$delivery['order_id'],$delivery['delivery_id']]);
         $delivery['evidence'] = $q->fetchAll();
+        $q=$this->db->prepare("SELECT cancellation_request_id,decision,reason,decision_note FROM cancellation_requests WHERE assignment_id=? AND requester_role='SHIPPER' ORDER BY cancellation_request_id DESC LIMIT 1");$q->execute([$delivery['assignment_id']]);$delivery['cancellation_request']=$q->fetch()?:null;
         $delivery['next_actions'] = self::nextActions($delivery);
         return ['delivery' => $delivery];
     }
@@ -82,6 +83,7 @@ final class DeliveryService
         if ($ctx['order']['status'] === 'IN_DELIVERY') return $this->current($shipperId);
         DeliveryContext::transition($this->db, $ctx['order'], 'IN_DELIVERY', $shipperId, 'SHIPPER');
         $this->db->prepare('UPDATE deliveries SET delivery_started_at = now(), updated_at = now() WHERE delivery_id = ?')->execute([$ctx['delivery']['delivery_id']]);
+        OrderLifecycleService::event($this->db,$ctx['order'],'OrderDelivering','delivering:'.$ctx['assignment']['assignment_id'],['shipper_id'=>(string)$shipperId]);
         return $this->current($shipperId);
     }
 }

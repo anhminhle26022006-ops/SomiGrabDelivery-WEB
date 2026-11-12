@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__.'/JobQueue.php';
+require_once __DIR__.'/DemoMode.php';
 require_once __DIR__.'/EncryptedPayload.php';
 require_once __DIR__.'/DeliveryInput.php';
 
@@ -14,6 +15,7 @@ final class EmailService
         if(!$db->inTransaction())throw new LogicException('Email must be enqueued in the business transaction.');
         $q=$db->prepare('SELECT email,app_language FROM users WHERE user_id=?');$q->execute([$userId]);$user=$q->fetch();
         if(!$user||!filter_var($user['email'],FILTER_VALIDATE_EMAIL))throw new DeliveryApiError(422,'INVALID_EMAIL','Recipient email is invalid.');
+        if(DemoMode::email($user['email']))return; // No verification, OTP or transactional provider calls for demonstration identities.
         $language=self::language($user);
         [$subject,$text]=self::render($template,$language,$variables);
         $payload=EncryptedPayload::seal(['to'=>$user['email'],'subject'=>$subject,'text'=>$text,'html'=>'<p>'.nl2br(htmlspecialchars($text,ENT_QUOTES|ENT_SUBSTITUTE,'UTF-8')).'</p>']);

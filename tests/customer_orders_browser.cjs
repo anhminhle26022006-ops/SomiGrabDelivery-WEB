@@ -8,7 +8,7 @@ const server=http.createServer((req,res)=>{
  if(['maps.js','places.js','create-route.js','server.js'].includes(script)){res.setHeader('Content-Type','application/javascript; charset=utf-8');return res.end(fs.readFileSync(path.join(root,'public/assets/js/customer',script)));}
  if(script==='bootstrap.css'||script==='customer.css'){res.setHeader('Content-Type','text/css');return res.end(fs.readFileSync(path.join(root,'public/assets',script==='bootstrap.css'?'vendor/bootstrap/bootstrap.min.css':'css/modules/customer.css')));}
  if(u.pathname!=='/'){res.writeHead(404);return res.end();}
- const view=['create','orders','order'].includes(u.searchParams.get('view'))?u.searchParams.get('view'):'orders';
+ const view=['create','orders','order','tracking'].includes(u.searchParams.get('view'))?u.searchParams.get('view'):'orders';
  const fragment=fs.readFileSync(path.join(root,'app/Views/customer/pages',view+'.php'),'utf8').replace(/<\?php.*?\?>/gs,'');
  const lang=u.searchParams.get('lang')==='en'?'en':'vi';
  res.setHeader('Content-Type','text/html; charset=utf-8');res.end(`<!doctype html><html lang="${lang}"><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/bootstrap.css"><link rel="stylesheet" href="/customer.css"></head><body data-page="customer" data-c-view="${view}"><div class="c-app"><div><span data-locale-current></span><button data-set-currency="VND">VND</button><button data-set-currency="USD">USD</button></div><main class="c-main" data-customer-server data-geoapify-key="${u.searchParams.has('noMap')?'':'fixture-browser-key'}">${fragment}</main></div>${u.searchParams.has('embedded')?'<script type="application/json" id="customer-profile-data">{"profile":{"user_id":"1","full_name":"Embedded Customer","phone":"0900000001","app_language":"vi"}}</script>':''}<script defer src="/maps.js"></script><script defer src="/places.js"></script><script defer src="/create-route.js"></script><script defer src="/server.js"></script></body></html>`);
@@ -29,23 +29,25 @@ const check=(ok,label)=>{assert.ok(ok,label);checks++;};
  await send('Page.enable');await send('Runtime.enable');
  await send('Page.addScriptToEvaluateOnNewDocument',{source:`(${function(){
   if(new URLSearchParams(location.search).has('resetCurrency'))localStorage.removeItem('somi-currency');
-  window.fixtureRequests=[];window.fixtureCancelConflict=false;window.fixtureQuoteError=null;
+  window.fixtureRequests=[];window.fixtureReturnHanded=false;window.fixtureLocationMode='ready';window.fixtureCancelConflict=false;window.fixtureQuoteError=null;
   window.fixtureGpsMode=new URL(location.href).searchParams.get('gps')||'ready';window.fixtureMarkers=[];window.fixtureMapEvents={};window.fixturePendingReverse=[];window.fixtureHoldReverse=false;window.fixturePendingRoute=[];window.fixtureHoldRoute=false;
   window.fixtureGpsOptions=[];
   window.fixtureHoldSearch=false;window.fixtureSearchPending=[];window.fixtureEmptyAutocomplete=false;
   Object.defineProperty(navigator,'geolocation',{value:{getCurrentPosition(resolve,reject,options){fixtureGpsOptions.push(options);setTimeout(()=>fixtureGpsMode==='ready'||fixtureGpsMode==='retry'&&fixtureGpsOptions.length>1?resolve({coords:{latitude:10.8,longitude:106.68,accuracy:10}}):reject({code:fixtureGpsMode==='denied'?1:fixtureGpsMode==='timeout'?3:2}),0);}}});
   window.L={
-   map(){return{setView(){return this;},fitBounds(){},invalidateSize(){},remove(){},on(name,fn){fixtureMapEvents[name]=fn;}};},
+   map(){return{setView(){return this;},fitBounds(){},invalidateSize(){},remove(){fixtureMarkers.forEach(m=>m.removed=true);},on(name,fn){fixtureMapEvents[name]=fn;}};},
    tileLayer(){return{addTo(){}};},
    circleMarker(position,options){const layer={position,options,removed:false,addTo(){fixtureMarkers.push(this);return this;},setLatLng(p){this.position=p;},bindTooltip(label){this.label=label.textContent;},bringToFront(){this.raised=true;},remove(){this.removed=true;}};return layer;},
    geoJSON(feature){return{addTo(){window.fixtureRoute=feature;return this;},getBounds(){return[];},remove(){window.fixtureRoute=null;}};}
   };
   const snapshot={currency_code:'VND',context:{distance_km:'4.500',weather_condition:'LIGHT_RAIN'},parcel:{weight_kg:'3.500'},cancellation_fees:{PENDING_PAYMENT:'0'},components:{base_fee_minor:'20000',distance_component_minor:'6000',weight_component_minor:'1250',time_multiplier:'1.2000',weather_multiplier:'1.1000',total_charge_minor:'35970'}};
   const history=[{old_status:null,new_status:'PENDING_PAYMENT',created_at:'2026-11-09T01:00:00Z'}];
-  window.fixtureOrder={order_id:'7',order_code:'SOMI-FIXTURE-007',status:'PENDING_PAYMENT',currency_code:'VND',total_charge_minor:'35970',pickup_address:'Frozen pickup',delivery_address:'Frozen delivery',sender_name:'Sender',sender_phone:'0900000001',receiver_name:'Receiver',receiver_phone:'0900000002',distance_km:'4.500',estimated_weight_kg:'3.500',parcel_description:'Fixture parcel',created_at:'2026-11-09T01:00:00Z',pricing_snapshot:snapshot,status_history:history};
+  window.fixtureOrder={order_id:'7',order_code:'SOMI-FIXTURE-007',status:'PENDING_PAYMENT',currency_code:'VND',total_charge_minor:'35970',pickup_address:'Frozen pickup',pickup_latitude:'10.8',pickup_longitude:'106.68',delivery_address:'Frozen delivery',delivery_latitude:'10.83',delivery_longitude:'106.70',sender_name:'Sender',sender_phone:'0900000001',receiver_name:'Receiver',receiver_phone:'0900000002',distance_km:'4.500',estimated_weight_kg:'3.500',parcel_description:'Fixture parcel',created_at:'2026-11-09T01:00:00Z',pricing_snapshot:snapshot,status_history:history};
   window.fetch=async(url,options={})=>{
    const u=new URL(url,location.href),body=options.body?JSON.parse(options.body):null,method=options.method||'GET';fixtureRequests.push({path:u.pathname,search:u.search,method,body,key:options.headers?.['Idempotency-Key']});let data={};
-   if(u.pathname.endsWith('/account/profile.php'))data={profile:{full_name:'Fixture Customer',phone:'0900000001',app_language:new URLSearchParams(location.search).get('accountLang')==='en'?'en':'vi'}};
+   if(u.pathname.endsWith('/account/profile.php'))data={profile:{full_name:'Fixture Customer',phone:'0900000001',email:new URLSearchParams(location.search).has('demo')?'fixture@demo.somi.invalid':'fixture@example.invalid',app_language:new URLSearchParams(location.search).get('accountLang')==='en'?'en':'vi'}};
+   else if(u.pathname.endsWith('/shipper-location.php')){if(fixtureLocationMode==='error')return new Response(JSON.stringify({code:'AUTHENTICATION_REQUIRED'}),{status:401});data={order_id:'7',status:fixtureOrder.status,location:fixtureLocationMode==='empty'?null:{latitude:'10.81',longitude:'106.69',recorded_at:new Date().toISOString()}};}
+   else if(u.pathname.endsWith('/confirm-return.php')){if(!fixtureReturnHanded)return new Response(JSON.stringify({code:'RETURN_NOT_HANDED_OVER'}),{status:409});fixtureOrder.status='RETURNED';data={order_id:'7',status:'RETURNED'};}
    else if(u.pathname.endsWith('/addresses.php'))data={items:[{address_id:'1',label:'Home',address_detail:'Saved fixture address',latitude:'10.77',longitude:'106.70',is_default:true}]};
    else if(u.pathname.endsWith('/parcel-categories.php'))data={items:[{category_id:'1',restriction_type:'ALLOWED',name_vi:'Fixture category'}]};
    else if(u.pathname.endsWith('/places.php')){
@@ -79,13 +81,15 @@ const check=(ok,label)=>{assert.ok(ok,label);checks++;};
  await click('[data-set-currency="VND"]');
  check(await evaluate(`document.querySelector('[data-locale-current]').textContent==='VI · VND'&&localStorage.getItem('somi-currency')==='VND'`),'English account can select and persist VND without changing language');
  await load('orders');
- check(await evaluate(`document.querySelectorAll('.c-order-row').length===2`),'history loads every cursor page');
+ check(await evaluate(`document.querySelectorAll('.c-order-row').length===1&&!fixtureRequests.some(r=>r.search.includes('before_id='))`),'history renders first page without waiting for every cursor');
+ await click('[data-more-orders]');await waitFor(`document.querySelectorAll('.c-order-row').length===2`);
+ check(await evaluate(`!document.querySelector('[data-more-orders]')`),'history loads next page on request');
  check(await evaluate(`fixtureRequests.some(r=>r.search.includes('before_id=8'))`),'history requests next cursor');
  await click('[data-tab="done"]');check(await evaluate(`document.querySelectorAll('.c-order-row').length===1&&document.querySelector('.c-order-row').textContent.includes('008')`),'filter delivered orders');
  await click('[data-tab="all"]');await evaluate(`document.querySelector('[data-search]').value='Receiver';document.querySelector('[data-search]').dispatchEvent(new Event('input'))`);
  check(await evaluate(`document.querySelectorAll('.c-order-row').length===1&&document.querySelector('.c-order-row').textContent.includes('007')`),'search recipient');
  await load('orders&embedded=1');
- check(await evaluate(`!fixtureRequests.some(r=>r.path.endsWith('/account/profile.php'))&&document.querySelectorAll('.c-order-row').length===2`),'server-rendered profile avoids a redundant authenticated profile API request');
+ check(await evaluate(`!fixtureRequests.some(r=>r.path.endsWith('/account/profile.php'))&&document.querySelectorAll('.c-order-row').length===1`),'server-rendered profile avoids a redundant authenticated profile API request');
  await load('order&id=7');
  check(await evaluate(`document.querySelector('[data-order]').textContent.includes('Frozen pickup')&&document.querySelector('[data-order]').textContent.includes('Frozen delivery')`),'detail shows frozen addresses');
  check(await evaluate(`document.querySelector('.c-fees-total').textContent.includes('35.970')`),'detail displays accepted total');
@@ -104,6 +108,25 @@ const check=(ok,label)=>{assert.ok(ok,label);checks++;};
  await evaluate(`fixtureOrder.status='SHIPPER_ASSIGNED';document.querySelector('[data-refresh]').click()`);
  await waitFor(`document.querySelector('[data-order]').textContent.includes('Đã phân công')`);
  check(await evaluate(`!document.querySelector('[data-cancel]')`),'assigned order has no customer cancellation action');
+ await waitFor(`fixtureMarkers.some(m=>m.label==='Shipper'&&!m.removed)`);
+ check(await evaluate(`fixtureRequests.some(r=>r.path.endsWith('/shipper-location.php')&&r.search==='?order_id=7')&&document.querySelector('[data-location-status]').textContent.includes('cập nhật')`),'active order requests authorized GPS and renders marker/timestamp');
+ await evaluate(`fixtureOrder.status='RETURNING';document.querySelector('[data-refresh]').click()`);await waitFor(`!!document.querySelector('[data-confirm-return]')`);
+ await click('[data-confirm-return] button');
+ check(await evaluate(`!fixtureRequests.some(r=>r.path.endsWith('/confirm-return.php'))`),'return confirmation requires explicit received checkbox');
+ await evaluate(`document.querySelector('[name=received]').checked=true;document.querySelector('[data-confirm-return]').requestSubmit()`);
+ await waitFor(`!!document.querySelector('[data-return-message] .alert-danger')`);
+ check(await evaluate(`document.querySelector('[data-return-message]').textContent.includes('chưa xác nhận')&&!document.querySelector('[data-confirm-return] button').disabled`),'handover conflict keeps confirmation usable');
+ await evaluate(`fixtureReturnHanded=true;document.querySelector('[data-confirm-return]').requestSubmit()`);await waitFor(`!document.querySelector('[data-confirm-return]')`);
+ check(await evaluate(`fixtureRequests.filter(r=>r.path.endsWith('/confirm-return.php')).every(r=>r.method==='POST'&&r.body.order_id==='7')&&!document.querySelector('[data-route-map]')&&document.querySelector('[data-order]').textContent.includes('Đã hoàn hàng')`),'successful return uses API and removes live tracking');
+ await evaluate(`fixtureOrder.status='SHIPPER_ASSIGNED';fixtureLocationMode='empty';document.querySelector('[data-refresh]').click()`);await waitFor(`document.querySelector('[data-location-status]')?.textContent.includes('chưa chia sẻ')`);
+ check(await evaluate(`!fixtureMarkers.some(m=>m.label==='Shipper'&&!m.removed)`),'missing GPS clears shipper marker');
+ await evaluate(`fixtureLocationMode='error';document.querySelector('[data-refresh]').click()`);await waitFor(`document.querySelector('[data-location-status]')?.textContent.includes('hết hạn')`);
+ await load('tracking&id=7');await evaluate(`fixtureOrder.status='IN_DELIVERY';document.querySelector('[data-refresh]').click()`);await waitFor(`!!window.fixtureRoute&&!!document.querySelector('[data-location-status]')`);
+ check(await evaluate(`fixtureRequests.some(r=>r.body?.action==='route')&&fixtureMarkers.some(m=>m.label==='Shipper'&&!m.removed)`),'tracking retains route and live shipper GPS together');
+ await load('order&id=7&lang=en');await evaluate(`fixtureOrder.status='RETURNING';document.querySelector('[data-refresh]').click()`);await waitFor(`!!document.querySelector('[data-confirm-return]')`);
+ check(await evaluate(`document.querySelector('[data-confirm-return] button').textContent==='Confirm return received'`),'return confirmation supports English');
+ await load('order&id=7&demo=1');check(await evaluate(`!!document.querySelector('[data-demo-banner]')&&document.querySelector('[data-pay]').textContent.includes('DEMO')&&!document.querySelector('[data-pay]').textContent.includes('SePay')`),'demo payment is visibly simulated');
+ await evaluate(`document.querySelector('[data-pay]').requestSubmit()`);await waitFor(`fixtureRequests.some(r=>r.path.endsWith('/payments.php')&&r.method==='POST')`);check(await evaluate(`fixtureRequests.find(r=>r.path.endsWith('/payments.php')&&r.method==='POST').body.method==='GATEWAY'`),'demo UI uses guarded payment API without a real checkout link');
  await load('create');
  await waitFor(`document.querySelector('[data-current-location]').textContent.includes('45 Phan')`);
  check(await evaluate(`document.querySelectorAll('[data-create-map]').length===1&&document.querySelectorAll('.somi-leaflet-map').length===1`),'create uses one shared map');

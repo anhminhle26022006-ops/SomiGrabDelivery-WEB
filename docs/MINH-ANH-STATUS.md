@@ -4,7 +4,9 @@ Cập nhật 12/11/2026, nhánh `MINH-ANH`. Bản chức năng chính: `3b6a9ee`
 
 ## Đã hoàn thiện trong source
 
-Đối chiếu Render ngày 12/11: service `SomiGrabDelivery_website` theo nhánh `dev`, bản Live `cc82c7a`. Hai commit Người 3 mới chưa được deploy. Đã tích hợp `origin/dev` vào `MINH-ANH`, xử lý xung đột Storage/worker/migration và giữ Dockerfile nhúng cùng thay đổi Customer/Shipper. Cần đưa bản tích hợp vào `dev`, cấu hình hosting và nghiệm thu có đăng nhập trước khi kết luận hoàn tất trên production.
+Đợt nối Người 2/3: xem [PERSON3-INTEGRATION.md](PERSON3-INTEGRATION.md). Đã thay tham chiếu ảnh tự tạo bằng private file ID, kiểm owner/purpose/order, bắt buộc ảnh Storage hợp lệ trước hoàn tất giao/hoàn, nối upload KYC thật và bỏ form ngân hàng demo. Retention bằng chứng thống nhất 90 ngày sau đóng đơn. Scheduler thêm matching worker bằng tham số CLI phù hợp. Kiểm thử TEMP cùng một đơn: 58 kiểm tra giao/hoàn → notification → earning → OTP queued → payout/đối soát; matching/KYC 53, browser Storage 7. Những kết quả này không chứng minh giao dịch hoặc inbox thật.
+
+Đối chiếu Render ngày 12/11: service `SomiGrabDelivery_website` theo nhánh `dev`. Bản tích hợp `cb11408` đã deploy và asset public khớp source. Bản sửa worker `32a57d7` đã Live: Supervisor đặt HOME đúng cho www-data, khắc phục lỗi libpq tìm chứng chỉ trong /root. Log xác nhận Person3 xử lý 4 events, 0 earnings và worker email thử 5 jobs. Chưa coi số jobs đã thử là email đã đến inbox hoặc có thu nhập phát sinh.
 
 - Geoapify/Leaflet, CRUD/default địa chỉ và API địa lý dùng chung Customer/Shipper.
 - Chat theo đơn, phân trang, read receipt, file gắn từng tin nhắn; chỉ người có quyền theo đơn được tham gia.
@@ -54,13 +56,13 @@ Domain: https://somigrabdelivery.online
 
 Kiểm tra GET chưa đăng nhập gần nhất: API notifications, bank-account và person3-jobs trả 401 JSON. Điều này xác nhận route hoạt động và yêu cầu đăng nhập, không chứng minh chức năng sau đăng nhập. Lần đọc trang chủ có timeout; không kết luận site ngừng hoạt động từ một lần timeout.
 
-JavaScript public trên site chưa trùng với source local được rà soát. Chưa xác minh Render đã nhận driver Supabase, server key, bucket, signing key và bật worker. Không lấy trạng thái local ready để suy ra hosting ready.
+Asset public đã đối chiếu khớp bản triển khai sau chuẩn hóa CRLF/LF. Render Environment đã có tên các biến driver, URL, server key, bucket, signing key, payout mode và run-workers. Worker đã chạy thành công trên hosting; startup scheduler in các kiểm tra boolean để xác minh giá trị cấu hình mà không lộ secret. Nghiệm thu có đăng nhập và OTP inbox vẫn còn cần thực hiện.
 
 ## Checklist phát hành/nghiệm thu còn lại
 
 - [x] Review, quét secret, commit và push bản hoàn thiện `934df4e` lên `MINH-ANH`.
-- [ ] Deploy đúng commit lên service Render đang phục vụ domain; không đổi nhánh tích hợp của nhóm một cách ngầm định.
-- [ ] Xác nhận Environment Render có cấu hình bên dưới và worker chạy định kỳ.
+- [x] Deploy bản tích hợp và sửa worker lên service Render theo nhánh dev đã được người dùng xác nhận.
+- [x] Render `7820697` báo ready:true; payout_mode_manual, storage_signing_key, supabase_private_bucket và migrations_applied đều true. Worker hoàn thành chu kỳ lúc 03:06:18 GMT+7 ngày 12/11, không có lỗi.
 - [ ] Kiểm thử qua phiên Customer/Shipper/Admin: chat/file/ticket/read receipt/notification và quyền tài nguyên chéo.
 - [ ] Nhận OTP đổi ngân hàng trong hộp thư test; kiểm tra sai mã, mã hết hạn và xin mã mới.
 - [ ] Chạy luồng matching/giao/hoàn bằng assignment và sự kiện thật của Người 2.
@@ -96,4 +98,4 @@ Test runner dùng TEMP tables; không gửi mail/chuyển tiền thật. `-SkipB
 
 Tài liệu chi tiết: [PERSON3-API.md](PERSON3-API.md). Đặc tả import Postman/Swagger: [person3-openapi.json](person3-openapi.json).
 
-Phiên kiểm tra Render hiện mở ở màn hình đăng nhập; chưa có phiên quản trị để xác nhận service/nhánh deploy hoặc thay Environment. Cần người dùng tự đăng nhập để tiếp tục, không gửi mật khẩu qua chat.
+Đã dùng phiên Render do người dùng mở để xác minh service, branch, deploy và log worker. Phiên đăng nhập website Customer/Shipper/Admin để nghiệm thu nghiệp vụ vẫn chưa được cung cấp; không gửi mật khẩu qua chat.

@@ -60,8 +60,13 @@ final class AdminPolicyService
     }
     public function score(int $adminId,array $in): array
     {
-        AccessControl::requirePermission($this->db,$adminId,'ADMIN','pricing.manage');DeliveryInput::only($in,['deduction_points','lock_threshold','recovery_points']);$values=[];foreach(['deduction_points','lock_threshold','recovery_points']as $field)$values[]=DeliveryInput::decimal($in[$field]??null,$field,2,'0','99999.99');
-        $this->db->exec('SELECT pg_advisory_xact_lock(20261106,22)');$at=$this->db->query('SELECT clock_timestamp()')->fetchColumn();$this->db->prepare('UPDATE shipper_score_policies SET effective_until=? WHERE effective_until IS NULL')->execute([$at]);
-        $q=$this->db->prepare('INSERT INTO shipper_score_policies(deduction_points,lock_threshold,recovery_points,effective_from,changed_by) VALUES (?,?,?,?,?) RETURNING *');$q->execute([...$values,$at,$adminId]);$p=$q->fetch();AuditService::record($this->db,$adminId,'ADMIN','SCORE_POLICY_CREATED','SCORE_POLICY',(int)$p['policy_id'],[],$p);return $p;
+        AccessControl::requirePermission($this->db,$adminId,'ADMIN','pricing.manage');DeliveryInput::only($in,['deduction_points','post_pickup_deduction_points','lock_threshold','recovery_points','max_score']);$values=[];foreach(['deduction_points','lock_threshold','recovery_points']as $field)$values[]=DeliveryInput::decimal($in[$field]??null,$field,2,'0','99999.99');
+        $this->db->exec('SELECT pg_advisory_xact_lock(20261106,22)');
+        $current=$this->db->query('SELECT post_pickup_deduction_points,max_score FROM shipper_score_policies WHERE effective_from<=now() AND (effective_until IS NULL OR effective_until>now()) ORDER BY effective_from DESC LIMIT 1')->fetch()?:[];
+        $post=DeliveryInput::decimal($in['post_pickup_deduction_points']??$current['post_pickup_deduction_points']??$in['deduction_points'],'post_pickup_deduction_points',2,'0','99999.99');
+        $max=DeliveryInput::decimal($in['max_score']??$current['max_score']??'100','max_score',2,'0.01','99999.99');
+        if(bccomp((string)$values[1],$max,2)>0)DeliveryInput::invalid('lock_threshold');
+        $at=$this->db->query('SELECT clock_timestamp()')->fetchColumn();$this->db->prepare('UPDATE shipper_score_policies SET effective_until=? WHERE effective_until IS NULL')->execute([$at]);
+        $q=$this->db->prepare('INSERT INTO shipper_score_policies(deduction_points,lock_threshold,recovery_points,post_pickup_deduction_points,max_score,effective_from,changed_by) VALUES (?,?,?,?,?,?,?) RETURNING *');$q->execute([...$values,$post,$max,$at,$adminId]);$p=$q->fetch();AuditService::record($this->db,$adminId,'ADMIN','SCORE_POLICY_CREATED','SCORE_POLICY',(int)$p['policy_id'],[],$p);return $p;
     }
 }

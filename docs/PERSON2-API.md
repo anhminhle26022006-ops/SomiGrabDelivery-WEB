@@ -28,7 +28,7 @@ Base `/public/api/`. Workspace phải là SHIPPER trừ hai endpoint Customer �
 | `shipper/accept-offer.php` | POST | `offer.respond_own` | `{offer_id}`. 201 khi vừa nhận, 200 khi gọi lại |
 | `shipper/deliveries.php` | GET | `delivery.update_assigned` | Đơn đang giao kèm `next_actions`; `?history=1` cho lịch sử |
 | `shipper/deliveries.php` | POST | `delivery.update_assigned` | `{order_id, action:"PICKUP"\|"START_DELIVERY"}` |
-| `shipper/evidence.php` | POST | `delivery.upload_evidence` | `{order_id, evidence_type, file_reference, mime_type, byte_size, checksum_sha256?}` |
+| `shipper/evidence.php` | POST | `delivery.upload_evidence` | `{order_id, evidence_type, reference_file_id}` after private Storage upload |
 | `shipper/complete-delivery.php` | POST | `delivery.update_assigned` | `{order_id}`. Cần ít nhất một `DELIVERY_PHOTO` |
 | `shipper/return-delivery.php` | POST | `delivery.update_assigned` | `{order_id, action:"FAIL", reason_code, note?}` hoặc `{order_id, action:"RETURNED"}` |
 | `shipper/location.php` | POST, GET | `delivery.update_assigned` | `{latitude, longitude, accuracy_meters?}`; GET `?order_id=` |
@@ -74,7 +74,7 @@ Hai file đầu dùng TEMP TABLE nên không ghi vào dữ liệu thật. File t
 
 ## Phần còn chờ và điểm cần nhóm thống nhất
 
-- **Upload file thật.** KYC và bằng chứng hiện lưu tham chiếu dạng `pending-upload/...`. Khi Storage của Người 3 sẵn sàng, giao diện upload trước rồi gửi object key thật vào đúng các trường `file_reference` hiện có.
+- **Private Storage integration:** upload multipart to `storage.php` with `purpose=KYC` or `EVIDENCE` (evidence also requires `order_id`). Submit the returned `file_id` as `reference_file_id`. KYC documents contain `{document_type,reference_file_id}`. Backend checks ownership, purpose and order inside the business transaction, and derives key/MIME/size/checksum from stored metadata. Arbitrary paths and client metadata are rejected. JPEG/PNG/WebP evidence and JPEG/PNG/WebP/PDF KYC are limited to 5 MiB. Evidence is retained for 90 days after order closure; GPS remains 7 days. Legacy placeholder evidence cannot satisfy delivery completion.
 - **Thu nhập và điểm.** Module này chỉ phát sự kiện; ghi `shipper_earnings` thuộc Người 3. Chưa có luồng Shipper tự hủy đơn trước khi lấy hàng vì chính sách trừ điểm chưa chốt.
 - **Giao diện.** Offer, nhận đơn, đơn đang giao, lịch sử và phương tiện đã nối API. Thông báo, chat, thu nhập và số liệu trang Tổng quan vẫn là demo. Chuỗi mới chưa có bản tiếng Anh trong bảng dịch của `app/Views/shipper/index.php`.
 - **Test trình duyệt cũ.** `tests/ui_e2e.cjs` và `tests/reaudit_browser.cjs` có bước bấm nút chi tiết của offer demo; danh sách offer giờ lấy từ database nên hai bước đó cần fixture offer hoặc cập nhật selector.

@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__.'/DemoMode.php';
 require_once __DIR__.'/InteractionService.php';
 require_once __DIR__.'/AuditService.php';
 require_once __DIR__.'/EncryptedPayload.php';
@@ -11,8 +12,10 @@ final class ShipperFinanceService
     private function refundHold(int $orderId):bool {
         $o=$this->rows('SELECT o.status,o.currency_code,o.total_charge_minor,o.return_fee_minor,p.status AS payment_status FROM orders o LEFT JOIN payments p USING(order_id) WHERE o.order_id=?',[$orderId])[0];
         if(!in_array($o['status'],['DELIVERED','RETURNED'],true))return true;
+        if($this->rows("SELECT 1 FROM cancellation_requests WHERE order_id=? AND requester_role='SHIPPER' AND decision='PENDING' LIMIT 1",[$orderId]))return true;
         if($o['status']==='DELIVERED'&&$o['payment_status']!=='PAID')return true;
         if($o['status']==='RETURNED'){
+            if($this->rows("SELECT 1 FROM shipper_score_events WHERE order_id=? AND event_type='POST_PICKUP_VIOLATION' LIMIT 1",[$orderId]))return true;
             if(!in_array($o['payment_status'],['PARTIALLY_REFUNDED','REFUNDED'],true))return true;
             $r=$this->rows("SELECT refund_id FROM refunds WHERE order_id=? AND reason='RETURN_FEE_DEDUCTION' AND status='SUCCEEDED' AND currency_code=? AND gross_amount_minor=? AND deducted_fee_minor=?",[$orderId,$o['currency_code'],$o['total_charge_minor'],$o['return_fee_minor']])[0]??null;
             if(!$r)return true;
@@ -36,6 +39,13 @@ final class ShipperFinanceService
         if(!$policy)return null;
         return $this->rows('INSERT INTO shipper_earnings(order_id,shipper_id,earning_type,basis_amount_minor,percentage_rate,gross_amount_minor,currency_code,policy_snapshot) VALUES(?,?,?,?,?,?,?,?::jsonb) ON CONFLICT(order_id) DO UPDATE SET order_id=EXCLUDED.order_id RETURNING *',[$orderId,$a['shipper_id'],$kind,$o['total_charge_minor'],$policy['percentage_rate'],$policy['amount'],$o['currency_code'],json_encode($policy,JSON_THROW_ON_ERROR)])[0];
     }
+    /** Called in the completion/refund transaction; worker settlement remains a retry fallback. */
+    public function settleOrder(int $order):?array {
+        if(!$this->db->inTransaction())throw new LogicException('Settlement requires a transaction.');
+        $earning=$this->accrue($order);if(!$earning)return null;
+        $payout=getenv('SOMI_PAYOUT_MODE')==='manual'?$this->reserve((int)$earning['earning_id']):null;
+        return ['earning_id'=>$earning['earning_id'],'amount_minor'=>(string)$earning['gross_amount_minor'],'currency_code'=>$earning['currency_code'],'payout_id'=>$payout['payout_id']??null,'transfer_status'=>$payout['status']??null,'manual_transfer'=>true];
+    }
     public function listing(int $user,array $in):array {
         $before=isset($in['before_id'])?DeliveryInput::id($in['before_id']):PHP_INT_MAX;
         $items=$this->rows('SELECT e.*,o.order_code,p.payout_id,p.status AS transfer_status,p.payout_amount_minor,p.payout_currency,p.failure_reason FROM shipper_earnings e JOIN orders o USING(order_id) LEFT JOIN shipper_payouts p USING(earning_id) WHERE e.shipper_id=? AND e.earning_id<? ORDER BY e.earning_id DESC LIMIT 50',[$user,$before]);
@@ -45,6 +55,7 @@ final class ShipperFinanceService
         AccessControl::requirePermission($this->db,$admin,'ADMIN','payout.manage');
         $bank=$this->rows("SELECT p.payout_id,p.status,p.payout_amount_minor,p.bank_account_id,b.bank_code,b.bank_name,b.account_holder,convert_from(b.account_number_enc,'UTF8') AS encrypted FROM shipper_payouts p JOIN shipper_bank_accounts b USING(bank_account_id) WHERE payout_id=?",[$payoutId])[0]??null;
         if(!$bank)throw new DeliveryApiError(404,'PAYOUT_NOT_FOUND','Payout not found.');
+        if(DemoMode::payout($this->db,$payoutId))DemoMode::denyTransfer();
         try{$payload=EncryptedPayload::open($bank['encrypted']);$number=$payload['account_number']??'';if(!is_string($number)||!preg_match('/^[0-9]{6,34}$/D',$number))throw new RuntimeException('Invalid bank envelope.');}catch(Throwable $e){throw new DeliveryApiError(503,'BANK_ENCRYPTION_UNSUPPORTED','Verified bank account must use the documented encrypted envelope.');}
         unset($bank['encrypted']);$bank['account_number']=$number;
         AuditService::record($this->db,$admin,'ADMIN','PAYOUT_BANK_READ','SHIPPER_PAYOUT',$payoutId,[],['bank_account_id'=>$bank['bank_account_id']]);return ['destination'=>$bank];
@@ -67,7 +78,7 @@ final class ShipperFinanceService
     public function transition(int $admin,string $action,array $in):array {
         AccessControl::requirePermission($this->db,$admin,'ADMIN','payout.manage');DeliveryInput::only($in,['payout_id','client_key','reason','evidence_reference','transfer_not_completed']);
         if(!in_array($action,['FAILED','RETRY'],true))DeliveryInput::invalid('action');
-        $id=DeliveryInput::id($in['payout_id']??null);$key=InteractionService::key($in);$reason=DeliveryInput::text($in['reason']??null,'reason',2000);$evidence=DeliveryInput::text($in['evidence_reference']??null,'evidence_reference',1000);
+        $id=DeliveryInput::id($in['payout_id']??null);if(DemoMode::payout($this->db,$id))DemoMode::denyTransfer();$key=InteractionService::key($in);$reason=DeliveryInput::text($in['reason']??null,'reason',2000);$evidence=DeliveryInput::text($in['evidence_reference']??null,'evidence_reference',1000);
         if(($in['transfer_not_completed']??null)!==true)throw new DeliveryApiError(422,'TRANSFER_REVIEW_REQUIRED','Confirm from bank evidence that no completed transfer exists.');
         $row=$this->rows('SELECT e.order_id,e.earning_id FROM shipper_payouts p JOIN shipper_earnings e USING(earning_id) WHERE payout_id=?',[$id])[0]??null;if(!$row)throw new DeliveryApiError(404,'PAYOUT_NOT_FOUND','Payout not found.');
         $this->rows('SELECT order_id FROM orders WHERE order_id=? FOR UPDATE',[$row['order_id']]);$this->rows('SELECT payment_id FROM payments WHERE order_id=? FOR UPDATE',[$row['order_id']]);$this->rows('SELECT earning_id FROM shipper_earnings WHERE earning_id=? FOR UPDATE',[$row['earning_id']]);
@@ -88,6 +99,7 @@ final class ShipperFinanceService
         $this->rows('SELECT payment_id FROM payments WHERE order_id=? FOR UPDATE',[$e['order_id']]);
         $e=$this->rows('SELECT * FROM shipper_earnings WHERE earning_id=? FOR UPDATE',[$earningId])[0];
         if($e['payout_status']!=='PENDING')return null;
+        if(DemoMode::user($this->db,(int)$e['shipper_id']))return null; // Demo earnings never reserve a bank transfer.
         if($this->refundHold((int)$e['order_id']))return null;
         $bank=$this->rows('SELECT bank_account_id FROM shipper_bank_accounts WHERE shipper_id=? AND replaced_at IS NULL AND verified_at IS NOT NULL FOR SHARE',[$e['shipper_id']])[0]??null;if(!$bank)return null;
         $fx=$e['currency_code']==='USD'?($this->rows('SELECT * FROM payout_fx_quotes WHERE earning_id=?',[$earningId])[0]??null):null;
@@ -97,7 +109,7 @@ final class ShipperFinanceService
     public function reconcile(int $admin,array $in):array {
         AccessControl::requirePermission($this->db,$admin,'ADMIN','payout.manage');
         DeliveryInput::only($in,['payout_id','provider_payout_ref','evidence_reference','amount_minor','currency_code']);
-        $id=DeliveryInput::id($in['payout_id']??null);$ref=DeliveryInput::text($in['provider_payout_ref']??null,'provider_payout_ref',180);$proof=DeliveryInput::text($in['evidence_reference']??null,'evidence_reference',1000);
+        $id=DeliveryInput::id($in['payout_id']??null);if(DemoMode::payout($this->db,$id))DemoMode::denyTransfer();$ref=DeliveryInput::text($in['provider_payout_ref']??null,'provider_payout_ref',180);$proof=DeliveryInput::text($in['evidence_reference']??null,'evidence_reference',1000);
         $row=$this->rows('SELECT e.order_id,e.earning_id FROM shipper_payouts p JOIN shipper_earnings e USING(earning_id) WHERE payout_id=?',[$id])[0]??null;
         if(!$row)throw new DeliveryApiError(404,'PAYOUT_NOT_FOUND','Payout not found.');
         $this->rows('SELECT order_id FROM orders WHERE order_id=? FOR UPDATE',[$row['order_id']]);$this->rows('SELECT payment_id FROM payments WHERE order_id=? FOR UPDATE',[$row['order_id']]);

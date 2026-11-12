@@ -1,0 +1,7 @@
+/* Bootstrap supplies the responsive columns and spacing; SOMI supplies the theme. */
+body .feature-grid.row { display: flex; gap: 0; }
+body .feature-grid.row > div > .feature-card { height: 100%; }
+body[data-page="shipper"] .cards.row { display: flex; gap: 0; }
+body[data-page="shipper"] .metric { flex-direction: row; }
+/* The delivery milestone strip is separate from Bootstrap's numeric progress bar. */
+body[data-page="shipper"] .progress { height: auto; overflow: visible; background: transparent; border-radius: 0; }

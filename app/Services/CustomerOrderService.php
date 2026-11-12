@@ -103,7 +103,7 @@ final class CustomerOrderService
         $order = OrderLifecycleService::lock($this->db, $id);
         if ((int) $order['customer_id'] !== $customerId) throw new DeliveryApiError(404, 'ORDER_NOT_FOUND', 'Order not found.');
         if ($order['status'] === 'CANCELLED') return $this->detail($customerId, $id);
-        if (!in_array($order['status'], ['PENDING_PAYMENT', 'SEARCHING_SHIPPER', 'NO_SHIPPER_FOUND'], true)) {
+        if (!\Somi\Domain\Order::fromRow($order)->canBeCancelledByCustomer($customerId)) {
             throw new DeliveryApiError(409, 'ORDER_NOT_CANCELLABLE', 'Customer cancellation is only allowed before Shipper assignment.');
         }
         $q = $this->db->prepare("SELECT 1 FROM order_assignments WHERE order_id = :id AND assignment_status = 'ACTIVE'");

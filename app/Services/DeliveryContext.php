@@ -31,7 +31,7 @@ final class DeliveryContext
     public static function transition(PDO $db, array $order, string $to, ?int $actorId, string $actorKind, ?string $note = null): void
     {
         $from = $order['status'];
-        if (!in_array($to, OrderLifecycleService::TRANSITIONS[$from] ?? [], true)) {
+        if (!\Somi\Domain\Order::fromRow($order)->canTransitionTo($to)) {
             throw new DeliveryApiError(409, 'INVALID_ORDER_STATE', "Order cannot move from $from to $to.");
         }
         $db->prepare('UPDATE orders SET status = ?, updated_at = now() WHERE order_id = ?')->execute([$to, $order['order_id']]);

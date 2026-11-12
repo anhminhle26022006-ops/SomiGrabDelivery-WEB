@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__.'/DemoMode.php';
 require_once __DIR__.'/SePayPaymentProvider.php';
 require_once __DIR__.'/OrderLifecycleService.php';
 require_once __DIR__.'/AuditService.php';
@@ -23,6 +24,12 @@ final class PaymentService
         $q=$this->db->prepare('SELECT * FROM payments WHERE order_id=? FOR UPDATE');$q->execute([$orderId]);$existing=$q->fetch();
         if($existing){if($existing['request_key']!==$key||$existing['method']!==$method)throw new DeliveryApiError(409,'PAYMENT_ALREADY_EXISTS','Use the original payment and idempotency key.');return $this->publicPayment($existing);}
         if($order['status']!=='PENDING_PAYMENT')throw new DeliveryApiError(409,'ORDER_NOT_PAYABLE','Order cannot be paid in its current state.');
+        if(DemoMode::user($this->db,$customerId)){
+            $q=$this->db->prepare("INSERT INTO payments(order_id,amount_minor,currency_code,method,provider,request_key) VALUES(?,?,?,?,'DEMO',?) RETURNING *");$q->execute([$orderId,$order['total_charge_minor'],$order['currency_code'],$method,$key]);$payment=$q->fetch();
+            $this->applyVerified(['kind'=>'PAYMENT','payment_id'=>$payment['payment_id'],'event_id'=>'demo-payment:'.$payment['payment_id'],'provider_payment_ref'=>'DEMO-NO-MONEY-'.$payment['payment_id'],'amount_minor'=>(string)$payment['amount_minor'],'currency_code'=>$payment['currency_code'],'status'=>'PAID'],'DEMO');
+            AuditService::record($this->db,$customerId,'CUSTOMER','DEMO_PAYMENT_SIMULATED','PAYMENT',(int)$payment['payment_id'],[],['real_money'=>false]);
+            return $this->read($customerId,$orderId);
+        }
         $provider=$this->provider->name();
         if($provider==='SEPAY'&&$order['currency_code']!=='VND')throw new DeliveryApiError(422,'PAYMENT_CURRENCY_UNSUPPORTED','SePay only supports VND.');
         $this->provider->assertConfigured();
@@ -132,6 +139,7 @@ final class PaymentService
         AccessControl::requirePermission($this->db,$adminId,'ADMIN','payment.reconcile');
         $reference=DeliveryInput::text($in['bank_reference']??null,'bank_reference',180);$evidence=DeliveryInput::text($in['evidence_reference']??null,'evidence_reference',500);$original=DeliveryInput::text($in['original_payment_reference']??null,'original_payment_reference',180);
         $q=$this->db->prepare('SELECT r.*,p.provider_payment_ref FROM refunds r JOIN payments p USING(payment_id) WHERE refund_id=?');$q->execute([$refundId]);$r=$q->fetch();
+        if($r&&$r['provider']==='DEMO')DemoMode::denyTransfer();
         if(!$r||$r['provider']!=='MANUAL_BANK')throw new DeliveryApiError(404,'REFUND_NOT_FOUND','Bank refund not found.');
         if($original!==$r['provider_payment_ref'])throw new DeliveryApiError(409,'ORIGINAL_METHOD_REQUIRED','Refund must reference the original reconciled payment.');
         $result=$this->applyVerified(['kind'=>'REFUND','event_id'=>'bank-refund:'.$reference,'payment_id'=>$r['payment_id'],'provider_payment_ref'=>$original,'refund_id'=>$refundId,'provider_refund_id'=>$reference,'amount_minor'=>$in['amount_minor']??null,'currency_code'=>$in['currency_code']??null,'status'=>'SUCCEEDED'],'MANUAL_BANK');
@@ -149,6 +157,7 @@ final class PaymentService
         $original=DeliveryInput::text($in['original_payment_reference']??null,'original_payment_reference',180);
         if(($in['original_method_confirmed']??null)!==true)throw new DeliveryApiError(422,'ORIGINAL_METHOD_REQUIRED','Confirm the refund was completed to the original payment method.');
         $q=$this->db->prepare('SELECT r.*,p.provider_payment_ref FROM refunds r JOIN payments p USING(payment_id) WHERE refund_id=?');$q->execute([$refundId]);$r=$q->fetch();
+        if($r&&$r['provider']==='DEMO')DemoMode::denyTransfer();
         if(!$r||$r['provider']!=='SEPAY')throw new DeliveryApiError(404,'REFUND_NOT_FOUND','SePay refund not found.');
         OrderLifecycleService::lock($this->db,(int)$r['order_id']);
         if($original!==$r['provider_payment_ref'])throw new DeliveryApiError(409,'ORIGINAL_METHOD_REQUIRED','Original payment reference mismatch.');

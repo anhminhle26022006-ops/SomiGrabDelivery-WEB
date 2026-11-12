@@ -84,6 +84,7 @@ final class PaymentService
                     $q=$this->db->prepare("SELECT COALESCE(sum(refund_amount_minor),0) FROM refunds WHERE payment_id=? AND status='SUCCEEDED'");$q->execute([$id]);$sum=(string)$q->fetchColumn();
                     $this->db->prepare('UPDATE payments SET status=?,updated_at=now() WHERE payment_id=?')->execute([bccomp($sum,(string)$p['amount_minor'])===0?'REFUNDED':'PARTIALLY_REFUNDED',$id]);
                     OrderLifecycleService::event($this->db,$order,'RefundSucceeded','refund-succeeded:'.$refundId,['payment_id'=>(string)$id,'refund_id'=>(string)$refundId,'refund_amount_minor'=>$amount]);
+                    if($order['status']==='RETURNED'){require_once __DIR__.'/ShipperFinanceService.php';(new ShipperFinanceService($this->db))->settleOrder((int)$orderId);}
                 }
             }
         }

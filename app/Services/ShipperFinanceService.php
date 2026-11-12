@@ -11,8 +11,10 @@ final class ShipperFinanceService
     private function refundHold(int $orderId):bool {
         $o=$this->rows('SELECT o.status,o.currency_code,o.total_charge_minor,o.return_fee_minor,p.status AS payment_status FROM orders o LEFT JOIN payments p USING(order_id) WHERE o.order_id=?',[$orderId])[0];
         if(!in_array($o['status'],['DELIVERED','RETURNED'],true))return true;
+        if($this->rows("SELECT 1 FROM cancellation_requests WHERE order_id=? AND requester_role='SHIPPER' AND decision='PENDING' LIMIT 1",[$orderId]))return true;
         if($o['status']==='DELIVERED'&&$o['payment_status']!=='PAID')return true;
         if($o['status']==='RETURNED'){
+            if($this->rows("SELECT 1 FROM shipper_score_events WHERE order_id=? AND event_type='POST_PICKUP_VIOLATION' LIMIT 1",[$orderId]))return true;
             if(!in_array($o['payment_status'],['PARTIALLY_REFUNDED','REFUNDED'],true))return true;
             $r=$this->rows("SELECT refund_id FROM refunds WHERE order_id=? AND reason='RETURN_FEE_DEDUCTION' AND status='SUCCEEDED' AND currency_code=? AND gross_amount_minor=? AND deducted_fee_minor=?",[$orderId,$o['currency_code'],$o['total_charge_minor'],$o['return_fee_minor']])[0]??null;
             if(!$r)return true;
@@ -35,6 +37,13 @@ final class ShipperFinanceService
         $policy=$this->rows('SELECT *,CASE WHEN policy_type=\'SUCCESSFUL_DELIVERY_PERCENT\' THEN ceil(?::numeric*percentage_rate/100)::bigint ELSE fixed_amount_minor END AS amount FROM shipper_earning_policies WHERE policy_type=? AND currency_code=? AND effective_from<=? AND (effective_until IS NULL OR effective_until>?) ORDER BY effective_from DESC LIMIT 1',[$o['total_charge_minor'],$kind==='SUCCESSFUL_DELIVERY'?'SUCCESSFUL_DELIVERY_PERCENT':'FAILED_RETURN_FIXED',$o['currency_code'],$at,$at])[0]??null;
         if(!$policy)return null;
         return $this->rows('INSERT INTO shipper_earnings(order_id,shipper_id,earning_type,basis_amount_minor,percentage_rate,gross_amount_minor,currency_code,policy_snapshot) VALUES(?,?,?,?,?,?,?,?::jsonb) ON CONFLICT(order_id) DO UPDATE SET order_id=EXCLUDED.order_id RETURNING *',[$orderId,$a['shipper_id'],$kind,$o['total_charge_minor'],$policy['percentage_rate'],$policy['amount'],$o['currency_code'],json_encode($policy,JSON_THROW_ON_ERROR)])[0];
+    }
+    /** Called in the completion/refund transaction; worker settlement remains a retry fallback. */
+    public function settleOrder(int $order):?array {
+        if(!$this->db->inTransaction())throw new LogicException('Settlement requires a transaction.');
+        $earning=$this->accrue($order);if(!$earning)return null;
+        $payout=getenv('SOMI_PAYOUT_MODE')==='manual'?$this->reserve((int)$earning['earning_id']):null;
+        return ['earning_id'=>$earning['earning_id'],'amount_minor'=>(string)$earning['gross_amount_minor'],'currency_code'=>$earning['currency_code'],'payout_id'=>$payout['payout_id']??null,'transfer_status'=>$payout['status']??null,'manual_transfer'=>true];
     }
     public function listing(int $user,array $in):array {
         $before=isset($in['before_id'])?DeliveryInput::id($in['before_id']):PHP_INT_MAX;

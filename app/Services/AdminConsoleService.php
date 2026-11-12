@@ -105,8 +105,8 @@ final class AdminConsoleService
         $old=$this->rows('SELECT reliability_score FROM shipper_profiles WHERE user_id=? FOR UPDATE',[$id])[0]??null;
         if(!$old)throw new DeliveryApiError(404,'SHIPPER_NOT_FOUND','Shipper not found.');
         if(bccomp($score,(string)$old['reliability_score'],2)<=0)throw new DeliveryApiError(422,'SCORE_MUST_INCREASE','Restoration must increase reliability.');
-        $policies=$this->rows('SELECT lock_threshold FROM shipper_score_policies WHERE effective_from<=now() AND (effective_until IS NULL OR effective_until>now())');
-        if(count($policies)!==1||bccomp($score,(string)$policies[0]['lock_threshold'],2)<0)throw new DeliveryApiError(422,'SCORE_POLICY_REQUIRED','Restore to at least the configured threshold.');
+        $policies=$this->rows('SELECT lock_threshold,max_score FROM shipper_score_policies WHERE effective_from<=now() AND (effective_until IS NULL OR effective_until>now())');
+        if(count($policies)!==1||bccomp($score,(string)$policies[0]['lock_threshold'],2)<0||bccomp($score,(string)$policies[0]['max_score'],2)>0)throw new DeliveryApiError(422,'SCORE_POLICY_REQUIRED','Restore within the configured threshold and maximum score.');
         $this->db->prepare('UPDATE shipper_profiles SET reliability_score=?,availability=FALSE,updated_at=now() WHERE user_id=?')->execute([$score,$id]);
         $this->db->prepare("INSERT INTO shipper_score_events(shipper_id,event_type,points_delta,score_after,reason,actor_id) VALUES(?,'ADMIN_ADJUSTMENT',?,?,?,?)")->execute([$id,bcsub($score,(string)$old['reliability_score'],2),$score,$reason,$admin]);
         AuditService::record($this->db,$admin,'ADMIN','SHIPPER_RELIABILITY_RESTORED','SHIPPER_PROFILE',$id,$old,['reliability_score'=>$score,'reason'=>$reason]);return ['shipper_id'=>$id,'reliability_score'=>$score];

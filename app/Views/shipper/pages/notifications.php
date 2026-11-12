@@ -1,0 +1,1 @@
+<section id="page-notifications" class="page<?= $shipperPage === 'notifications' ? '' : ' hidden' ?>" aria-hidden="<?= $shipperPage === 'notifications' ? 'false' : 'true' ?>"><p>Thông báo thật nằm trong mục Hỗ trợ & trò chuyện bên dưới. / See Support & chat below for notifications.</p></section>

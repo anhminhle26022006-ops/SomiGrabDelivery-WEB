@@ -1,0 +1,22 @@
+[
+  {
+    "test": "expired",
+    "status": 303,
+    "result": "PASS"
+  },
+  {
+    "test": "missing_timestamp",
+    "status": 303,
+    "result": "PASS"
+  },
+  {
+    "test": "forged_admin",
+    "status": 303,
+    "result": "PASS"
+  },
+  {
+    "test": "forged_admin_api",
+    "status": 403,
+    "result": "PASS"
+  }
+]

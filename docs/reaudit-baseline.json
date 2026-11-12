@@ -1,0 +1,23 @@
+[
+  {
+    "role": "admin",
+    "status": 200,
+    "elapsed_ms": 1823,
+    "php_error": false,
+    "pending_shipper": false
+  },
+  {
+    "role": "customer",
+    "status": 200,
+    "elapsed_ms": 1453,
+    "php_error": false,
+    "pending_shipper": false
+  },
+  {
+    "role": "shipper",
+    "status": 200,
+    "elapsed_ms": 1972,
+    "php_error": false,
+    "pending_shipper": false
+  }
+]

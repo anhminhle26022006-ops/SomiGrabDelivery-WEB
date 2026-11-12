@@ -1,0 +1,33 @@
+{
+    "result": "PASS",
+    "read_only": true,
+    "elapsed_ms": 2022,
+    "role_status_counts": [
+        {
+            "role_code": "ADMIN",
+            "account_status": "ACTIVE",
+            "total": 1
+        },
+        {
+            "role_code": "CUSTOMER",
+            "account_status": "ACTIVE",
+            "total": 4
+        },
+        {
+            "role_code": "SHIPPER",
+            "account_status": "ACTIVE",
+            "total": 2
+        }
+    ],
+    "required_tables_found": [
+        "audit_logs",
+        "email_verifications",
+        "password_reset_tokens",
+        "phone_verifications",
+        "roles",
+        "shipper_profiles",
+        "user_identity_documents",
+        "user_roles",
+        "users"
+    ]
+}

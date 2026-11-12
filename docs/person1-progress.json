@@ -1,0 +1,633 @@
+{
+  "before": {
+    "DONE": 1,
+    "PARTIAL": 12,
+    "MISSING": 31,
+    "BUG": 4,
+    "BLOCKED": 15,
+    "NOT_VERIFIED": 5
+  },
+  "after": {
+    "DONE": 32,
+    "PARTIAL": 28,
+    "MISSING": 0,
+    "BUG": 0,
+    "BLOCKED": 8,
+    "NOT_VERIFIED": 0
+  },
+  "total": 68,
+  "tasks": [
+    {
+      "id": "A-01",
+      "task": "Kiến trúc backend phân tách route/API, service nghiệp vụ và data access.",
+      "status": "PARTIAL",
+      "file": "public/api/_person1.php; app/Repositories/Person1Repository.php; app/Services/CustomerService.php; AdminService.php",
+      "evidence": "Routes/service/data access tách cho API mới; service/HTTP tests PASS.",
+      "priority": "P1",
+      "remaining": "Auth cũ vẫn có SQL trong endpoint; không refactor hàng loạt đang hoạt động."
+    },
+    {
+      "id": "A-02",
+      "task": "Validation đầu vào và chuẩn hóa API response/error.",
+      "status": "PARTIAL",
+      "file": "app/Services/Input.php; ApiProblem.php; public/api/_person1.php",
+      "evidence": "Validation type/ID/coordinates/money, error code/status cho API mới; tests PASS.",
+      "priority": "P1",
+      "remaining": "Error auth cũ giữ tương thích; body-size limit và shared rate limiter chưa triển khai."
+    },
+    {
+      "id": "A-03",
+      "task": "Cấu hình PostgreSQL theo môi trường.",
+      "status": "DONE",
+      "file": "app/Config/database.php::somi_db; scripts/serve.ps1",
+      "evidence": "Supabase read-only đủ23 bảng; PostgreSQL16 test kết nối/migration PASS.",
+      "priority": "P1",
+      "remaining": "—"
+    },
+    {
+      "id": "A-04",
+      "task": "Không hardcode mật khẩu hoặc secret.",
+      "status": "DONE",
+      "file": ".env.example; .gitignore; app/Config/database.php",
+      "evidence": "Environment-only credentials; scan154 file text không phát hiện pattern secret; .runtime/env ignored.",
+      "priority": "P1",
+      "remaining": "Scan heuristic không bảo đảm phát hiện mọi dạng secret hoặc secret ngoài repository."
+    },
+    {
+      "id": "A-05",
+      "task": "Migrations nền đầy đủ, có thể chạy trên database sạch.",
+      "status": "DONE",
+      "file": "scripts/migrate.php; database/SOMI_database.sql; database/migrations/20261102_person1.sql",
+      "evidence": "Baseline sạch PostgreSQL16 PASS, rerun checksum ledger/advisory lock skip đúng.",
+      "priority": "P0",
+      "remaining": "Chưa apply lên Supabase; chưa build image PHP8.3."
+    },
+    {
+      "id": "A-06",
+      "task": "Quy ước thống nhất về tên bảng, khóa ngoại, trạng thái, timestamp, timezone và tiền tệ.",
+      "status": "PARTIAL",
+      "file": "database/SOMI_database.sql; app/Services/OrderContract.php; docs/PERSON1_INTEGRATION.md",
+      "evidence": "Giữ snake_case, FK, TIMESTAMPTZ, integer minor money; vocabulary DB thống nhất cho API mới.",
+      "priority": "P1",
+      "remaining": "Language/currency CHECK xung đột demo và graph giao hàng cần chốt với Người2/3."
+    },
+    {
+      "id": "A-07",
+      "task": "Có `.env.example` và tài liệu chạy backend.",
+      "status": "DONE",
+      "file": ".env.example; scripts/serve.ps1; docs/PERSON1_BACKEND.md",
+      "evidence": "Có hướng dẫn env/extension/migration và scripts kiểm thử thực chạy PASS.",
+      "priority": "P1",
+      "remaining": "—"
+    },
+    {
+      "id": "A-08",
+      "task": "Middleware authentication.",
+      "status": "DONE",
+      "file": "app/Services/SessionGuard.php; public/api/_person1.php::person1_identity",
+      "evidence": "HTTP login/logout/suspend-restore; expired/missing timestamp/forged role/microsecond reset assertions PASS.",
+      "priority": "P1",
+      "remaining": "—"
+    },
+    {
+      "id": "A-09",
+      "task": "Middleware authorization theo role/permission.",
+      "status": "DONE",
+      "file": "public/api/_person1.php::person1_identity; database/migrations/20261102_person1.sql",
+      "evidence": "Vai trò session đối chiếu DB + permission; wrong-workspace và DB permission revocation assertions PASS.",
+      "priority": "P0",
+      "remaining": "API Người2/3 chưa tồn tại; chưa chứng minh chúng dùng middleware này."
+    },
+    {
+      "id": "A-10",
+      "task": "Lấy chính xác danh tính người dùng từ session/token.",
+      "status": "DONE",
+      "file": "app/Services/SessionGuard.php; public/api/_person1.php::person1_identity",
+      "evidence": "HTTP login/logout/suspend-restore; expired/missing timestamp/forged role/microsecond reset assertions PASS.",
+      "priority": "P0",
+      "remaining": "—"
+    },
+    {
+      "id": "B-01",
+      "task": "Đăng ký bằng email/số điện thoại.",
+      "status": "PARTIAL",
+      "file": "public/api/auth/register.php; app/Services/PhoneVerificationService.php; EmailVerificationService.php",
+      "evidence": "Verification timestamp/activation, wrong-attempt lock và replay tests PostgreSQL PASS.",
+      "priority": "P1",
+      "remaining": "Chưa kiểm thử registration→SMS/email thật. SMS chỉ demo; delivery provider/Resend config/key cần riêng."
+    },
+    {
+      "id": "B-02",
+      "task": "Đăng nhập bằng email/số điện thoại.",
+      "status": "DONE",
+      "file": "public/api/auth/login.php",
+      "evidence": "HTTP login thật email4 workspace và phone; wrong password/Customer-as-Admin401 PASS. Lock user khi kiểm mật khẩu để phối hợp reset/suspend.",
+      "priority": "P1",
+      "remaining": "—"
+    },
+    {
+      "id": "B-03",
+      "task": "Đăng xuất và vô hiệu hóa session/token theo cơ chế thực tế.",
+      "status": "DONE",
+      "file": "public/api/auth/logout.php; app/Services/SessionGuard.php",
+      "evidence": "HTTP logout xóa cookie/session; request tiếp theo401 PASS.",
+      "priority": "P1",
+      "remaining": "—"
+    },
+    {
+      "id": "B-04",
+      "task": "Xác minh email/điện thoại.",
+      "status": "PARTIAL",
+      "file": "public/api/auth/register.php; app/Services/PhoneVerificationService.php; EmailVerificationService.php",
+      "evidence": "Verification timestamp/activation, wrong-attempt lock và replay tests PostgreSQL PASS.",
+      "priority": "P1",
+      "remaining": "Chưa kiểm thử registration→SMS/email thật. SMS chỉ demo; delivery provider/Resend config/key cần riêng."
+    },
+    {
+      "id": "B-05",
+      "task": "Gửi lại mã xác minh.",
+      "status": "PARTIAL",
+      "file": "public/api/auth/register.php; app/Services/PhoneVerificationService.php; EmailVerificationService.php",
+      "evidence": "Verification timestamp/activation, wrong-attempt lock và replay tests PostgreSQL PASS.",
+      "priority": "P1",
+      "remaining": "Chưa kiểm thử registration→SMS/email thật. SMS chỉ demo; delivery provider/Resend config/key cần riêng."
+    },
+    {
+      "id": "B-06",
+      "task": "Quên mật khẩu.",
+      "status": "PARTIAL",
+      "file": "public/api/auth/request-password-reset.php; app/Services/PasswordResetService.php::request",
+      "evidence": "Known/unknown email response giống nhau khi lỗi provider PASS.",
+      "priority": "P1",
+      "remaining": "Chưa xác minh email delivery; timing enumeration và shared rate limiting còn mở."
+    },
+    {
+      "id": "B-07",
+      "task": "Đặt lại mật khẩu an toàn.",
+      "status": "DONE",
+      "file": "app/Services/PasswordResetService.php::reset; app/Services/SessionGuard.php",
+      "evidence": "Reset PostgreSQL, token single-use, hai token concurrent chỉ1 thành công/không deadlock; thu hồi session theo giây lẻ PASS.",
+      "priority": "P1",
+      "remaining": "Không chứng minh email gửi link đến người nhận thật."
+    },
+    {
+      "id": "B-08",
+      "task": "API hồ sơ người dùng.",
+      "status": "DONE",
+      "file": "public/api/auth/profile.php",
+      "evidence": "HTTP profile read/update actual identity, reject role injection, không hash PASS; browser Customer render.",
+      "priority": "P1",
+      "remaining": "—"
+    },
+    {
+      "id": "B-09",
+      "task": "Một tài khoản có thể có đồng thời role Customer và Shipper.",
+      "status": "DONE",
+      "file": "public/api/auth/switch-workspace.php",
+      "evidence": "HTTP Shipper thêm Customer, profile còn cả2 role PASS; session role chỉ đổi sau commit.",
+      "priority": "P1",
+      "remaining": "—"
+    },
+    {
+      "id": "B-10",
+      "task": "Kiểm tra quyền sở hữu dữ liệu ở backend.",
+      "status": "DONE",
+      "file": "app/Services/CustomerService.php; public/api/auth/profile.php",
+      "evidence": "Cross-owner address edit/archive và order read404; other list không chứa đơn; actual session identity PASS.",
+      "priority": "P1",
+      "remaining": "Không đánh giá endpoint offer chưa tồn tại."
+    },
+    {
+      "id": "B-11",
+      "task": "Shipper không truy cập được offer/đơn ngoài phạm vi được phép.",
+      "status": "BLOCKED",
+      "file": "docs/PERSON1_INTEGRATION.md",
+      "evidence": "Không có API offer backend để kiểm thử.",
+      "priority": "P1",
+      "remaining": "DEPENDENCY_PERSON2: ownership offer/order cần implementation và tests của Người2."
+    },
+    {
+      "id": "B-12",
+      "task": "Admin xem, khóa/mở tài khoản.",
+      "status": "DONE",
+      "file": "public/api/admin/accounts.php; app/Services/AdminService.php; Person1Repository.php::audit",
+      "evidence": "Lookup/lock/unlock, self-action denied, status history+audit cùng transaction; suspension revokes old sessions PASS.",
+      "priority": "P1",
+      "remaining": "Không đổi quyền truy cập tài khoản Admin khi chưa có governance policy."
+    },
+    {
+      "id": "B-13",
+      "task": "Admin xử lý yêu cầu đổi quốc tịch.",
+      "status": "PARTIAL",
+      "file": "public/api/auth/nationality-request.php; public/api/admin/nationality-requests.php",
+      "evidence": "Request/list/reject, pending uniqueness, audit và country preservation PASS.",
+      "priority": "P1",
+      "remaining": "BLOCKED_BY_BUSINESS_DECISION: approve cần thay giấy tờ/tái xác minh."
+    },
+    {
+      "id": "B-14",
+      "task": "Ghi lịch sử trạng thái tài khoản.",
+      "status": "DONE",
+      "file": "public/api/admin/accounts.php; app/Services/AdminService.php; Person1Repository.php::audit",
+      "evidence": "Lookup/lock/unlock, self-action denied, status history+audit cùng transaction; suspension revokes old sessions PASS.",
+      "priority": "P1",
+      "remaining": "Không đổi quyền truy cập tài khoản Admin khi chưa có governance policy."
+    },
+    {
+      "id": "B-15",
+      "task": "Audit log cho thao tác Admin nhạy cảm.",
+      "status": "DONE",
+      "file": "public/api/admin/accounts.php; app/Services/AdminService.php; Person1Repository.php::audit",
+      "evidence": "Lookup/lock/unlock, self-action denied, status history+audit cùng transaction; suspension revokes old sessions PASS.",
+      "priority": "P1",
+      "remaining": "Không đổi quyền truy cập tài khoản Admin khi chưa có governance policy."
+    },
+    {
+      "id": "C-01",
+      "task": "CRUD địa chỉ Customer.",
+      "status": "DONE",
+      "file": "public/api/customer/addresses.php; app/Services/CustomerService.php::saveAddress/archiveAddress",
+      "evidence": "CRUD soft archive, default invariant, cross-owner404, coordinate bounds, used-address409; HTTP/service/browser persistence PASS.",
+      "priority": "P1",
+      "remaining": "Tên/phone liên hệ riêng địa chỉ chưa có schema; không tự thêm field chưa chốt."
+    },
+    {
+      "id": "C-02",
+      "task": "Phân quyền sở hữu địa chỉ.",
+      "status": "DONE",
+      "file": "public/api/customer/addresses.php; app/Services/CustomerService.php::saveAddress/archiveAddress",
+      "evidence": "CRUD soft archive, default invariant, cross-owner404, coordinate bounds, used-address409; HTTP/service/browser persistence PASS.",
+      "priority": "P1",
+      "remaining": "Tên/phone liên hệ riêng địa chỉ chưa có schema; không tự thêm field chưa chốt."
+    },
+    {
+      "id": "C-03",
+      "task": "Danh mục loại kiện hàng.",
+      "status": "DONE",
+      "file": "public/api/customer/categories.php",
+      "evidence": "HTTP actual catalog có restriction_type, chỉ active PASS.",
+      "priority": "P1",
+      "remaining": "—"
+    },
+    {
+      "id": "C-04",
+      "task": "Admin đánh dấu loại hàng được phép/hạn chế/cấm.",
+      "status": "DONE",
+      "file": "public/api/admin/categories.php",
+      "evidence": "HTTP đổi restriction persisted và transaction audit; validation choices PASS.",
+      "priority": "P1",
+      "remaining": "—"
+    },
+    {
+      "id": "C-05",
+      "task": "Tạo đơn với địa chỉ lấy/giao.",
+      "status": "BLOCKED",
+      "file": "public/api/customer/create-order.php; quote.php; database/SOMI_database.sql",
+      "evidence": "Không tạo đơn thật từ giá client; HTTP409 có code rõ PASS.",
+      "priority": "P0",
+      "remaining": "BLOCKED_BY_BUSINESS_DECISION: server quotation/currency/distance/weather + payment contract. Các cột có sẵn không chứng minh flow đã xong."
+    },
+    {
+      "id": "C-06",
+      "task": "Lưu tọa độ hợp lệ.",
+      "status": "PARTIAL",
+      "file": "app/Services/CustomerService.php::saveAddress; database/SOMI_database.sql",
+      "evidence": "Địa chỉ lưu tọa độ hợp lệ và reject ngoài range PASS.",
+      "priority": "P1",
+      "remaining": "Tạo đơn thật bị chặn nên chưa kiểm chứng snapshot tọa độ qua API create."
+    },
+    {
+      "id": "C-07",
+      "task": "Lưu thông tin liên hệ người gửi/người nhận.",
+      "status": "BLOCKED",
+      "file": "public/api/customer/create-order.php; quote.php; database/SOMI_database.sql",
+      "evidence": "Không tạo đơn thật từ giá client; HTTP409 có code rõ PASS.",
+      "priority": "P1",
+      "remaining": "BLOCKED_BY_BUSINESS_DECISION: server quotation/currency/distance/weather + payment contract. Các cột có sẵn không chứng minh flow đã xong."
+    },
+    {
+      "id": "C-08",
+      "task": "Lưu loại hàng, khối lượng.",
+      "status": "BLOCKED",
+      "file": "public/api/customer/create-order.php; quote.php; database/SOMI_database.sql",
+      "evidence": "Không tạo đơn thật từ giá client; HTTP409 có code rõ PASS.",
+      "priority": "P1",
+      "remaining": "BLOCKED_BY_BUSINESS_DECISION: server quotation/currency/distance/weather + payment contract. Các cột có sẵn không chứng minh flow đã xong."
+    },
+    {
+      "id": "C-09",
+      "task": "Snapshot địa chỉ/liên hệ tại thời điểm tạo đơn.",
+      "status": "PARTIAL",
+      "file": "app/Services/CustomerService.php; tests/person1_services.php",
+      "evidence": "Snapshot địa chỉ của order test trực tiếp trong DB không đổi sau sửa saved address PASS.",
+      "priority": "P1",
+      "remaining": "Chưa có server create-order flow để chứng minh snapshot contact/address lúc tạo."
+    },
+    {
+      "id": "C-10",
+      "task": "Customer xem danh sách đơn.",
+      "status": "DONE",
+      "file": "public/api/customer/orders.php; CustomerService.php::orders/order",
+      "evidence": "Owner list/detail/history actual PostgreSQL; IDOR404; browser order detail PASS.",
+      "priority": "P1",
+      "remaining": "Chỉ đọc đơn có sẵn; không phải bằng chứng API tạo đơn hoạt động."
+    },
+    {
+      "id": "C-11",
+      "task": "Customer xem chi tiết đơn của mình.",
+      "status": "DONE",
+      "file": "public/api/customer/orders.php; CustomerService.php::orders/order",
+      "evidence": "Owner list/detail/history actual PostgreSQL; IDOR404; browser order detail PASS.",
+      "priority": "P1",
+      "remaining": "Chỉ đọc đơn có sẵn; không phải bằng chứng API tạo đơn hoạt động."
+    },
+    {
+      "id": "C-12",
+      "task": "Customer xem trạng thái và lịch sử đơn.",
+      "status": "DONE",
+      "file": "public/api/customer/orders.php; CustomerService.php::orders/order",
+      "evidence": "Owner list/detail/history actual PostgreSQL; IDOR404; browser order detail PASS.",
+      "priority": "P1",
+      "remaining": "Chỉ đọc đơn có sẵn; không phải bằng chứng API tạo đơn hoạt động."
+    },
+    {
+      "id": "C-13",
+      "task": "Customer được hủy đơn trước khi Shipper nhận theo quy tắc nghiệp vụ.",
+      "status": "PARTIAL",
+      "file": "CustomerService.php::cancel; OrderContract.php",
+      "evidence": "Unassigned/unpaid cancel idempotent, history, stale assigned409, row-lock races PASS.",
+      "priority": "P1",
+      "remaining": "DEPENDENCY_PERSON3: có bất kỳ payment record/paid_at thì chặn409 chờ refund contract."
+    },
+    {
+      "id": "C-14",
+      "task": "Có hợp đồng trạng thái đơn dùng chung với Người 2.",
+      "status": "PARTIAL",
+      "file": "app/Services/OrderContract.php; docs/PERSON1_INTEGRATION.md",
+      "evidence": "Vocabulary DB và BEFORE_ASSIGNMENT dùng trong service, docs lock protocol; test contract simulator PASS.",
+      "priority": "P1",
+      "remaining": "Chưa được Người2 xác nhận/áp dụng transition graph."
+    },
+    {
+      "id": "C-15",
+      "task": "Lưu lịch sử chuyển trạng thái.",
+      "status": "PARTIAL",
+      "file": "CustomerService.php::cancel; tests/person1_concurrency.php",
+      "evidence": "History và concurrency path hủy đã PASS; matching simulator dùng cùng lock không nhận đơn cancelled.",
+      "priority": "P0",
+      "remaining": "Chưa test backend matching/delivery/payment thực của Người2/3; chưa graph cho toàn bộ trạng thái."
+    },
+    {
+      "id": "C-16",
+      "task": "Ngăn chuyển trạng thái không hợp lệ và xử lý cập nhật đồng thời.",
+      "status": "PARTIAL",
+      "file": "CustomerService.php::cancel; tests/person1_concurrency.php",
+      "evidence": "History và concurrency path hủy đã PASS; matching simulator dùng cùng lock không nhận đơn cancelled.",
+      "priority": "P0",
+      "remaining": "Chưa test backend matching/delivery/payment thực của Người2/3; chưa graph cho toàn bộ trạng thái."
+    },
+    {
+      "id": "D-01",
+      "task": "Admin cấu hình giá theo khoảng cách.",
+      "status": "PARTIAL",
+      "file": "app/Services/PricingConfiguration.php; public/api/admin/pricing.php; database/migrations/20261102_person1.sql",
+      "evidence": "Typed validation, explicit VND/USD cấu hình đầy đủ lưu draft + audit; invalid time/money/percent tests PASS; browser draft save PASS.",
+      "priority": "P1",
+      "remaining": "BLOCKED_BY_BUSINESS_DECISION: draft không kích hoạt, không tính/gán giá hoặc thu nhập thực."
+    },
+    {
+      "id": "D-02",
+      "task": "Admin cấu hình giá theo khung giờ.",
+      "status": "PARTIAL",
+      "file": "app/Services/PricingConfiguration.php; public/api/admin/pricing.php; database/migrations/20261102_person1.sql",
+      "evidence": "Typed validation, explicit VND/USD cấu hình đầy đủ lưu draft + audit; invalid time/money/percent tests PASS; browser draft save PASS.",
+      "priority": "P1",
+      "remaining": "BLOCKED_BY_BUSINESS_DECISION: draft không kích hoạt, không tính/gán giá hoặc thu nhập thực."
+    },
+    {
+      "id": "D-03",
+      "task": "Admin cấu hình ảnh hưởng thời tiết.",
+      "status": "PARTIAL",
+      "file": "app/Services/PricingConfiguration.php; public/api/admin/pricing.php; database/migrations/20261102_person1.sql",
+      "evidence": "Typed validation, explicit VND/USD cấu hình đầy đủ lưu draft + audit; invalid time/money/percent tests PASS; browser draft save PASS.",
+      "priority": "P1",
+      "remaining": "BLOCKED_BY_BUSINESS_DECISION: draft không kích hoạt, không tính/gán giá hoặc thu nhập thực."
+    },
+    {
+      "id": "D-04",
+      "task": "Bảng giá VND và USD riêng.",
+      "status": "PARTIAL",
+      "file": "app/Services/PricingConfiguration.php; public/api/admin/pricing.php; database/migrations/20261102_person1.sql",
+      "evidence": "Typed validation, explicit VND/USD cấu hình đầy đủ lưu draft + audit; invalid time/money/percent tests PASS; browser draft save PASS.",
+      "priority": "P1",
+      "remaining": "BLOCKED_BY_BUSINESS_DECISION: draft không kích hoạt, không tính/gán giá hoặc thu nhập thực."
+    },
+    {
+      "id": "D-05",
+      "task": "Tính báo giá theo chính sách đã thống nhất.",
+      "status": "BLOCKED",
+      "file": "public/api/customer/quote.php; create-order.php; docs/PERSON1_INTEGRATION.md",
+      "evidence": "Quote/create fail-closed409 đã test; không dùng công thức demo.",
+      "priority": "P1",
+      "remaining": "BLOCKED_BY_BUSINESS_DECISION: công thức/ranh giới/hệ số, nguồn distance/weather, rounding và policy snapshot contract."
+    },
+    {
+      "id": "D-06",
+      "task": "Làm tròn lên đơn vị tiền nhỏ nhất theo từng loại tiền.",
+      "status": "BLOCKED",
+      "file": "public/api/customer/quote.php; create-order.php; docs/PERSON1_INTEGRATION.md",
+      "evidence": "Quote/create fail-closed409 đã test; không dùng công thức demo.",
+      "priority": "P1",
+      "remaining": "BLOCKED_BY_BUSINESS_DECISION: công thức/ranh giới/hệ số, nguồn distance/weather, rounding và policy snapshot contract."
+    },
+    {
+      "id": "D-07",
+      "task": "Snapshot chính sách giá lên đơn.",
+      "status": "BLOCKED",
+      "file": "public/api/customer/quote.php; create-order.php; docs/PERSON1_INTEGRATION.md",
+      "evidence": "Quote/create fail-closed409 đã test; không dùng công thức demo.",
+      "priority": "P1",
+      "remaining": "BLOCKED_BY_BUSINESS_DECISION: công thức/ranh giới/hệ số, nguồn distance/weather, rounding và policy snapshot contract."
+    },
+    {
+      "id": "D-08",
+      "task": "Snapshot các thành phần tạo thành tổng giá.",
+      "status": "BLOCKED",
+      "file": "public/api/customer/quote.php; create-order.php; docs/PERSON1_INTEGRATION.md",
+      "evidence": "Quote/create fail-closed409 đã test; không dùng công thức demo.",
+      "priority": "P1",
+      "remaining": "BLOCKED_BY_BUSINESS_DECISION: công thức/ranh giới/hệ số, nguồn distance/weather, rounding và policy snapshot contract."
+    },
+    {
+      "id": "D-09",
+      "task": "Không thay đổi giá đơn đã thanh toán.",
+      "status": "PARTIAL",
+      "file": "public/api/admin/orders.php; CustomerService.php::cancel",
+      "evidence": "API mới không có update price; cancel test giữ total và pricing_snapshot PASS.",
+      "priority": "P1",
+      "remaining": "Chưa chứng minh paid-order immutability khi tích hợp Người3 và server create."
+    },
+    {
+      "id": "D-10",
+      "task": "Admin cấu hình phí hủy.",
+      "status": "PARTIAL",
+      "file": "app/Services/PricingConfiguration.php; public/api/admin/pricing.php; database/migrations/20261102_person1.sql",
+      "evidence": "Typed validation, explicit VND/USD cấu hình đầy đủ lưu draft + audit; invalid time/money/percent tests PASS; browser draft save PASS.",
+      "priority": "P1",
+      "remaining": "BLOCKED_BY_BUSINESS_DECISION: draft không kích hoạt, không tính/gán giá hoặc thu nhập thực."
+    },
+    {
+      "id": "D-11",
+      "task": "Admin cấu hình phí hoàn hàng.",
+      "status": "PARTIAL",
+      "file": "app/Services/PricingConfiguration.php; public/api/admin/pricing.php; database/migrations/20261102_person1.sql",
+      "evidence": "Typed validation, explicit VND/USD cấu hình đầy đủ lưu draft + audit; invalid time/money/percent tests PASS; browser draft save PASS.",
+      "priority": "P1",
+      "remaining": "BLOCKED_BY_BUSINESS_DECISION: draft không kích hoạt, không tính/gán giá hoặc thu nhập thực."
+    },
+    {
+      "id": "D-12",
+      "task": "Admin cấu hình phần trăm thu nhập Shipper.",
+      "status": "PARTIAL",
+      "file": "app/Services/PricingConfiguration.php; public/api/admin/pricing.php; database/migrations/20261102_person1.sql",
+      "evidence": "Typed validation, explicit VND/USD cấu hình đầy đủ lưu draft + audit; invalid time/money/percent tests PASS; browser draft save PASS.",
+      "priority": "P1",
+      "remaining": "BLOCKED_BY_BUSINESS_DECISION: draft không kích hoạt, không tính/gán giá hoặc thu nhập thực."
+    },
+    {
+      "id": "D-13",
+      "task": "Admin cấu hình bồi hoàn đơn hoàn.",
+      "status": "PARTIAL",
+      "file": "app/Services/PricingConfiguration.php; public/api/admin/pricing.php; database/migrations/20261102_person1.sql",
+      "evidence": "Typed validation, explicit VND/USD cấu hình đầy đủ lưu draft + audit; invalid time/money/percent tests PASS; browser draft save PASS.",
+      "priority": "P1",
+      "remaining": "BLOCKED_BY_BUSINESS_DECISION: draft không kích hoạt, không tính/gán giá hoặc thu nhập thực."
+    },
+    {
+      "id": "D-14",
+      "task": "Admin cấu hình chính sách điểm Shipper.",
+      "status": "PARTIAL",
+      "file": "app/Services/PricingConfiguration.php; public/api/admin/pricing.php; database/migrations/20261102_person1.sql",
+      "evidence": "Typed validation, explicit VND/USD cấu hình đầy đủ lưu draft + audit; invalid time/money/percent tests PASS; browser draft save PASS.",
+      "priority": "P1",
+      "remaining": "BLOCKED_BY_BUSINESS_DECISION: draft không kích hoạt, không tính/gán giá hoặc thu nhập thực."
+    },
+    {
+      "id": "E-01",
+      "task": "API Admin tra cứu Customer.",
+      "status": "DONE",
+      "file": "public/api/admin/accounts.php; AdminService.php::accounts",
+      "evidence": "HTTP lookup Customer/Shipper qua q/role actual data PASS, permission enforced.",
+      "priority": "P1",
+      "remaining": "—"
+    },
+    {
+      "id": "E-02",
+      "task": "API Admin tra cứu Shipper.",
+      "status": "DONE",
+      "file": "public/api/admin/accounts.php; AdminService.php::accounts",
+      "evidence": "HTTP lookup Customer/Shipper qua q/role actual data PASS, permission enforced.",
+      "priority": "P1",
+      "remaining": "—"
+    },
+    {
+      "id": "E-03",
+      "task": "API Admin tra cứu và xem chi tiết đơn hàng.",
+      "status": "DONE",
+      "file": "public/api/admin/orders.php",
+      "evidence": "HTTP list và detail/history actual DB PASS.",
+      "priority": "P1",
+      "remaining": "—"
+    },
+    {
+      "id": "E-04",
+      "task": "Admin duyệt hồ sơ KYC.",
+      "status": "DONE",
+      "file": "public/api/admin/review-shipper.php",
+      "evidence": "APPROVED/REJECTED/NEEDS_INFO HTTP PASS, stale409; identity persisted và audit cả3 quyết định assertions PASS.",
+      "priority": "P1",
+      "remaining": "Chưa có UI xem evidence upload/number nhạy cảm; không tuyên bố kiểm định tài liệu thực tế."
+    },
+    {
+      "id": "E-05",
+      "task": "Admin từ chối KYC.",
+      "status": "DONE",
+      "file": "public/api/admin/review-shipper.php",
+      "evidence": "APPROVED/REJECTED/NEEDS_INFO HTTP PASS, stale409; identity persisted và audit cả3 quyết định assertions PASS.",
+      "priority": "P1",
+      "remaining": "Chưa có UI xem evidence upload/number nhạy cảm; không tuyên bố kiểm định tài liệu thực tế."
+    },
+    {
+      "id": "E-06",
+      "task": "Admin yêu cầu bổ sung hồ sơ.",
+      "status": "DONE",
+      "file": "public/api/admin/review-shipper.php",
+      "evidence": "APPROVED/REJECTED/NEEDS_INFO HTTP PASS, stale409; identity persisted và audit cả3 quyết định assertions PASS.",
+      "priority": "P1",
+      "remaining": "Chưa có UI xem evidence upload/number nhạy cảm; không tuyên bố kiểm định tài liệu thực tế."
+    },
+    {
+      "id": "E-07",
+      "task": "Lưu trạng thái và lịch sử xét duyệt KYC.",
+      "status": "DONE",
+      "file": "public/api/admin/review-shipper.php",
+      "evidence": "APPROVED/REJECTED/NEEDS_INFO HTTP PASS, stale409; identity persisted và audit cả3 quyết định assertions PASS.",
+      "priority": "P1",
+      "remaining": "Chưa có UI xem evidence upload/number nhạy cảm; không tuyên bố kiểm định tài liệu thực tế."
+    },
+    {
+      "id": "E-08",
+      "task": "Hợp đồng API cho matching với Người 2.",
+      "status": "PARTIAL",
+      "file": "docs/PERSON1_INTEGRATION.md; app/Services/OrderContract.php",
+      "evidence": "Có đề xuất identity/permission, lock order, idempotency, payment guard và ownership.",
+      "priority": "P1",
+      "remaining": "Chờ Người2/3 xác nhận và implementation; không gọi contract test là E2E matching/payment."
+    },
+    {
+      "id": "E-09",
+      "task": "Hợp đồng API cho trạng thái giao hàng với Người 2.",
+      "status": "PARTIAL",
+      "file": "docs/PERSON1_INTEGRATION.md; app/Services/OrderContract.php",
+      "evidence": "Có đề xuất identity/permission, lock order, idempotency, payment guard và ownership.",
+      "priority": "P1",
+      "remaining": "Chờ Người2/3 xác nhận và implementation; không gọi contract test là E2E matching/payment."
+    },
+    {
+      "id": "E-10",
+      "task": "Hợp đồng API thanh toán/refund với Người 3.",
+      "status": "PARTIAL",
+      "file": "docs/PERSON1_INTEGRATION.md; app/Services/OrderContract.php",
+      "evidence": "Có đề xuất identity/permission, lock order, idempotency, payment guard và ownership.",
+      "priority": "P1",
+      "remaining": "Chờ Người2/3 xác nhận và implementation; không gọi contract test là E2E matching/payment."
+    },
+    {
+      "id": "E-11",
+      "task": "Review migrations và khả năng tích hợp.",
+      "status": "DONE",
+      "file": "scripts/migrate.php; docs/PERSON1_BACKEND.md",
+      "evidence": "Canonical baseline/migrations PostgreSQL16 test PASS; Supabase23 prerequisites read-only PASS, new migration chưa áp.",
+      "priority": "P1",
+      "remaining": "—"
+    },
+    {
+      "id": "E-12",
+      "task": "Chuẩn hóa authentication/authorization giữa các module.",
+      "status": "PARTIAL",
+      "file": "public/api/_person1.php; SessionGuard.php; public/api/auth/switch-workspace.php",
+      "evidence": "Middleware dùng cho API mới/review; bỏ duplicate guard, giữ auth legacy tương thích; test permission/session PASS.",
+      "priority": "P0",
+      "remaining": "Người2/3 chưa có API để xác nhận chuẩn hóa toàn module."
+    },
+    {
+      "id": "E-13",
+      "task": "Tài liệu API và hướng dẫn tích hợp.",
+      "status": "DONE",
+      "file": "docs/PERSON1_API_CONTRACT.md; PERSON1_INTEGRATION.md; PERSON1_BACKEND.md",
+      "evidence": "Có request/response/status/permission, paths, env/test/migration instructions và giới hạn.",
+      "priority": "P1",
+      "remaining": "—"
+    }
+  ]
+}

@@ -1,19 +1,11 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/DeliveryInput.php';
+require_once __DIR__ . '/../Domain/Order.php';
 
 final class OrderLifecycleService
 {
-    public const TRANSITIONS = [
-        'PENDING_PAYMENT' => ['SEARCHING_SHIPPER', 'CANCELLED'],
-        'SEARCHING_SHIPPER' => ['SHIPPER_ASSIGNED', 'NO_SHIPPER_FOUND', 'CANCELLED'],
-        'NO_SHIPPER_FOUND' => ['SEARCHING_SHIPPER', 'CANCELLED'],
-        'SHIPPER_ASSIGNED' => ['PICKED_UP', 'SEARCHING_SHIPPER'],
-        'PICKED_UP' => ['IN_DELIVERY', 'RETURNING'],
-        'IN_DELIVERY' => ['DELIVERED', 'RETURNING'],
-        'RETURNING' => ['RETURNED'],
-        'DELIVERED' => [], 'RETURNED' => [], 'CANCELLED' => [],
-    ];
+    public const TRANSITIONS = \Somi\Domain\Order::TRANSITIONS;
 
     public static function lock(PDO $db, int $orderId): array
     {

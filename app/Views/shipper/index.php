@@ -37,7 +37,7 @@
   </div>
 </header>
 <main>
-  <div class="shipper-status" role="group" aria-label="Trạng thái nhận đơn">
+  <div class="shipper-status d-flex flex-wrap align-items-center gap-2" role="group" aria-label="Trạng thái nhận đơn">
     <button class="toggle on" id="availabilityToggle" aria-label="Bật tắt nhận đơn"></button><strong>Trạng thái nhận đơn</strong>
     <span class="pill" id="availabilityPill">ĐANG NHẬN ĐƠN</span>
     <p class="muted" id="availabilityHelp">Bạn sẽ nhận được các đơn phù hợp khi trực tuyến.</p>
@@ -46,7 +46,7 @@
   <?php require __DIR__.'/../shared/person3-panel.php'; ?>
 </main>
 <div id="contactModal" class="modalback hidden" role="dialog" aria-modal="true" aria-labelledby="contactTitle">
-  <div class="modal">
+  <div class="somi-modal">
     <div class="modalhead"><div><span class="eyebrow">LIÊN HỆ THEO ĐƠN</span><h2 id="contactTitle">Liên hệ người nhận</h2><span class="muted" style="font-size:12px">Đơn SOMI-240126</span></div><button class="outline" aria-label="Đóng" onclick="closeContactChat()">✕</button></div>
     <div class="modalbody">
       <div class="recipient-summary"><div class="recipient-avatar">NA</div><div><b>Nguyễn Minh Anh</b><span>Người nhận · 090 000 0000</span><small>241 Võ Văn Tần, Phường 5, Quận 3</small></div></div>
@@ -58,7 +58,7 @@
   </div>
 </div>
 <div id="orderDetailModal" class="modalback hidden" role="dialog" aria-modal="true" aria-labelledby="orderDetailTitle">
-  <div class="modal detailmodal"><div class="modalhead"><div><span class="eyebrow">THÔNG TIN ĐƠN GIAO</span><h2 id="orderDetailTitle">Chi tiết đơn</h2></div><button class="outline" aria-label="Đóng" onclick="closeOrderDetail()">✕</button></div><div class="modalbody" id="orderDetailBody"></div></div>
+  <div class="somi-modal detailmodal"><div class="modalhead"><div><span class="eyebrow">THÔNG TIN ĐƠN GIAO</span><h2 id="orderDetailTitle">Chi tiết đơn</h2></div><button class="outline" aria-label="Đóng" onclick="closeOrderDetail()">✕</button></div><div class="modalbody" id="orderDetailBody"></div></div>
 </div>
 <div id="shipperSupportModal" class="shipper-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="shipperSupportTitle">
   <section class="shipper-dialog">

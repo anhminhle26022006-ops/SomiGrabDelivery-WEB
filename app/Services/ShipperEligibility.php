@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/DeliveryApiError.php';
+require_once __DIR__ . '/../Domain/Shipper.php';
 
 /**
  * Điều kiện hoạt động của Shipper, kiểm tra tại backend.
@@ -29,10 +30,6 @@ final class ShipperEligibility
     /** Danh sách lý do Shipper chưa được hoạt động. Mảng rỗng nghĩa là đủ điều kiện. */
     public static function blockers(PDO $db, array $profile): array
     {
-        $blockers = [];
-        if ($profile['account_status'] !== 'ACTIVE') $blockers[] = 'ACCOUNT_NOT_ACTIVE';
-        if ($profile['verification_status'] !== 'APPROVED') $blockers[] = 'KYC_NOT_APPROVED';
-        if ($profile['identity_review_status'] !== 'APPROVED') $blockers[] = 'IDENTITY_NOT_APPROVED';
         // Chỉ khóa theo điểm khi Admin đã ban hành chính sách điểm; không tự đặt ngưỡng.
         $q = $db->query(
             'SELECT lock_threshold FROM shipper_score_policies
@@ -40,8 +37,7 @@ final class ShipperEligibility
              ORDER BY effective_from DESC LIMIT 1'
         );
         $threshold = $q->fetchColumn();
-        if ($threshold !== false && (float) $profile['reliability_score'] < (float) $threshold) $blockers[] = 'SCORE_LOCKED';
-        return $blockers;
+        return \Somi\Domain\Shipper::fromRow($profile)->workBlockers($threshold === false ? null : (string)$threshold);
     }
 
     public static function assertCanWork(PDO $db, array $profile): void

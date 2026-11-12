@@ -22,6 +22,9 @@ somi_load_env();
  */
 function somi_db(): PDO
 {
+    if (!extension_loaded('pdo_pgsql')) {
+        throw new RuntimeException('PostgreSQL PDO driver is not loaded. Enable pdo_pgsql in the active php.ini or run PHP with -d extension=pdo_pgsql.');
+    }
     static $connection = null;
 
     if ($connection instanceof PDO) {

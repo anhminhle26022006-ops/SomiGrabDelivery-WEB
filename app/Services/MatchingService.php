@@ -87,6 +87,8 @@ final class MatchingService
                    AND sp.last_location_at > now() - make_interval(secs => ?)
                    AND NOT EXISTS (SELECT 1 FROM order_assignments a WHERE a.shipper_id = sp.user_id AND a.assignment_status = 'ACTIVE')
                    AND NOT EXISTS (SELECT 1 FROM order_match_offers f WHERE f.order_id = ? AND f.shipper_id = sp.user_id AND f.sent_at >= CAST(? AS timestamptz))
+                   AND NOT EXISTS (SELECT 1 FROM order_assignments cancelled WHERE cancelled.order_id=? AND cancelled.shipper_id=sp.user_id AND cancelled.assignment_status='CANCELLED_BEFORE_PICKUP')
+                   AND (u.email LIKE '%@demo.somi.invalid') = EXISTS (SELECT 1 FROM users dc WHERE dc.user_id=? AND dc.email LIKE '%@demo.somi.invalid')
                    AND NOT EXISTS (SELECT 1 FROM shipper_score_policies sc
                                    WHERE sc.effective_from <= now() AND (sc.effective_until IS NULL OR sc.effective_until > now())
                                      AND sp.reliability_score < sc.lock_threshold)
@@ -99,7 +101,7 @@ final class MatchingService
         );
         $q->execute([
             $order['pickup_latitude'], $order['pickup_longitude'], $order['customer_id'],
-            ShipperInput::config('location_max_age_seconds'), $order['order_id'], $startedAt,
+            ShipperInput::config('location_max_age_seconds'), $order['order_id'], $startedAt, $order['order_id'], $order['customer_id'],
             ShipperInput::config('radius_km'), ShipperInput::config('batch_size'),
         ]);
         return $q->fetchAll();

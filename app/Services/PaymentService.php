@@ -105,16 +105,20 @@ final class PaymentService
     public function requestRefund(int $orderId,string $reason,string $key,?int $adminId=null): array
     {
         if($adminId!==null)AccessControl::requirePermission($this->db,$adminId,'ADMIN','payment.refund');
-        if(!in_array($reason,['CUSTOMER_CANCELLATION','RETURN_FEE_DEDUCTION','ADMIN_ADJUSTMENT'],true))DeliveryInput::invalid('reason');
+        if(!in_array($reason,['CUSTOMER_CANCELLATION','RETURN_FEE_DEDUCTION','ADMIN_ADJUSTMENT','NO_SHIPPER_FOUND'],true))DeliveryInput::invalid('reason');
         if($reason==='ADMIN_ADJUSTMENT')throw new DeliveryApiError(422,'REFUND_POLICY_REQUIRED','An explicit adjustment policy is required.');
         $order=OrderLifecycleService::lock($this->db,$orderId);$q=$this->db->prepare('SELECT * FROM payments WHERE order_id=? FOR UPDATE');$q->execute([$orderId]);$p=$q->fetch();
         if(!$p||!in_array($p['status'],['PAID','PARTIALLY_REFUNDED','REFUNDED'],true))throw new DeliveryApiError(409,'PAYMENT_NOT_REFUNDABLE','No confirmed payment is refundable.');
         $q=$this->db->prepare('SELECT * FROM refunds WHERE request_key=?');$q->execute([$key]);$old=$q->fetch();
         if($old){if((int)$old['order_id']!==$orderId||$old['reason']!==$reason)throw new DeliveryApiError(409,'IDEMPOTENCY_CONFLICT','Refund key conflict.');return $old;}
-        if(($reason==='CUSTOMER_CANCELLATION'&&$order['status']!=='CANCELLED')||($reason==='RETURN_FEE_DEDUCTION'&&$order['status']!=='RETURNED'))throw new DeliveryApiError(409,'REFUND_NOT_ELIGIBLE','Order is not eligible for this refund.');
+        if((in_array($reason,['CUSTOMER_CANCELLATION','NO_SHIPPER_FOUND'],true)&&$order['status']!=='CANCELLED')||($reason==='RETURN_FEE_DEDUCTION'&&$order['status']!=='RETURNED'))throw new DeliveryApiError(409,'REFUND_NOT_ELIGIBLE','Order is not eligible for this refund.');
+        if($reason==='NO_SHIPPER_FOUND'){
+            $q=$this->db->prepare("SELECT 1 FROM order_status_history WHERE order_id=? AND old_status='NO_SHIPPER_FOUND' AND new_status='CANCELLED' AND actor_kind='SYSTEM' LIMIT 1");$q->execute([$orderId]);
+            if(!$q->fetchColumn())throw new DeliveryApiError(409,'REFUND_NOT_ELIGIBLE','A system cancellation after exhausted matching is required.');
+        }
         $q=$this->db->prepare('SELECT COALESCE(sum(gross_amount_minor),0) FROM refunds WHERE payment_id=?');$q->execute([$p['payment_id']]);$reserved=(string)$q->fetchColumn();
         if(bccomp($reserved,'0')>0)throw new DeliveryApiError(409,'REFUND_ALREADY_RESERVED','A refund is already reserved. Retry the existing refund.');
-        $fee=$reason==='RETURN_FEE_DEDUCTION'?(string)$order['return_fee_minor']:(string)$order['cancellation_fee_minor'];
+        $fee=$reason==='RETURN_FEE_DEDUCTION'?(string)$order['return_fee_minor']:($reason==='NO_SHIPPER_FOUND'?'0':(string)$order['cancellation_fee_minor']);
         if(bccomp($fee,(string)$p['amount_minor'])>0)throw new DeliveryApiError(409,'REFUND_POLICY_INVALID','Deduction exceeds captured amount.');
         $amount=bcsub((string)$p['amount_minor'],$fee,0);
         $q=$this->db->prepare('INSERT INTO refunds(payment_id,order_id,reason,gross_amount_minor,deducted_fee_minor,refund_amount_minor,currency_code,provider,request_key) VALUES (?,?,?,?,?,?,?,?,?) RETURNING *');$q->execute([$p['payment_id'],$orderId,$reason,$p['amount_minor'],$fee,$amount,$p['currency_code'],$p['provider'],$key]);$refund=$q->fetch();

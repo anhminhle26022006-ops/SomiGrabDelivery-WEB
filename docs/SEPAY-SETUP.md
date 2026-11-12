@@ -78,3 +78,11 @@ Lệnh đầu chỉ kiểm tra cấu hình local. Lệnh thứ hai gọi GET dan
 Kết quả `ready:true` chứng minh merchant local gọi được API và khóa IPN local khớp endpoint hosting. Nó không chứng minh merchant/môi trường trên hosting trùng local, và chưa chứng minh SePay gửi được IPN thực tế. Giữ `payment_roundtrip_verified:false` cho đến khi hoàn tất một giao dịch trên web và xác nhận IPN, payment, ledger và trạng thái đơn.
 
 Với LIVE, người dùng tự tạo đơn VND và thực hiện thanh toán trên web. Kiểm tra checkout mở `pay.sepay.vn`, Nhật ký IPN trả HTTP 200, payment thành PAID và đơn chuyển sang SEARCHING_SHIPPER (hoặc trạng thái sau đó nếu đã ghép tài xế). Browser quay lại success URL không đủ để xác nhận đã nhận tiền. Không gửi IPN giả hoặc chỉnh PAID thủ công trên database LIVE.
+
+## 7. Đối chiếu giao dịch hiện có, không ghi DB
+
+```powershell
+php bin/person1-acceptance-check.php SOMI-<20-hex-characters> --provider
+```
+
+Công cụ chỉ đọc payment, payment_transactions, sự kiện/consumer receipt, email/queue và policy đang hiệu lực; `--provider` thêm GET đối chiếu SePay. Không tạo checkout, apply callback hay refund. Callback từ bản phát hành 12/11 ghi audit `SEPAY_IPN_ACCEPTED`; audit thiếu ở giao dịch cũ không chứng minh IPN thất bại, vì reconciliation cũ dùng chung transaction ID. Bằng chứng và phần còn thiếu: [tiến độ Người 1](PERSON1-PROGRESS-2026-11-12.md).

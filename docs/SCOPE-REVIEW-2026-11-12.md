@@ -1,5 +1,7 @@
 # Đối chiếu scope và phần việc còn lại — 12/11/2026
 
+> Đây là snapshot rà soát trước khi pull. Tiến độ sau `bed4549`, bằng chứng SePay/inbox và code Người 1 mới: [PERSON1-PROGRESS-2026-11-12.md](PERSON1-PROGRESS-2026-11-12.md). Không dùng các dòng tồn bên dưới để giao làm lại phần đã tích hợp.
+
 Mã đối chiếu: `cc82c7a` trên local và `origin/dev` (đã fetch, hai đầu trùng nhau). Đây là rà soát source/contract, không phải chứng nhận toàn bộ hosting đã nghiệm thu. Không sửa nghiệp vụ hay database trong đợt rà soát này.
 
 ## Căn cứ và cách đọc

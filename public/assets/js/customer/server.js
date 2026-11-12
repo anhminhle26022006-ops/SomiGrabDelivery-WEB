@@ -10,7 +10,9 @@
   let profile, currency='VND', pendingKey=null;
   function embeddedProfile(){try{const data=JSON.parse(document.getElementById('customer-profile-data')?.textContent||'null');if(data?.profile&&typeof data.profile.full_name==='string'&&['vi','en'].includes(data.profile.app_language))return data.profile;}catch{}return null;}
   function savedCurrency(){try{const saved=localStorage.getItem('somi-currency');if(['VND','USD'].includes(saved))return saved;}catch{}return profile?.app_language==='en'?'USD':'VND';}
-  let mapHandles=[],lookupHandles=[];
+  let mapHandles=[],lookupHandles=[],stopTracking=()=>{};
+  window.addEventListener('pagehide',()=>{stopTracking();resetMaps();});
+  window.addEventListener('pageshow',e=>{if(e.persisted&&['order','tracking'].includes(view))run(detail);});
   const resetMaps=()=>{mapHandles.forEach(m=>m?.destroy());mapHandles=[];lookupHandles.forEach(l=>l.destroy());lookupHandles=[];};
   function addressMap(container,input,apply,invalidate){
     const canvas=document.createElement('div');canvas.className='somi-leaflet-map';container.append(canvas);
@@ -36,7 +38,7 @@
     } catch(e){if(e.name==='AbortError')throw new Error(t('Yêu cầu quá thời gian. Bạn có thể thử lại.','Request timed out. You can retry.'));throw e;} finally{clearTimeout(timer);}
   }
   function errorMessage(error) {
-    const errors={ORDER_NOT_FOUND:t('Không tìm thấy đơn hàng của bạn. Vui lòng mở lại danh sách đơn.','Your order was not found. Please return to your order list.'),ORDER_NOT_CANCELLABLE:t('Đơn đã được nhận hoặc đã chuyển trạng thái nên không thể hủy. Vui lòng tải trạng thái mới.','This order has been assigned or changed status and can no longer be cancelled. Please refresh its status.'),WEATHER_SERVICE_PAUSED:t('Tạm ngừng nhận đơn do thời tiết nguy hiểm tại điểm lấy hàng. Vui lòng thử lại sau.','New deliveries are paused due to unsafe weather at pickup. Please try again later.'),ROUTE_NOT_FOUND:t('Không tìm được tuyến xe máy giữa hai điểm. Vui lòng chọn lại vị trí lấy/giao.','No motorcycle route was found. Please choose different pickup or delivery locations.'),PAYMENT_CURRENCY_UNSUPPORTED:t('Thanh toán USD tạm khóa. SePay chỉ hỗ trợ VND.','USD payments are temporarily disabled. SePay only supports VND.'),PRICING_CONTEXT_UNAVAILABLE:t('Dịch vụ tuyến đường/thời tiết chưa sẵn sàng. Vui lòng thử lại sau.','Routing/weather is unavailable. Please try again later.'),WEIGHT_NOT_SUPPORTED:t('Khối lượng tối đa là 30 kg.','Maximum weight is 30 kg.'),OUTSIDE_SERVICE_AREA:t('Hai điểm phải thuộc TP.HCM và tuyến đường dưới 40 km.','Both locations must be in Ho Chi Minh City and the route shorter than 40 km.'),QUOTE_EXPIRED:t('Báo giá đã hết hạn. Vui lòng lấy báo giá mới.','Quote expired. Please request a new quote.'),PAYMENT_PROVIDER_UNAVAILABLE:t('Thanh toán trực tuyến chưa sẵn sàng.','Online payments are not available yet.'),BANK_NOT_CONFIGURED:t('Chuyển khoản chưa sẵn sàng.','Bank transfer is not available yet.'),AUTHENTICATION_REQUIRED:t('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.','Your session expired. Please sign in again.')};
+    const errors={RETURN_NOT_HANDED_OVER:t('Shipper chưa xác nhận đã trả hàng. Vui lòng kiểm tra và tải lại trạng thái.','The shipper has not confirmed handover yet. Please check and refresh.'),INVALID_ORDER_STATE:t('Trạng thái đơn đã thay đổi. Vui lòng tải lại.','Order status changed. Please refresh.'),ORDER_NOT_FOUND:t('Không tìm thấy đơn hàng của bạn. Vui lòng mở lại danh sách đơn.','Your order was not found. Please return to your order list.'),ORDER_NOT_CANCELLABLE:t('Đơn đã được nhận hoặc đã chuyển trạng thái nên không thể hủy. Vui lòng tải trạng thái mới.','This order has been assigned or changed status and can no longer be cancelled. Please refresh its status.'),WEATHER_SERVICE_PAUSED:t('Tạm ngừng nhận đơn do thời tiết nguy hiểm tại điểm lấy hàng. Vui lòng thử lại sau.','New deliveries are paused due to unsafe weather at pickup. Please try again later.'),ROUTE_NOT_FOUND:t('Không tìm được tuyến xe máy giữa hai điểm. Vui lòng chọn lại vị trí lấy/giao.','No motorcycle route was found. Please choose different pickup or delivery locations.'),PAYMENT_CURRENCY_UNSUPPORTED:t('Thanh toán USD tạm khóa. SePay chỉ hỗ trợ VND.','USD payments are temporarily disabled. SePay only supports VND.'),PRICING_CONTEXT_UNAVAILABLE:t('Dịch vụ tuyến đường/thời tiết chưa sẵn sàng. Vui lòng thử lại sau.','Routing/weather is unavailable. Please try again later.'),WEIGHT_NOT_SUPPORTED:t('Khối lượng tối đa là 30 kg.','Maximum weight is 30 kg.'),OUTSIDE_SERVICE_AREA:t('Hai điểm phải thuộc TP.HCM và tuyến đường dưới 40 km.','Both locations must be in Ho Chi Minh City and the route shorter than 40 km.'),QUOTE_EXPIRED:t('Báo giá đã hết hạn. Vui lòng lấy báo giá mới.','Quote expired. Please request a new quote.'),PAYMENT_PROVIDER_UNAVAILABLE:t('Thanh toán trực tuyến chưa sẵn sàng.','Online payments are not available yet.'),BANK_NOT_CONFIGURED:t('Chuyển khoản chưa sẵn sàng.','Bank transfer is not available yet.'),AUTHENTICATION_REQUIRED:t('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.','Your session expired. Please sign in again.')};
     return errors[error.code]||(error.code?t('Không thể xử lý yêu cầu. Vui lòng kiểm tra thông tin hoặc thử lại sau.','Unable to process the request. Please check your information or try again later.'):error.message);
   }
   function report(error,node=root) {if(node===root){let box=$('[data-live-message]');if(!box){box=document.createElement('div');box.dataset.liveMessage='';root.prepend(box);}node=box;}node.innerHTML=`<div class="alert alert-danger" role="alert">${h(errorMessage(error))}</div>`+(error.status===401?link('orders',t('Đăng nhập lại','Sign in again')):'');}
@@ -70,7 +72,7 @@
     $('[data-default-address]').innerHTML=`<h2>${h(t('Địa chỉ mặc định','Default address'))}</h2><p class="c-panel-sub">${h(a?.address_detail||t('Bạn chưa có địa chỉ mặc định.','No default address yet.'))}</p><a class="c-link" href="${h(url('addresses'))}">${h(t('Quản lý sổ địa chỉ','Manage addresses'))}</a>`;
   }
   async function orders(){
-    const items=await allOrders();let tab=params.get('tab')||'all';if(!Object.hasOwn(groups,tab))tab='all';
+    const firstPage=await api('customer/orders.php?limit=50');const items=[...firstPage.items];let cursor=firstPage.next_before_id,loadingMore=false;const seenCursors=new Set();let tab=params.get('tab')||'all';if(!Object.hasOwn(groups,tab))tab='all';
     const titles={all:t('Tất cả','All'),active:t('Đang xử lý','In progress'),done:t('Đã giao','Delivered'),problem:t('Cần chú ý','Needs attention'),cancelled:t('Đã hủy','Cancelled')};
     function render(){
       $('[data-tabs]').innerHTML=Object.entries(titles).map(([key,label])=>`<button type="button" role="tab" data-tab="${key}" aria-selected="${key===tab}" class="nav-link${key===tab?' active':''}">${h(label)} <b>${items.filter(o=>!groups[key]||groups[key].includes(o.status)).length}</b></button>`).join('');
@@ -79,17 +81,47 @@
       const list=items.filter(o=>{const d=new Date(o.created_at),day=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;return (!groups[tab]||groups[tab].includes(o.status))&&(!q||`${o.order_code} ${o.pickup_address} ${o.delivery_address} ${o.receiver_name||''} ${o.parcel_description||''}`.toLocaleLowerCase().includes(q))&&(!from||day>=from)&&(!to||day<=to);});
       $('[data-list]').innerHTML=list.map(row).join('')||empty(items.length?t('Không có đơn phù hợp','No matching orders'):t('Bạn chưa có đơn hàng nào','No orders yet'));
       $('[data-clear]').hidden=!q&&!from&&!to;
+      let more=$('[data-load-more]');if(!more){more=document.createElement('div');more.dataset.loadMore='';$('[data-list]').after(more);}
+      more.innerHTML=`<p class="c-hint">${h(t('Đã tải ','Loaded '))}${items.length}${h(cursor?t(' đơn. Bộ lọc áp dụng cho các đơn đã tải.',' orders. Filters apply to loaded orders.') : t(' đơn.',' orders.'))}</p>`+(cursor?`<button class="btn btn-outline-dark" data-more-orders ${loadingMore?'disabled':''}>${h(t('Tải thêm đơn','Load more orders'))}</button>`:'');
+      const button=$('[data-more-orders]');if(button)button.onclick=async()=>{if(loadingMore)return;loadingMore=true;render();try{if(seenCursors.has(String(cursor)))throw new Error(t('Không thể tải tiếp danh sách đơn.','Unable to load the next page.'));const previous=cursor;const data=await api('customer/orders.php?limit=50&before_id='+encodeURIComponent(cursor));const ids=new Set(items.map(o=>String(o.order_id)));items.push(...data.items.filter(o=>!ids.has(String(o.order_id))));seenCursors.add(String(previous));cursor=data.next_before_id;}catch(e){report(e);}finally{loadingMore=false;render();}};
     }
     ['[data-search]','[data-from]','[data-to]'].forEach(s=>$(s).addEventListener('input',render));
     $('[data-clear]').onclick=()=>{['[data-search]','[data-from]','[data-to]'].forEach(s=>$(s).value='');render();};render();
   }
+  const trackedStatuses=['SHIPPER_ASSIGNED','PICKED_UP','IN_DELIVERY','RETURNING'];
+  function trackShipper(o,section){
+    const hint=$('[data-location-status]',section),canvas=$('[data-route-map]',section);
+    const map=window.SomiMaps?.create(canvas);mapHandles.push(map);
+    const stops=[{id:'pickup',label:t('Điểm lấy','Pickup'),latitude:o.pickup_latitude,longitude:o.pickup_longitude},{id:'delivery',label:t('Điểm giao','Delivery'),latitude:o.delivery_latitude,longitude:o.delivery_longitude}];
+    map?.points(stops);
+    let active=true,timer=null;
+    stopTracking=()=>{active=false;clearTimeout(timer);};
+    async function poll(){
+      if(!active||!section.isConnected)return;
+      try{
+        if(document.hidden)return;
+        const data=await api('customer/shipper-location.php?order_id='+encodeURIComponent(o.order_id));
+        if(!active||!section.isConnected)return;
+        if(data.status!==o.status){stopTracking();await detail();return;}
+        const point=data.location;
+        map?.points(point?[...stops,{...point,id:'user',label:t('Shipper','Shipper')}]:stops);
+        hint.textContent=point?t('Vị trí Shipper cập nhật lúc: ','Shipper location updated: ')+date(point.recorded_at)+(Date.now()-new Date(point.recorded_at).getTime()>120000?t(' · Vị trí đã cũ',' · Location may be outdated'):''):t('Shipper chưa chia sẻ vị trí.','The shipper has not shared a location yet.');
+      }catch(e){if(active){map?.points(stops);hint.textContent=errorMessage(e);if(e.status===401||e.status===403||e.status===404)stopTracking();}}
+      finally{if(active)timer=setTimeout(poll,15000);}
+    }
+    poll();
+    if(view==='tracking'&&map&&o.pickup_latitude!=null&&o.delivery_latitude!=null){
+      api('customer/places.php','POST',{action:'route',pickup:{latitude:o.pickup_latitude,longitude:o.pickup_longitude},delivery:{latitude:o.delivery_latitude,longitude:o.delivery_longitude}}).then(data=>{if(active&&section.isConnected)map.route(data.route);}).catch(e=>{if(active&&section.isConnected){const message=document.createElement('p');message.className='c-hint';message.textContent=errorMessage(e);section.append(message);}});
+    }
+  }
   async function detail(){
+    stopTracking();resetMaps();
     let id=params.get('id');if(!id&&params.get('code')){const found=(await allOrders()).find(o=>o.order_code===params.get('code'));id=found?.order_id;}
     if(!id)throw new Error(t('Mở đơn từ danh sách đơn hàng của bạn.','Open an order from your order list.'));
     const [data,payments,refunds]=await Promise.all([api('customer/orders.php?id='+encodeURIComponent(id)),api('customer/payments.php?order_id='+encodeURIComponent(id)),api('customer/refunds.php?order_id='+encodeURIComponent(id))]);
     const o=data.order,p=payments.payment,target=$('[data-order],[data-payment],[data-matching],[data-tracking]');
     const back=$('[data-back]');if(back)back.href=url('order',id);
-    const canCancel=['PENDING_PAYMENT','SEARCHING_SHIPPER','NO_SHIPPER_FOUND'].includes(o.status);
+    const canCancel=['PENDING_PAYMENT','SEARCHING_SHIPPER'].includes(o.status);
     target.innerHTML=`<section class="c-head"><div><h1>${h(o.order_code)}</h1><div class="c-head-meta">${badge(o.status)}<span>${h(date(o.created_at))}</span></div></div><div class="c-head-actions c-actions">${view!=='payment'&&o.status==='PENDING_PAYMENT'?link('payment',t('Thanh toán','Pay'),id):''}<button class="btn btn-outline-dark" data-refresh>${h(t('Tải trạng thái mới','Refresh status'))}</button></div></section><div class="row g-4 align-items-start"><div class="col-lg-7 vstack gap-4"><section class="card card-body"><div class="c-panel-head"><h2>${h(t('Lộ trình','Route'))}</h2><span class="c-chip">${h(o.distance_km)} km</span></div>${route(o)}</section><section class="card card-body"><h2>${h(t('Hành trình đơn hàng','Order timeline'))}</h2><ol class="c-timeline">${(o.status_history||[]).map(s=>`<li class="c-tl-item is-done"><span class="c-tl-dot"></span><div><strong>${h(state(s.new_status))}</strong><small>${h(date(s.created_at))}</small>${s.note?`<p>${h(s.note)}</p>`:''}</div></li>`).join('')}</ol></section><section class="card card-body"><h2>${h(t('Kiện hàng','Parcel'))}</h2><dl class="c-pkg"><div><dt>${h(t('Khối lượng','Weight'))}</dt><dd>${h(o.estimated_weight_kg)} kg</dd></div><div class="c-span-2"><dt>${h(t('Mô tả','Description'))}</dt><dd>${h(o.parcel_description||'—')}</dd></div>${o.customer_note?`<div class="c-span-2"><dt>${h(t('Ghi chú','Note'))}</dt><dd>${h(o.customer_note)}</dd></div>`:''}</dl></section></div><div class="col-lg-5 vstack gap-4"><section class="card card-body${view==='payment'?' c-dark':''}"><h2>${h(t('Chi phí','Charges'))}</h2>${fees(o)}</section><section class="card card-body" data-payment-card><h2>${h(t('Thanh toán','Payment'))}</h2>${p?`<p>${h(paymentState(p.status))} · ${h(money(p.amount_minor,p.currency_code))}</p>`:`<p>${h(t('Chưa tạo yêu cầu thanh toán.','No payment request yet.'))}</p>`}</section></div></div>`;
     const card=$('[data-payment-card]');
     if(o.status==='PENDING_PAYMENT'&&!p&&o.currency_code==='VND')card.insertAdjacentHTML('beforeend',`<form data-pay><div class="c-tiles">${[['BANK_TRANSFER',t('Chuyển khoản QR','QR bank transfer')],['CARD',t('Thẻ','Card')],['GATEWAY',t('Cổng thanh toán','Payment gateway')]].map(([method,label],i)=>`<label class="c-tile"><input type="radio" name="method" value="${method}" ${i===0?'checked':''}><strong>${h(label)}</strong><small>SePay</small></label>`).join('')}</div><div class="c-form-actions"><button class="btn btn-dark">${h(t('Tạo yêu cầu thanh toán','Create payment request'))}</button></div><div data-payment-error></div></form>`);
@@ -98,6 +130,9 @@
     const right=card.parentElement;
     if(refunds.items.length)right.insertAdjacentHTML('beforeend',`<section class="card card-body"><h2>${h(t('Hoàn tiền','Refunds'))}</h2>${refunds.items.map(r=>`<p>${h(paymentState(r.status))} · ${h(money(r.refund_amount_minor,r.currency_code))}</p>`).join('')}</section>`);
     if(canCancel)right.insertAdjacentHTML('beforeend',`<section class="card card-body"><h2>${h(t('Hủy đơn','Cancel order'))}</h2><p class="c-panel-sub">${h(t('Phí hủy theo báo giá','Cancellation fee from your quote'))}: ${h(money(o.pricing_snapshot?.cancellation_fees?.[o.status]||'0',o.currency_code))}</p><form data-cancel><div class="c-field"><label class="form-label" for="cancel-reason">${h(t('Lý do hủy','Reason'))}</label><textarea id="cancel-reason" class="form-control" name="reason" required maxlength="500"></textarea></div><div class="c-form-actions"><button class="btn btn-outline-dark">${h(t('Hủy đơn','Cancel order'))}</button></div><div data-cancel-error></div></form></section>`);
+    if(o.status==='NO_SHIPPER_FOUND')right.insertAdjacentHTML('afterbegin',`<section class="card card-body"><h2>${h(state(o.status))}</h2><p>${h(t('Đã hết lượt tìm Shipper. Hệ thống sẽ tự hủy đơn và tạo yêu cầu hoàn toàn bộ phí. Khoản hoàn chờ đối soát trước khi được xác nhận hoàn tất.','Matching is exhausted. Your order will be cancelled automatically with a full refund request. Completion awaits reconciliation.'))}</p></section>`);
+    if(o.status==='RETURNING')right.insertAdjacentHTML('afterbegin',`<section class="card card-body"><h2>${h(t('Nhận lại hàng hoàn','Receive returned parcel'))}</h2><p>${h(t('Chỉ xác nhận khi bạn đã nhận và kiểm tra hàng Shipper trả lại.','Confirm only after receiving and checking the returned parcel.'))}</p><form data-confirm-return><label class="form-check"><input class="form-check-input" type="checkbox" required name="received"> ${h(t('Tôi đã nhận lại hàng','I have received the parcel back'))}</label><button class="btn btn-dark mt-3">${h(t('Xác nhận nhận hàng hoàn','Confirm return received'))}</button><div data-return-message role="status"></div></form></section>`);
+    const returnForm=$('[data-confirm-return]');if(returnForm)returnForm.onsubmit=async e=>{e.preventDefault();if(!returnForm.reportValidity())return;const button=$('button',returnForm);if(button.disabled)return;button.disabled=true;try{await api('customer/confirm-return.php','POST',{order_id:String(id)});await detail();}catch(error){report(error,$('[data-return-message]',returnForm));button.disabled=false;}};
     $('[data-refresh]').onclick=()=>run(detail);
     const pay=$('[data-pay]');if(pay)pay.onsubmit=async e=>{e.preventDefault();const button=$('button',pay);if(button.disabled)return;button.disabled=true;pendingKey??=crypto.randomUUID();try{await api('customer/payments.php?order_id='+id,'POST',{method:pay.elements.method.value},pendingKey);await detail();}catch(error){report(error,$('[data-payment-error]',pay));button.disabled=false;}};
     const cancel=$('[data-cancel]');if(cancel)cancel.onsubmit=async e=>{e.preventDefault();const button=$('button',cancel);if(button.disabled)return;button.disabled=true;try{await api('customer/cancel-order.php?id='+id,'POST',{reason:cancel.elements.reason.value});await detail();}catch(error){report(error,$('[data-cancel-error]',cancel));button.disabled=false;}};
@@ -110,14 +145,13 @@
       panel.innerHTML=`${o.status==='SEARCHING_SHIPPER'?'<div class="c-radar" aria-hidden="true"><i></i><i></i><i></i><span>↗</span></div>':''}<h1>${h(o.status==='SEARCHING_SHIPPER'?t('Đang tìm shipper gần bạn','Finding a shipper near you'):state(o.status))}</h1><p>${h(o.order_code)}</p><div class="c-actions">${link('order',t('Xem chi tiết đơn','View order details'),id)}</div>`;
       $('.c-actions',panel).append($('[data-refresh]',target));const routeCard=$('.col-lg-7 .card',target);if(routeCard)panel.append(routeCard);const cancelForm=$('[data-cancel]',target);if(cancelForm)panel.append(cancelForm.closest('section'));target.replaceChildren(panel);
     }
-    if(view==='tracking'){
-      resetMaps();const section=document.createElement('section');section.className='card card-body';
-      section.innerHTML='<h2>'+h(t('Tuyến giao hàng','Delivery route'))+'</h2><div class="somi-leaflet-map" data-route-map></div><p class="c-hint">'+h(t('Chưa có vị trí shipper trực tiếp.','Live shipper location is not available yet.'))+'</p>';
-      $('.col-lg-7',target).prepend(section);const map=window.SomiMaps?.create($('[data-route-map]',section));mapHandles.push(map);
-      if(map&&o.pickup_latitude!=null&&o.delivery_latitude!=null){try{const data=await api('customer/places.php','POST',{action:'route',pickup:{latitude:o.pickup_latitude,longitude:o.pickup_longitude},delivery:{latitude:o.delivery_latitude,longitude:o.delivery_longitude}});map.route(data.route);}catch(e){const hint=document.createElement('p');hint.className='c-hint';hint.textContent=errorMessage(e);section.append(hint);}}
-
+    if(['order','tracking'].includes(view)&&trackedStatuses.includes(o.status)){
+      const section=document.createElement('section');section.className='card card-body';
+      section.innerHTML='<h2>'+h(t('Vị trí Shipper','Shipper location'))+'</h2><div class="somi-leaflet-map" data-route-map></div><p class="c-hint" role="status" data-location-status>'+h(t('Đang tải vị trí…','Loading location…'))+'</p>';
+      $('.col-lg-7',target).prepend(section);trackShipper(o,section);
     }
   }
+
   async function create(){
     const form=$('[data-create-form]'),sidebar=$('[data-quote]');form.dataset.create='';
     const [addressData,categoryData]=await Promise.all([api('customer/addresses.php'),api('customer/parcel-categories.php')]);

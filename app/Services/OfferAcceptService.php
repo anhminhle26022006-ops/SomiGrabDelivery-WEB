@@ -41,6 +41,9 @@ final class OfferAcceptService
         $q->execute([$orderId]);
         if ($order['paid_at'] === null || $q->fetchColumn() !== 'PAID') throw new DeliveryApiError(409, 'PAYMENT_NOT_CONFIRMED', 'The order payment is not confirmed.');
 
+        $q=$this->db->prepare("SELECT (c.email LIKE '%@demo.somi.invalid')=(s.email LIKE '%@demo.somi.invalid') FROM users c CROSS JOIN users s WHERE c.user_id=? AND s.user_id=?");$q->execute([$order['customer_id'],$shipperId]);
+        if(!in_array($q->fetchColumn(),[true,'t',1,'1'],true))throw new DeliveryApiError(409,'ORDER_NOT_AVAILABLE','Demo and live deliveries cannot be mixed.');
+
         // 4) Điều kiện của Shipper tại đúng thời điểm nhận, không tin trạng thái lúc gửi offer.
         $profile = ShipperEligibility::profile($this->db, $shipperId, true);
         ShipperEligibility::assertCanWork($this->db, $profile);

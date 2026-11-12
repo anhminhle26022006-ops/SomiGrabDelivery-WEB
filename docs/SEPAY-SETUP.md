@@ -64,3 +64,17 @@ php tests/person1_backend.php
 `tests/sepay.php` kiểm tra cấu hình, host môi trường, thứ tự ký form, ngôn ngữ và payload/xác thực IPN bằng khóa fixture; không network/database. Bộ Người 1 kiểm tra callback/ledger/order/refund bằng TEMP tables và provider giả. Các test này không chứng minh giao dịch sandbox thực đã thành công.
 
 Refund Gateway hiện cần operator xử lý về phương thức gốc và Admin đối soát chứng từ; đây không phải tích hợp tự động chuyển tiền hoàn. Chi tiết API và quyền: [PERSON1-API.md](PERSON1-API.md).
+
+
+## 6. Kiểm tra kết nối kỹ thuật (sandbox hoặc LIVE)
+
+```powershell
+php bin/sepay-check.php
+php bin/sepay-connection-check.php
+```
+
+Lệnh đầu chỉ kiểm tra cấu hình local. Lệnh thứ hai gọi GET danh sách đơn SePay với `per_page=1` để xác minh xác thực merchant, chỉ xuất HTTP status và kết quả, không in dữ liệu đơn/khóa. Sau đó kiểm tra URL IPN hosting: GET phải bị từ chối 405; POST thiếu khóa phải bị từ chối 401; POST có đúng khóa nhưng JSON cố ý lỗi phải bị từ chối 400 `INVALID_JSON`. Payload lỗi dừng trước khi đọc/ghi database, không tạo sự kiện thanh toán hợp lệ. Không có checkout, hoàn tiền hoặc chuyển tiền.
+
+Kết quả `ready:true` chứng minh merchant local gọi được API và khóa IPN local khớp endpoint hosting. Nó không chứng minh merchant/môi trường trên hosting trùng local, và chưa chứng minh SePay gửi được IPN thực tế. Giữ `payment_roundtrip_verified:false` cho đến khi hoàn tất một giao dịch trên web và xác nhận IPN, payment, ledger và trạng thái đơn.
+
+Với LIVE, người dùng tự tạo đơn VND và thực hiện thanh toán trên web. Kiểm tra checkout mở `pay.sepay.vn`, Nhật ký IPN trả HTTP 200, payment thành PAID và đơn chuyển sang SEARCHING_SHIPPER (hoặc trạng thái sau đó nếu đã ghép tài xế). Browser quay lại success URL không đủ để xác nhận đã nhận tiền. Không gửi IPN giả hoặc chỉnh PAID thủ công trên database LIVE.

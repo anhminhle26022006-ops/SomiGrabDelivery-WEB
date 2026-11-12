@@ -1,0 +1,366 @@
+[
+  {
+    "file": ".htaccess",
+    "lines": 9
+  },
+  {
+    "file": "Dockerfile",
+    "lines": 18
+  },
+  {
+    "file": "index.php",
+    "lines": 166
+  },
+  {
+    "file": "README.md",
+    "lines": 46
+  },
+  {
+    "file": "TEAM-OWNERSHIP.md",
+    "lines": 21
+  },
+  {
+    "file": "database/schema.sql",
+    "lines": 690
+  },
+  {
+    "file": "database/SOMI_database.sql",
+    "lines": 805
+  },
+  {
+    "file": "public/api/_bootstrap.php",
+    "lines": 96
+  },
+  {
+    "file": "public/assets/css/app.css",
+    "lines": 209
+  },
+  {
+    "file": "public/assets/js/app.js",
+    "lines": 1043
+  },
+  {
+    "file": "public/assets/js/shipper-navigation.js",
+    "lines": 62
+  },
+  {
+    "file": "public/assets/js/shipper.js",
+    "lines": 58
+  },
+  {
+    "file": "public/assets/js/customer/i18n.js",
+    "lines": 171
+  },
+  {
+    "file": "public/assets/js/customer/store.js",
+    "lines": 1156
+  },
+  {
+    "file": "public/assets/js/customer/ui.js",
+    "lines": 612
+  },
+  {
+    "file": "public/assets/js/customer/lang/en.js",
+    "lines": 855
+  },
+  {
+    "file": "public/assets/js/customer/pages/account.js",
+    "lines": 171
+  },
+  {
+    "file": "public/assets/js/customer/pages/addresses.js",
+    "lines": 85
+  },
+  {
+    "file": "public/assets/js/customer/pages/create.js",
+    "lines": 286
+  },
+  {
+    "file": "public/assets/js/customer/pages/dashboard.js",
+    "lines": 114
+  },
+  {
+    "file": "public/assets/js/customer/pages/matching.js",
+    "lines": 84
+  },
+  {
+    "file": "public/assets/js/customer/pages/notifications.js",
+    "lines": 62
+  },
+  {
+    "file": "public/assets/js/customer/pages/order.js",
+    "lines": 115
+  },
+  {
+    "file": "public/assets/js/customer/pages/orders.js",
+    "lines": 82
+  },
+  {
+    "file": "public/assets/js/customer/pages/payment.js",
+    "lines": 184
+  },
+  {
+    "file": "public/assets/js/customer/pages/report.js",
+    "lines": 129
+  },
+  {
+    "file": "public/assets/js/customer/pages/reports.js",
+    "lines": 54
+  },
+  {
+    "file": "public/assets/js/customer/pages/review.js",
+    "lines": 83
+  },
+  {
+    "file": "public/assets/js/customer/pages/tracking.js",
+    "lines": 215
+  },
+  {
+    "file": "public/assets/css/modules/admin.css",
+    "lines": 1341
+  },
+  {
+    "file": "public/assets/css/modules/customer.css",
+    "lines": 564
+  },
+  {
+    "file": "public/assets/css/modules/shipper.css",
+    "lines": 104
+  },
+  {
+    "file": "public/api/admin/review-shipper.php",
+    "lines": 94
+  },
+  {
+    "file": "public/api/auth/complete-password-reset.php",
+    "lines": 17
+  },
+  {
+    "file": "public/api/auth/login.php",
+    "lines": 104
+  },
+  {
+    "file": "public/api/auth/logout.php",
+    "lines": 10
+  },
+  {
+    "file": "public/api/auth/register.php",
+    "lines": 130
+  },
+  {
+    "file": "public/api/auth/request-password-reset.php",
+    "lines": 20
+  },
+  {
+    "file": "public/api/auth/resend-phone-code.php",
+    "lines": 17
+  },
+  {
+    "file": "public/api/auth/send-email-code.php",
+    "lines": 20
+  },
+  {
+    "file": "public/api/auth/switch-workspace.php",
+    "lines": 121
+  },
+  {
+    "file": "public/api/auth/verify-email-code.php",
+    "lines": 21
+  },
+  {
+    "file": "public/api/auth/verify-phone.php",
+    "lines": 14
+  },
+  {
+    "file": "database/migrations/20261018_email_verification_attempt_count.sql",
+    "lines": 18
+  },
+  {
+    "file": "database/migrations/20261018_identity_documents.sql",
+    "lines": 62
+  },
+  {
+    "file": "app/Config/database.php",
+    "lines": 58
+  },
+  {
+    "file": "app/Services/EmailVerificationService.php",
+    "lines": 168
+  },
+  {
+    "file": "app/Services/IdentityDocumentVault.php",
+    "lines": 160
+  },
+  {
+    "file": "app/Services/PasswordResetService.php",
+    "lines": 151
+  },
+  {
+    "file": "app/Services/PhoneVerificationService.php",
+    "lines": 151
+  },
+  {
+    "file": "app/Services/ResendMailer.php",
+    "lines": 92
+  },
+  {
+    "file": "app/Services/SessionGuard.php",
+    "lines": 21
+  },
+  {
+    "file": "app/Views/admin/audit-logs.php",
+    "lines": 199
+  },
+  {
+    "file": "app/Views/admin/complaints.php",
+    "lines": 190
+  },
+  {
+    "file": "app/Views/admin/customers.php",
+    "lines": 205
+  },
+  {
+    "file": "app/Views/admin/disputes.php",
+    "lines": 201
+  },
+  {
+    "file": "app/Views/admin/index.php",
+    "lines": 282
+  },
+  {
+    "file": "app/Views/admin/notifications.php",
+    "lines": 145
+  },
+  {
+    "file": "app/Views/admin/orders.php",
+    "lines": 200
+  },
+  {
+    "file": "app/Views/admin/payments.php",
+    "lines": 200
+  },
+  {
+    "file": "app/Views/admin/reviews.php",
+    "lines": 199
+  },
+  {
+    "file": "app/Views/admin/shippers.php",
+    "lines": 205
+  },
+  {
+    "file": "app/Views/admin/users.php",
+    "lines": 218
+  },
+  {
+    "file": "app/Views/customer/CUSTOMER.md",
+    "lines": 152
+  },
+  {
+    "file": "app/Views/customer/index.php",
+    "lines": 150
+  },
+  {
+    "file": "app/Views/shared/auth.php",
+    "lines": 78
+  },
+  {
+    "file": "app/Views/shared/public.php",
+    "lines": 77
+  },
+  {
+    "file": "app/Views/shared/reset-password.php",
+    "lines": 21
+  },
+  {
+    "file": "app/Views/shipper/index.php",
+    "lines": 339
+  },
+  {
+    "file": "app/Views/shipper/pending.php",
+    "lines": 11
+  },
+  {
+    "file": "app/Views/shipper/pages/account.php",
+    "lines": 58
+  },
+  {
+    "file": "app/Views/shipper/pages/active.php",
+    "lines": 34
+  },
+  {
+    "file": "app/Views/shipper/pages/dashboard.php",
+    "lines": 38
+  },
+  {
+    "file": "app/Views/shipper/pages/earnings.php",
+    "lines": 6
+  },
+  {
+    "file": "app/Views/shipper/pages/history.php",
+    "lines": 5
+  },
+  {
+    "file": "app/Views/shipper/pages/notifications.php",
+    "lines": 5
+  },
+  {
+    "file": "app/Views/shipper/pages/offers.php",
+    "lines": 5
+  },
+  {
+    "file": "app/Views/shipper/pages/overview.php",
+    "lines": 38
+  },
+  {
+    "file": "app/Views/customer/pages/account.php",
+    "lines": 69
+  },
+  {
+    "file": "app/Views/customer/pages/addresses.php",
+    "lines": 13
+  },
+  {
+    "file": "app/Views/customer/pages/create.php",
+    "lines": 92
+  },
+  {
+    "file": "app/Views/customer/pages/dashboard.php",
+    "lines": 32
+  },
+  {
+    "file": "app/Views/customer/pages/matching.php",
+    "lines": 6
+  },
+  {
+    "file": "app/Views/customer/pages/notifications.php",
+    "lines": 10
+  },
+  {
+    "file": "app/Views/customer/pages/order.php",
+    "lines": 6
+  },
+  {
+    "file": "app/Views/customer/pages/orders.php",
+    "lines": 28
+  },
+  {
+    "file": "app/Views/customer/pages/payment.php",
+    "lines": 6
+  },
+  {
+    "file": "app/Views/customer/pages/report.php",
+    "lines": 12
+  },
+  {
+    "file": "app/Views/customer/pages/reports.php",
+    "lines": 2
+  },
+  {
+    "file": "app/Views/customer/pages/review.php",
+    "lines": 6
+  },
+  {
+    "file": "app/Views/customer/pages/tracking.php",
+    "lines": 6
+  }
+]

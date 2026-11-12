@@ -1,0 +1,9 @@
+.git
+tests
+docs
+demoUI
+*.pdf
+**/__pycache__
+**/*.pyc
+.env*
+**/.env*

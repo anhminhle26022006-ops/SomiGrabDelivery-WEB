@@ -1,0 +1,181 @@
+{
+  "results": [
+    {
+      "test": "picker matches language vi",
+      "result": "PASS"
+    },
+    {
+      "test": "all Pricing copy translated vi",
+      "result": "PASS"
+    },
+    {
+      "test": "hero language vi",
+      "result": "PASS"
+    },
+    {
+      "test": "footer modal language vi",
+      "result": "PASS"
+    },
+    {
+      "test": "accessible menu label vi",
+      "result": "PASS"
+    },
+    {
+      "test": "USD exact distance and weight rounded example vi",
+      "result": "PASS"
+    },
+    {
+      "test": "VND example vi",
+      "result": "PASS"
+    },
+    {
+      "test": "overweight rejected vi",
+      "result": "PASS"
+    },
+    {
+      "test": "40 km unsupported vi",
+      "result": "PASS"
+    },
+    {
+      "test": "picker matches language en",
+      "result": "PASS"
+    },
+    {
+      "test": "all Pricing copy translated en",
+      "result": "PASS"
+    },
+    {
+      "test": "hero language en",
+      "result": "PASS"
+    },
+    {
+      "test": "footer modal language en",
+      "result": "PASS"
+    },
+    {
+      "test": "accessible menu label en",
+      "result": "PASS"
+    },
+    {
+      "test": "USD exact distance and weight rounded example en",
+      "result": "PASS"
+    },
+    {
+      "test": "VND example en",
+      "result": "PASS"
+    },
+    {
+      "test": "overweight rejected en",
+      "result": "PASS"
+    },
+    {
+      "test": "40 km unsupported en",
+      "result": "PASS"
+    },
+    {
+      "test": "picker matches language vi",
+      "result": "PASS"
+    },
+    {
+      "test": "all Pricing copy translated vi",
+      "result": "PASS"
+    },
+    {
+      "test": "hero language vi",
+      "result": "PASS"
+    },
+    {
+      "test": "footer modal language vi",
+      "result": "PASS"
+    },
+    {
+      "test": "accessible menu label vi",
+      "result": "PASS"
+    },
+    {
+      "test": "USD exact distance and weight rounded example vi",
+      "result": "PASS"
+    },
+    {
+      "test": "VND example vi",
+      "result": "PASS"
+    },
+    {
+      "test": "overweight rejected vi",
+      "result": "PASS"
+    },
+    {
+      "test": "40 km unsupported vi",
+      "result": "PASS"
+    },
+    {
+      "test": "picker matches language en",
+      "result": "PASS"
+    },
+    {
+      "test": "all Pricing copy translated en",
+      "result": "PASS"
+    },
+    {
+      "test": "hero language en",
+      "result": "PASS"
+    },
+    {
+      "test": "footer modal language en",
+      "result": "PASS"
+    },
+    {
+      "test": "accessible menu label en",
+      "result": "PASS"
+    },
+    {
+      "test": "USD exact distance and weight rounded example en",
+      "result": "PASS"
+    },
+    {
+      "test": "VND example en",
+      "result": "PASS"
+    },
+    {
+      "test": "overweight rejected en",
+      "result": "PASS"
+    },
+    {
+      "test": "40 km unsupported en",
+      "result": "PASS"
+    },
+    {
+      "test": "no horizontal overflow vi 1440",
+      "result": "PASS"
+    },
+    {
+      "test": "no horizontal overflow vi 768",
+      "result": "PASS"
+    },
+    {
+      "test": "no horizontal overflow vi 375",
+      "result": "PASS"
+    },
+    {
+      "test": "no horizontal overflow en 1440",
+      "result": "PASS"
+    },
+    {
+      "test": "no horizontal overflow en 768",
+      "result": "PASS"
+    },
+    {
+      "test": "no horizontal overflow en 375",
+      "result": "PASS"
+    },
+    {
+      "test": "saved language survives reload",
+      "result": "PASS"
+    },
+    {
+      "test": "no browser runtime exceptions",
+      "result": "PASS"
+    }
+  ],
+  "errors": []
+}

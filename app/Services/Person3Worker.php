@@ -3,6 +3,7 @@ declare(strict_types=1);
 require_once __DIR__.'/ShipperFinanceService.php';
 require_once __DIR__.'/PrivateStorageService.php';
 require_once __DIR__.'/ShipperInput.php';
+require_once __DIR__.'/ShipperScoreService.php';
 
 final class Person3Worker
 {
@@ -35,15 +36,19 @@ final class Person3Worker
                 foreach(array_unique($recipients) as $user)InteractionService::notify($db,$user,(int)$event['order_id'],$event['event_type'],$vi,$en,$o['order_code'].' · '.$vi,$o['order_code'].' · '.$en,'event:'.$event['event_id']);
             }
             // Offers are addressed from persisted offers, never a user ID in untrusted event payloads.
-            if(in_array($event['event_type'],['RefundRequested','RefundSucceeded'],true)){
+            if(in_array($event['event_type'],['RefundRequested','RefundSucceeded','ShipperViolationConfirmed'],true)){
                 $db->prepare('SELECT order_id FROM orders WHERE order_id=? FOR UPDATE')->execute([$event['order_id']]);
                 $db->prepare('SELECT payment_id FROM payments WHERE order_id=? FOR UPDATE')->execute([$event['order_id']]);
                 $db->prepare('INSERT INTO shipper_finance_reviews(event_id,order_id,reason) VALUES(?,?,?) ON CONFLICT(event_id) DO NOTHING')->execute([$event['event_id'],$event['order_id'],$event['event_type']]);
-                $db->prepare("UPDATE shipper_payouts p SET failure_reason='REFUND_REVIEW_REQUIRED' FROM shipper_earnings e WHERE e.earning_id=p.earning_id AND e.order_id=? AND p.status<>'SUCCEEDED'")->execute([$event['order_id']]);
+                $db->prepare("UPDATE shipper_payouts p SET failure_reason=? FROM shipper_earnings e WHERE e.earning_id=p.earning_id AND e.order_id=? AND p.status<>'SUCCEEDED'")->execute([$event['event_type']==='ShipperViolationConfirmed'?'SHIPPER_FAULT_REVIEW_REQUIRED':'REFUND_REVIEW_REQUIRED',$event['order_id']]);
             }
             if($o&&$event['event_type']==='OfferCreated'){
                 $q=$db->prepare("SELECT offer_id,shipper_id FROM order_match_offers WHERE order_id=? AND status='PENDING' AND expires_at>now()");$q->execute([$event['order_id']]);
                 foreach($q->fetchAll() as $a)InteractionService::notify($db,(int)$a['shipper_id'],(int)$event['order_id'],'OfferCreated','Có đơn mới','New delivery offer',$o['order_code'],$o['order_code'],'offer:'.$a['offer_id']);
+            }
+            if(in_array($event['event_type'],['OrderDelivered','RefundSucceeded'],true)){
+                if($event['event_type']==='OrderDelivered')(new ShipperScoreService($db))->recovery((int)$event['order_id']);
+                (new ShipperFinanceService($db))->settleOrder((int)$event['order_id']);
             }
             $db->prepare("INSERT INTO event_consumer_receipts(consumer,event_id) VALUES('person3',?)")->execute([$event['event_id']]);$db->prepare('DELETE FROM person3_event_failures WHERE event_id=?')->execute([$event['event_id']]);$db->commit();return true;
         }catch(Throwable $e){if($db->inTransaction())$db->rollBack();if(empty($event))throw $e;

@@ -5,6 +5,8 @@
   const { esc, toast } = api;
   const GPS_INTERVAL_MS = 15000; // backend chặn dưới 5 giây; gửi 15 giây một lần là đủ cho bản đồ theo dõi
 
+  const t=(vn,en)=>(window.SomiI18n?.lang||document.documentElement.lang)==='en'?en:vn;
+  let cancelSubmission=null;
   let delivery = null;
   let historyRows = [];
   let gpsWatch = null;
@@ -76,7 +78,16 @@
       <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:15px">
         <a class="outline" style="text-decoration:none" href="tel:${esc(d.sender_phone)}">☎ Gọi người gửi</a><a class="outline" style="text-decoration:none" href="tel:${esc(d.receiver_phone)}">☎ Gọi người nhận</a>
         ${actionButtons(d.next_actions)}
+        ${['SHIPPER_ASSIGNED','PICKED_UP','IN_DELIVERY'].includes(d.status)&&d.cancellation_request?.decision!=='PENDING'?`<button class="outline" type="button" data-delivery-action="SHOW_CANCEL">${esc(t('Yêu cầu hủy / dừng đơn','Request cancellation / stop'))}</button>`:''}
       </div>
+      ${d.cancellation_request?`<p role="status">${esc(t('Yêu cầu gần nhất: ','Latest request: '))}${esc(d.cancellation_request.decision)} ${esc(d.cancellation_request.decision_note||'')}</p>`:''}
+      <form id="cancelDeliveryPanel" class="hidden" data-shipper-cancel-form style="margin-top:14px">
+        <p>${esc(t('Trước khi lấy hàng: tự hủy do lỗi của bạn sẽ bị trừ điểm theo policy và đơn được tìm Shipper khác. Sự cố khách quan hoặc đã lấy hàng cần Admin duyệt; tiếp tục bảo quản hàng.','Before pickup: cancelling due to your fault deducts policy points and restarts matching. External issues or cancellation after pickup require Admin review; keep the parcel safe.'))}</p>
+        <label>${esc(t('Phân loại','Reason type'))}<select name="reason_code" class="outline"><option value="SHIPPER_FAULT">${esc(t('Lỗi của tôi','My fault'))}</option><option value="EXTERNAL_ISSUE">${esc(t('Sự cố khách quan, cần xác minh','External issue requiring review'))}</option></select></label>
+        <label style="display:block">${esc(t('Lý do','Reason'))}<textarea name="reason" required maxlength="1000" style="display:block;width:100%"></textarea></label>
+        <label><input type="checkbox" name="acknowledged" required> ${esc(t('Tôi đã đọc điều kiện và xác nhận nội dung trên','I have read the conditions and confirm these details'))}</label>
+        <button class="primary" type="submit" data-cancellation-submit>${esc(t('Gửi yêu cầu','Submit request'))}</button>
+      </form>
       <div id="failPanel" class="hidden" style="margin-top:14px;padding:16px;border:1px solid #cfe0f5;border-radius:13px;background:#f7fbff">
         <label for="failureReason" style="display:block;font-weight:750;margin-bottom:6px">Lý do không thể giao</label>
         <select id="failureReason" class="outline" style="width:100%;margin-bottom:10px">${Object.entries(REASONS).map(([code, label]) => `<option value="${code}">${label}</option>`).join("")}</select>
@@ -114,11 +125,18 @@
   }
 
   async function act(action, button) {
+    if (action === "SHOW_CANCEL") return document.getElementById("cancelDeliveryPanel")?.classList.toggle("hidden");
     if (action === "SHOW_FAIL") return document.getElementById("failPanel")?.classList.toggle("hidden");
     const orderId = delivery.order_id;
     button.disabled = true;
     try {
-      if (action === "PICKUP" || action === "START_DELIVERY") show(await api.deliveryAction(orderId, action));
+      if(action==='REQUEST_CANCEL'){
+        const form=document.querySelector('[data-shipper-cancel-form]');if(!form.reportValidity())return;
+        const body={order_id:String(orderId),reason_code:form.elements.reason_code.value,reason:form.elements.reason.value.trim()};
+        const fingerprint=JSON.stringify(body);if(cancelSubmission?.fingerprint!==fingerprint)cancelSubmission={fingerprint,key:crypto.randomUUID()};
+        const result=await api.requestCancellation({...body,client_key:cancelSubmission.key});
+        toast(result.request.decision==='PENDING'?t('Đã gửi yêu cầu, chờ Admin duyệt.','Request sent for Admin review.'):t('Đã hủy phân công. Đơn được tìm Shipper khác.','Assignment cancelled. Matching restarted.'));await load();
+      } else if (action === "PICKUP" || action === "START_DELIVERY") show(await api.deliveryAction(orderId, action));
       else if (action === "FAIL") {
         const reason = document.getElementById("failureReason").value;
         const note = document.getElementById("failureNote").value.trim();
@@ -126,8 +144,8 @@
         show(await api.failDelivery(orderId, reason, note));
         toast("Đã ghi nhận giao thất bại. Vui lòng hoàn hàng về điểm lấy.");
       } else if (action === "DELIVERED") {
-        await api.completeDelivery(orderId);
-        toast("Đã giao thành công.");
+        const result=await api.completeDelivery(orderId);
+        toast(result.settlement?.payout_id?t('Đã giao thành công, yêu cầu chi trả đang chờ chuyển khoản thủ công.','Delivered. Payout is awaiting manual transfer.'):t('Đã giao thành công. Xem thu nhập và kiểm tra tài khoản ngân hàng đã xác minh.','Delivered. Review earnings and verify your payout bank account.'));
         await load();
       } else if (action === "RETURNED") {
         await api.confirmReturned(orderId);
@@ -177,6 +195,8 @@
         .catch((error) => { if (error.code === "NO_ACTIVE_DELIVERY") load(); });
     }, () => {}, { enableHighAccuracy: true, maximumAge: 10000 });
   }
+
+  document.addEventListener('submit',e=>{if(!e.target.matches('[data-shipper-cancel-form]'))return;e.preventDefault();const button=e.target.querySelector('[data-cancellation-submit]');if(!button.disabled)act('REQUEST_CANCEL',button);});
 
   document.addEventListener("DOMContentLoaded", () => {
     document.addEventListener("click", (event) => {

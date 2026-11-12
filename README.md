@@ -8,6 +8,9 @@ Somi Grab Delivery allows customers to create delivery orders, estimate fees, ma
 
 Academic project using PHP, an MVC-style structure, HTML/CSS, JavaScript, AJAX/JSON, PostgreSQL on Supabase, and external APIs.
 
+Bootstrap and OOP entities (`User`, `Shipper extends User`, `Order`), integration
+points and validation: [Bootstrap/OOP review — 13/11/2026](docs/BOOTSTRAP-OOP-REVIEW.md).
+
 ## 2. Main Features
 
 ### Customer

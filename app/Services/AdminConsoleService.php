@@ -21,7 +21,8 @@ final class AdminConsoleService
           (SELECT count(*) FROM orders WHERE status NOT IN ('DELIVERED','RETURNED','CANCELLED')) AS active_orders,
           (SELECT count(*) FROM shipper_profiles WHERE verification_status IN ('PENDING','NEEDS_INFO')) AS pending_shippers,
           (SELECT count(*) FROM support_tickets WHERE status IN ('NEW','IN_PROGRESS')) AS open_tickets,
-          (SELECT count(*) FROM background_jobs WHERE status='FAILED') AS failed_jobs")[0];
+          (SELECT count(*) FROM background_jobs WHERE status='FAILED') AS failed_jobs,
+          (SELECT count(*) FROM orders o JOIN users du ON du.user_id=o.customer_id WHERE du.email LIKE '%@demo.somi.invalid') AS demo_orders")[0];
         $money=$this->rows("SELECT currency_code,COALESCE(sum(amount_minor),0) AS collected_minor,count(*) AS payments FROM payments WHERE status IN ('PAID','PARTIALLY_REFUNDED','REFUNDED') GROUP BY currency_code ORDER BY currency_code");
         $days=$this->rows("SELECT d::date AS day,count(o.order_id) AS orders FROM generate_series((now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date-6,(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date,interval '1 day')d LEFT JOIN orders o ON (o.created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date=d::date GROUP BY d ORDER BY d");
         return ['stats'=>$stats,'collected'=>$money,'days'=>$days,

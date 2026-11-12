@@ -9,7 +9,7 @@
 - Customer: danh sách đơn tải trang đầu 50 bản ghi, có nút tải thêm theo cursor; bộ lọc áp dụng trên phần đã tải và UI ghi rõ. Dashboard thống kê toàn bộ vẫn dùng luồng hiện hành; chưa tuyên bố tối ưu dashboard với hàng nghìn đơn.
 - Admin: từ hồ sơ Shipper mở tài liệu KYC, từ đơn mở bằng chứng. API `admin/files.php` chỉ liệt kê file đã gắn vào shipper_documents/delivery_evidence và chưa hết retention, có audit. KYC yêu cầu storage.read_support + shipper.verify. Bằng chứng giữ yêu cầu ticket hỗ trợ, order.read_all và support.manage_all theo contract Storage. Ảnh đi qua signed download có xác thực và audit, rồi preview blob; URL bị thu hồi khi đóng/thay modal. PDF dùng tải xuống.
 - IPN: callback mới ghi `SEPAY_IPN_ACCEPTED` trong transaction với kết quả xử lý, gồm cờ duplicate, không ghi payload/secret. Giúp phân biệt IPN với GET reconciliation từ lần deploy sau.
-- Chính sách không có Shipper: tự hủy, không phí và reserve hoàn toàn phần; có sweep các đơn tồn và migration lý do refund. Chi tiết và phần điểm/earning chờ duyệt: [quyết định policy](PERSON1-POLICY-DECISIONS-2026-11-12.md).
+- Chính sách không có Shipper: tự hủy, không phí và reserve hoàn toàn phần; có sweep các đơn tồn và migration lý do refund. Chi tiết và phần điểm/earning đã được duyệt nghiệp vụ, còn cần triển khai: [quyết định policy](PERSON1-POLICY-DECISIONS-2026-11-12.md).
 - Scheduler: thêm Người 1 sau matching để xử lý hết lượt tìm cùng chu kỳ; thêm GPS retention khi khởi động rồi mỗi 24 giờ, retry chu kỳ sau nếu lỗi. Có log timestamp/duration mỗi chu kỳ. Retention chạy lại khi container restart là an toàn; không cần cron thứ hai cho các worker này trên cùng container.
 
 ## SePay thật: phần đã xác minh
@@ -53,4 +53,16 @@ Hosting public `https://somigrabdelivery.online/` trả 200, đo một lượt G
 4. Lấy log IPN SePay 200 cho giao dịch đã có, đối chiếu ledger/event chỉ đọc. Sau bản mới có thêm audit nguồn cho callback tiếp theo.
 5. Phiên thật ba vai trò: Shipper upload KYC/ảnh, Admin xem/duyệt; Customer xem GPS và xác nhận hàng hoàn; kiểm tra cross-account, mobile và Inbox OTP ngân hàng. Không coi browser fixture thay thế các bước này.
 6. Đo API Customer có session thật sau deploy, thời gian tải trang đầu và tải thêm. Kiểm tra log DB connection/timeout; không bật persistent chỉ dựa trên GET public.
-7. Nhóm chọn mức điểm/earning trong tài liệu policy rồi Admin ban hành. Chưa có quyết định số thì giữ chưa cấu hình.
+7. Mức điểm/earning đã được duyệt và đã có source hỗ trợ đầy đủ. Migration 20261112_shipper_policy_workflows sẽ ban hành bản release đúng một lần, có audit; kiểm tra lại policy và các luồng liên module trên hosting sau deploy. Chưa coi source local là đã cấu hình hosting.
+
+## Bổ sung quyết định sau báo cáo
+
+Người dùng chốt giữ hoàn tiền Customer thủ công, chưa phát triển SePay tự hoàn. Luồng hiện tại vẫn PAID → matching; hết lượt tìm thì tạo yêu cầu hoàn toàn phần để Admin chuyển hoàn/đối soát. Hướng “tạm giữ tiền → thu khi ghép được Shipper, hoặc giải phóng khoản giữ nếu không ghép được” chỉ ghi vào phần hướng phát triển báo cáo, chưa triển khai. Nội dung sẵn dùng cho báo cáo và các mức điểm/thu nhập đã duyệt nằm tại [quyết định policy](PERSON1-POLICY-DECISIONS-2026-11-12.md).
+
+## Bổ sung triển khai policy và luồng còn thiếu
+
+Đã triển khai code điểm 10/20, phục hồi +2/trần100/ngưỡng60, Shipper hủy trước lấy hàng hoặc yêu cầu Admin duyệt sau lấy hàng, Admin xác minh lỗi có chứng cứ, thu nhập/chi trả theo từng đơn trong transaction, và các finance hold. Có migration/versioned policy release và UI/API tương ứng. Chi tiết contract, rollout và kiểm thử: [SHIPPER-POLICY-WORKFLOWS.md](SHIPPER-POLICY-WORKFLOWS.md). Đợt này chỉ triển khai/kiểm thử code; chưa migrate DB ứng dụng hoặc deploy hosting. Các mục cần hoàn thiện hỗ trợ hai mức trừ ở phần trước nay đã có source; không còn chờ lựa chọn mức số.
+
+### Kết quả hoàn tất ngày 13/11/2026
+
+8 bộ backend đạt 471 kiểm tra, Admin/Shipper browser đạt 256 kiểm tra, HTTP guards đạt 33 kiểm tra (tổng 760). Bao gồm ca đã chuyển RETURNING trong lúc chờ Admin, xử lý yêu cầu tồn sau DELIVERED, rollback khi thiếu policy và race accept/cancel. Chi tiết từng suite tại SHIPPER-POLICY-WORKFLOWS.md. Policy đã có source release và migration; chưa chạy migration hoặc deploy DB hosting. Chuyển tiền Customer/Shipper vẫn thủ công, không có tích hợp authorize/capture trong bản này.

@@ -1,0 +1,10 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert/strict');
+const source=fs.readFileSync('public/assets/js/app.js','utf8');
+const start=source.indexOf('    function finishAuth('),end=source.indexOf('    const forgot =',start);
+const calls=[];
+const context={navigate:role=>calls.push(role),localStorage:{setItem(){throw Error('Storage denied')}},window:{location:{search:'?page=auth&next=shipper'}}};
+vm.createContext(context);vm.runInContext(source.slice(start,end)+';this.finishAuth=finishAuth;',context);
+for(const role of ['customer','shipper','admin'])context.finishAuth(role);
+assert.deepEqual(calls,['customer','shipper','admin']);
+assert.throws(()=>context.finishAuth('unknown'));
+console.log('PASS: role redirect ignores conflicting next; denied storage does not prevent navigation; invalid role rejected');

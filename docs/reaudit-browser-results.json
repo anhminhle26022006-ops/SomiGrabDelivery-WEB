@@ -1,0 +1,583 @@
+{
+  "results": [
+    {
+      "test": "workspace role renders",
+      "role": "customer",
+      "width": 1440,
+      "actualPage": "customer",
+      "result": "PASS"
+    },
+    {
+      "test": "workspace overflow",
+      "role": "customer",
+      "width": 1440,
+      "scroll": 1425,
+      "pending": false,
+      "result": "PASS"
+    },
+    {
+      "test": "customer avatar opens with one click",
+      "width": 1440,
+      "result": "PASS"
+    },
+    {
+      "test": "workspace role renders",
+      "role": "shipper",
+      "width": 1440,
+      "actualPage": "shipper",
+      "result": "PASS"
+    },
+    {
+      "test": "workspace overflow",
+      "role": "shipper",
+      "width": 1440,
+      "scroll": 1425,
+      "pending": false,
+      "result": "PASS"
+    },
+    {
+      "test": "shipper avatar opens with one click",
+      "width": 1440,
+      "result": "PASS"
+    },
+    {
+      "test": "shipper offers navigation",
+      "width": 1440,
+      "result": "PASS"
+    },
+    {
+      "test": "shipper offer detail opens",
+      "width": 1440,
+      "result": "PASS"
+    },
+    {
+      "test": "workspace role renders",
+      "role": "admin",
+      "width": 1440,
+      "actualPage": "admin",
+      "result": "PASS"
+    },
+    {
+      "test": "workspace overflow",
+      "role": "admin",
+      "width": 1440,
+      "scroll": 1425,
+      "pending": false,
+      "result": "PASS"
+    },
+    {
+      "test": "workspace role renders",
+      "role": "customer",
+      "width": 768,
+      "actualPage": "customer",
+      "result": "PASS"
+    },
+    {
+      "test": "workspace overflow",
+      "role": "customer",
+      "width": 768,
+      "scroll": 764,
+      "pending": false,
+      "result": "PASS"
+    },
+    {
+      "test": "customer avatar opens with one click",
+      "width": 768,
+      "result": "PASS"
+    },
+    {
+      "test": "workspace role renders",
+      "role": "shipper",
+      "width": 768,
+      "actualPage": "shipper",
+      "result": "PASS"
+    },
+    {
+      "test": "workspace overflow",
+      "role": "shipper",
+      "width": 768,
+      "scroll": 753,
+      "pending": false,
+      "result": "PASS"
+    },
+    {
+      "test": "shipper avatar opens with one click",
+      "width": 768,
+      "result": "PASS"
+    },
+    {
+      "test": "shipper offers navigation",
+      "width": 768,
+      "result": "PASS"
+    },
+    {
+      "test": "shipper offer detail opens",
+      "width": 768,
+      "result": "PASS"
+    },
+    {
+      "test": "workspace role renders",
+      "role": "admin",
+      "width": 768,
+      "actualPage": "admin",
+      "result": "PASS"
+    },
+    {
+      "test": "workspace overflow",
+      "role": "admin",
+      "width": 768,
+      "scroll": 753,
+      "pending": false,
+      "result": "PASS"
+    },
+    {
+      "test": "workspace role renders",
+      "role": "customer",
+      "width": 375,
+      "actualPage": "customer",
+      "result": "PASS"
+    },
+    {
+      "test": "workspace overflow",
+      "role": "customer",
+      "width": 375,
+      "scroll": 375,
+      "pending": false,
+      "result": "PASS"
+    },
+    {
+      "test": "customer avatar opens with one click",
+      "width": 375,
+      "result": "PASS"
+    },
+    {
+      "test": "workspace role renders",
+      "role": "shipper",
+      "width": 375,
+      "actualPage": "shipper",
+      "result": "PASS"
+    },
+    {
+      "test": "workspace overflow",
+      "role": "shipper",
+      "width": 375,
+      "scroll": 375,
+      "pending": false,
+      "result": "PASS"
+    },
+    {
+      "test": "shipper avatar opens with one click",
+      "width": 375,
+      "result": "PASS"
+    },
+    {
+      "test": "shipper offers navigation",
+      "width": 375,
+      "result": "PASS"
+    },
+    {
+      "test": "shipper offer detail opens",
+      "width": 375,
+      "result": "PASS"
+    },
+    {
+      "test": "workspace role renders",
+      "role": "admin",
+      "width": 375,
+      "actualPage": "admin",
+      "result": "PASS"
+    },
+    {
+      "test": "workspace overflow",
+      "role": "admin",
+      "width": 375,
+      "scroll": 375,
+      "pending": false,
+      "result": "PASS"
+    },
+    {
+      "test": "private view JavaScript initialization",
+      "role": "customer",
+      "view": "dashboard",
+      "result": "PASS"
+    },
+    {
+      "test": "private view JavaScript initialization",
+      "role": "customer",
+      "view": "create",
+      "result": "PASS"
+    },
+    {
+      "test": "private view JavaScript initialization",
+      "role": "customer",
+      "view": "orders",
+      "result": "PASS"
+    },
+    {
+      "test": "private view JavaScript initialization",
+      "role": "customer",
+      "view": "order",
+      "result": "PASS"
+    },
+    {
+      "test": "private view JavaScript initialization",
+      "role": "customer",
+      "view": "payment",
+      "result": "PASS"
+    },
+    {
+      "test": "private view JavaScript initialization",
+      "role": "customer",
+      "view": "matching",
+      "result": "PASS"
+    },
+    {
+      "test": "private view JavaScript initialization",
+      "role": "customer",
+      "view": "tracking",
+      "result": "PASS"
+    },
+    {
+      "test": "private view JavaScript initialization",
+      "role": "customer",
+      "view": "review",
+      "result": "PASS"
+    },
+    {
+      "test": "private view JavaScript initialization",
+      "role": "customer",
+      "view": "report",
+      "result": "PASS"
+    },
+    {
+      "test": "private view JavaScript initialization",
+      "role": "customer",
+      "view": "reports",
+      "result": "PASS"
+    },
+    {
+      "test": "private view JavaScript initialization",
+      "role": "customer",
+      "view": "notifications",
+      "result": "PASS"
+    },
+    {
+      "test": "private view JavaScript initialization",
+      "role": "customer",
+      "view": "account",
+      "result": "PASS"
+    },
+    {
+      "test": "private view JavaScript initialization",
+      "role": "customer",
+      "view": "addresses",
+      "result": "PASS"
+    },
+    {
+      "test": "private view JavaScript initialization",
+      "role": "shipper",
+      "view": "dashboard",
+      "result": "PASS"
+    },
+    {
+      "test": "private view JavaScript initialization",
+      "role": "shipper",
+      "view": "offers",
+      "result": "PASS"
+    },
+    {
+      "test": "private view JavaScript initialization",
+      "role": "shipper",
+      "view": "active",
+      "result": "PASS"
+    },
+    {
+      "test": "private view JavaScript initialization",
+      "role": "shipper",
+      "view": "history",
+      "result": "PASS"
+    },
+    {
+      "test": "private view JavaScript initialization",
+      "role": "shipper",
+      "view": "earnings",
+      "result": "PASS"
+    },
+    {
+      "test": "private view JavaScript initialization",
+      "role": "shipper",
+      "view": "account",
+      "result": "PASS"
+    },
+    {
+      "test": "private view JavaScript initialization",
+      "role": "shipper",
+      "view": "notifications",
+      "result": "PASS"
+    },
+    {
+      "test": "private view JavaScript initialization",
+      "role": "admin",
+      "view": "index",
+      "result": "PASS"
+    },
+    {
+      "test": "private view JavaScript initialization",
+      "role": "admin",
+      "view": "users",
+      "result": "PASS"
+    },
+    {
+      "test": "admin filter tab",
+      "view": "users",
+      "result": "PASS"
+    },
+    {
+      "test": "admin search empty state",
+      "view": "users",
+      "result": "PASS"
+    },
+    {
+      "test": "admin account read-only modal opens and closes",
+      "result": "PASS"
+    },
+    {
+      "test": "admin management mobile overflow",
+      "view": "users",
+      "scroll": 375,
+      "result": "PASS"
+    },
+    {
+      "test": "private view JavaScript initialization",
+      "role": "admin",
+      "view": "customers",
+      "result": "PASS"
+    },
+    {
+      "test": "admin filter tab",
+      "view": "customers",
+      "result": "PASS"
+    },
+    {
+      "test": "admin search empty state",
+      "view": "customers",
+      "result": "PASS"
+    },
+    {
+      "test": "admin management mobile overflow",
+      "view": "customers",
+      "scroll": 375,
+      "result": "PASS"
+    },
+    {
+      "test": "private view JavaScript initialization",
+      "role": "admin",
+      "view": "shippers",
+      "result": "PASS"
+    },
+    {
+      "test": "admin filter tab",
+      "view": "shippers",
+      "result": "PASS"
+    },
+    {
+      "test": "admin search empty state",
+      "view": "shippers",
+      "result": "PASS"
+    },
+    {
+      "test": "admin management mobile overflow",
+      "view": "shippers",
+      "scroll": 375,
+      "result": "PASS"
+    },
+    {
+      "test": "private view JavaScript initialization",
+      "role": "admin",
+      "view": "orders",
+      "result": "PASS"
+    },
+    {
+      "test": "admin filter tab",
+      "view": "orders",
+      "result": "PASS"
+    },
+    {
+      "test": "admin search empty state",
+      "view": "orders",
+      "result": "PASS"
+    },
+    {
+      "test": "admin management mobile overflow",
+      "view": "orders",
+      "scroll": 375,
+      "result": "PASS"
+    },
+    {
+      "test": "private view JavaScript initialization",
+      "role": "admin",
+      "view": "complaints",
+      "result": "PASS"
+    },
+    {
+      "test": "admin filter tab",
+      "view": "complaints",
+      "result": "PASS"
+    },
+    {
+      "test": "admin search empty state",
+      "view": "complaints",
+      "result": "PASS"
+    },
+    {
+      "test": "admin management mobile overflow",
+      "view": "complaints",
+      "scroll": 375,
+      "result": "PASS"
+    },
+    {
+      "test": "private view JavaScript initialization",
+      "role": "admin",
+      "view": "disputes",
+      "result": "PASS"
+    },
+    {
+      "test": "admin filter tab",
+      "view": "disputes",
+      "result": "PASS"
+    },
+    {
+      "test": "admin search empty state",
+      "view": "disputes",
+      "result": "PASS"
+    },
+    {
+      "test": "admin management mobile overflow",
+      "view": "disputes",
+      "scroll": 375,
+      "result": "PASS"
+    },
+    {
+      "test": "private view JavaScript initialization",
+      "role": "admin",
+      "view": "payments",
+      "result": "PASS"
+    },
+    {
+      "test": "admin filter tab",
+      "view": "payments",
+      "result": "PASS"
+    },
+    {
+      "test": "admin search empty state",
+      "view": "payments",
+      "result": "PASS"
+    },
+    {
+      "test": "admin management mobile overflow",
+      "view": "payments",
+      "scroll": 375,
+      "result": "PASS"
+    },
+    {
+      "test": "private view JavaScript initialization",
+      "role": "admin",
+      "view": "reviews",
+      "result": "PASS"
+    },
+    {
+      "test": "admin filter tab",
+      "view": "reviews",
+      "result": "PASS"
+    },
+    {
+      "test": "admin search empty state",
+      "view": "reviews",
+      "result": "PASS"
+    },
+    {
+      "test": "admin management mobile overflow",
+      "view": "reviews",
+      "scroll": 375,
+      "result": "PASS"
+    },
+    {
+      "test": "private view JavaScript initialization",
+      "role": "admin",
+      "view": "notifications",
+      "result": "PASS"
+    },
+    {
+      "test": "admin filter tab",
+      "view": "notifications",
+      "result": "PASS"
+    },
+    {
+      "test": "admin notification preview mark read",
+      "result": "PASS"
+    },
+    {
+      "test": "admin management mobile overflow",
+      "view": "notifications",
+      "scroll": 375,
+      "result": "PASS"
+    },
+    {
+      "test": "private view JavaScript initialization",
+      "role": "admin",
+      "view": "audit-logs",
+      "result": "PASS"
+    },
+    {
+      "test": "admin filter tab",
+      "view": "audit-logs",
+      "result": "PASS"
+    },
+    {
+      "test": "admin search empty state",
+      "view": "audit-logs",
+      "result": "PASS"
+    },
+    {
+      "test": "admin management mobile overflow",
+      "view": "audit-logs",
+      "scroll": 375,
+      "result": "PASS"
+    },
+    {
+      "test": "login shows immediate busy feedback",
+      "result": "PASS"
+    },
+    {
+      "test": "three submits send one login request",
+      "requests": 1,
+      "result": "PASS"
+    },
+    {
+      "test": "invalid login recovers with visible error",
+      "result": "PASS"
+    },
+    {
+      "test": "login handler works when browser storage is denied",
+      "result": "PASS"
+    }
+  ],
+  "exceptions": [],
+  "networkErrors": [
+    {
+      "page": "?page=customer",
+      "url": "http://127.0.0.1:3033/favicon.ico",
+      "status": 404
+    },
+    {
+      "page": "?page=auth&next=shipper",
+      "url": "http://127.0.0.1:3033/public/api/auth/login.php",
+      "status": 401
+    },
+    {
+      "page": "?page=auth",
+      "url": "http://127.0.0.1:3033/public/api/auth/login.php",
+      "status": 401
+    }
+  ]
+}

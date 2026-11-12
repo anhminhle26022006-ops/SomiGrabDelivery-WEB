@@ -1,0 +1,425 @@
+[
+  {
+    "role": "admin",
+    "path": "/?page=admin&view=index",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 1415,
+    "result": "PASS",
+    "shipper_pending": true
+  },
+  {
+    "role": "admin",
+    "path": "/?page=admin&view=users",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 1518,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "admin",
+    "path": "/?page=admin&view=customers",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 1291,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "admin",
+    "path": "/?page=admin&view=shippers",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 1292,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "admin",
+    "path": "/?page=admin&view=orders",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 1275,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "admin",
+    "path": "/?page=admin&view=complaints",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 1396,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "admin",
+    "path": "/?page=admin&view=disputes",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 1304,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "admin",
+    "path": "/?page=admin&view=payments",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 1306,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "admin",
+    "path": "/?page=admin&view=reviews",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 1333,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "admin",
+    "path": "/?page=admin&view=notifications",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 1442,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "admin",
+    "path": "/?page=admin&view=audit-logs",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 1268,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "admin",
+    "path": "/?page=customer",
+    "status": 303,
+    "expected": 303,
+    "elapsed_ms": 1012,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "admin",
+    "path": "/?page=shipper",
+    "status": 303,
+    "expected": 303,
+    "elapsed_ms": 1060,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "admin",
+    "path": "/?page=admin&view[]=bad",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 1501,
+    "result": "PASS",
+    "shipper_pending": true
+  },
+  {
+    "role": "customer",
+    "path": "/?page=customer&view=dashboard",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 1030,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "customer",
+    "path": "/?page=customer&view=create",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 1172,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "customer",
+    "path": "/?page=customer&view=orders",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 1016,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "customer",
+    "path": "/?page=customer&view=order",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 1178,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "customer",
+    "path": "/?page=customer&view=payment",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 1077,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "customer",
+    "path": "/?page=customer&view=matching",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 1006,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "customer",
+    "path": "/?page=customer&view=tracking",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 1051,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "customer",
+    "path": "/?page=customer&view=review",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 1002,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "customer",
+    "path": "/?page=customer&view=report",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 1019,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "customer",
+    "path": "/?page=customer&view=reports",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 1036,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "customer",
+    "path": "/?page=customer&view=notifications",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 1036,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "customer",
+    "path": "/?page=customer&view=account",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 1017,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "customer",
+    "path": "/?page=customer&view=addresses",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 1010,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "customer",
+    "path": "/?page=shipper",
+    "status": 303,
+    "expected": 303,
+    "elapsed_ms": 993,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "customer",
+    "path": "/?page=admin",
+    "status": 303,
+    "expected": 303,
+    "elapsed_ms": 1022,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "customer",
+    "path": "/?page=customer&view[]=bad",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 1176,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "shipper",
+    "path": "/?page=shipper&view=dashboard",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 1155,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "shipper",
+    "path": "/?page=shipper&view=offers",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 1094,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "shipper",
+    "path": "/?page=shipper&view=detail",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 1174,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "shipper",
+    "path": "/?page=shipper&view=active",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 1069,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "shipper",
+    "path": "/?page=shipper&view=history",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 1066,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "shipper",
+    "path": "/?page=shipper&view=earnings",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 1166,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "shipper",
+    "path": "/?page=shipper&view=account",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 1072,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "shipper",
+    "path": "/?page=shipper&view=registration",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 1171,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "shipper",
+    "path": "/?page=shipper&view=chat",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 2039,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "shipper",
+    "path": "/?page=shipper&view=support",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 1111,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "shipper",
+    "path": "/?page=shipper&view=cancel",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 994,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "shipper",
+    "path": "/?page=shipper&view=withdraw",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 1086,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "shipper",
+    "path": "/?page=shipper&view=report",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 2049,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "shipper",
+    "path": "/?page=shipper&view=notifications",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 1152,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "shipper",
+    "path": "/?page=customer",
+    "status": 303,
+    "expected": 303,
+    "elapsed_ms": 1057,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "shipper",
+    "path": "/?page=admin",
+    "status": 303,
+    "expected": 303,
+    "elapsed_ms": 2322,
+    "result": "PASS",
+    "shipper_pending": false
+  },
+  {
+    "role": "shipper",
+    "path": "/?page=shipper&view[]=bad",
+    "status": 200,
+    "expected": 200,
+    "elapsed_ms": 1036,
+    "result": "PASS",
+    "shipper_pending": false
+  }
+]

@@ -1,0 +1,234 @@
+[
+  {
+    "test": "unauthenticated API is 401 JSON",
+    "result": "PASS"
+  },
+  {
+    "test": "real password login customer",
+    "result": "PASS"
+  },
+  {
+    "test": "real password login other",
+    "result": "PASS"
+  },
+  {
+    "test": "real password login admin",
+    "result": "PASS"
+  },
+  {
+    "test": "real password login shipper",
+    "result": "PASS"
+  },
+  {
+    "test": "incorrect password rejected",
+    "result": "PASS"
+  },
+  {
+    "test": "Customer cannot log in as Admin",
+    "result": "PASS"
+  },
+  {
+    "test": "profile returns actual identity and no hash",
+    "result": "PASS"
+  },
+  {
+    "test": "real phone password login",
+    "result": "PASS"
+  },
+  {
+    "test": "profile update real database",
+    "result": "PASS"
+  },
+  {
+    "test": "profile rejects role injection",
+    "result": "PASS"
+  },
+  {
+    "test": "reset request response does not enumerate accounts on provider failure",
+    "result": "PASS"
+  },
+  {
+    "test": "wrong workspace rejected",
+    "result": "PASS"
+  },
+  {
+    "test": "customer cannot read admin accounts",
+    "result": "PASS"
+  },
+  {
+    "test": "customer cannot change categories",
+    "result": "PASS"
+  },
+  {
+    "test": "HTTP address create",
+    "result": "PASS"
+  },
+  {
+    "test": "HTTP address list persists",
+    "result": "PASS"
+  },
+  {
+    "test": "HTTP address ownership edit",
+    "result": "PASS"
+  },
+  {
+    "test": "HTTP address ownership delete",
+    "result": "PASS"
+  },
+  {
+    "test": "HTTP coordinate boundary",
+    "result": "PASS"
+  },
+  {
+    "test": "HTTP method rejected",
+    "result": "PASS"
+  },
+  {
+    "test": "cross-origin mutation rejected",
+    "result": "PASS"
+  },
+  {
+    "test": "order own detail and history",
+    "result": "PASS"
+  },
+  {
+    "test": "order IDOR hidden",
+    "result": "PASS"
+  },
+  {
+    "test": "array ID validation",
+    "result": "PASS"
+  },
+  {
+    "test": "repeat cancel is idempotent",
+    "result": "PASS"
+  },
+  {
+    "test": "real quote fails closed without approved policy",
+    "result": "PASS"
+  },
+  {
+    "test": "real create rejects browser price",
+    "result": "PASS"
+  },
+  {
+    "test": "customer categories actual catalog",
+    "result": "PASS"
+  },
+  {
+    "test": "admin lookup customer",
+    "result": "PASS"
+  },
+  {
+    "test": "admin lookup shipper",
+    "result": "PASS"
+  },
+  {
+    "test": "admin order detail",
+    "result": "PASS"
+  },
+  {
+    "test": "admin order list",
+    "result": "PASS"
+  },
+  {
+    "test": "admin category restriction persists",
+    "result": "PASS"
+  },
+  {
+    "test": "admin creates inert pricing draft",
+    "result": "PASS"
+  },
+  {
+    "test": "admin invalid minor price rejected",
+    "result": "PASS"
+  },
+  {
+    "test": "all policy draft sections persist without activation",
+    "result": "PASS"
+  },
+  {
+    "test": "invalid pricing time rejected",
+    "result": "PASS"
+  },
+  {
+    "test": "invalid Shipper percentage rejected",
+    "result": "PASS"
+  },
+  {
+    "test": "nationality request persists",
+    "result": "PASS"
+  },
+  {
+    "test": "duplicate pending nationality conflict",
+    "result": "PASS"
+  },
+  {
+    "test": "nationality unknown country validation",
+    "result": "PASS"
+  },
+  {
+    "test": "nationality approval blocked by identity policy",
+    "result": "PASS"
+  },
+  {
+    "test": "nationality admin rejection persists",
+    "result": "PASS"
+  },
+  {
+    "test": "KYC NEEDS_INFO supported",
+    "result": "PASS"
+  },
+  {
+    "test": "KYC rejection persisted",
+    "result": "PASS"
+  },
+  {
+    "test": "KYC approve from needs info",
+    "result": "PASS"
+  },
+  {
+    "test": "KYC stale review returns 409",
+    "result": "PASS"
+  },
+  {
+    "test": "Shipper can add Customer workspace without losing Shipper role",
+    "result": "PASS"
+  },
+  {
+    "test": "admin suspend account",
+    "result": "PASS"
+  },
+  {
+    "test": "suspended session revoked on next request",
+    "result": "PASS"
+  },
+  {
+    "test": "admin restore account",
+    "result": "PASS"
+  },
+  {
+    "test": "suspend then restore revokes even unvisited old sessions",
+    "result": "PASS"
+  },
+  {
+    "test": "customer live workspace renders",
+    "result": "PASS"
+  },
+  {
+    "test": "admin live workspace renders",
+    "result": "PASS"
+  },
+  {
+    "test": "self suspension rejected",
+    "result": "PASS"
+  },
+  {
+    "test": "HTTP address archive",
+    "result": "PASS"
+  },
+  {
+    "test": "logout invalidates session",
+    "result": "PASS"
+  }
+]

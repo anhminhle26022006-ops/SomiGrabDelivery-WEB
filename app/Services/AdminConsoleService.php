@@ -115,7 +115,7 @@ final class AdminConsoleService
         $this->guard($admin,'order.cancel_admin');$reason=DeliveryInput::text($reason,'reason',1000);$order=OrderLifecycleService::lock($this->db,$id);
         if(!in_array($order['status'],['PENDING_PAYMENT','SEARCHING_SHIPPER','NO_SHIPPER_FOUND','SHIPPER_ASSIGNED'],true))throw new DeliveryApiError(409,'ORDER_NOT_CANCELLABLE','Only orders before pickup can be cancelled here.');
         if($this->rows('SELECT 1 FROM deliveries d JOIN order_assignments a USING(assignment_id) WHERE a.order_id=? AND d.picked_up_at IS NOT NULL LIMIT 1',[$id]))throw new DeliveryApiError(409,'ORDER_NOT_CANCELLABLE','Pickup evidence already exists.');
-        $snapshot=json_decode($order['pricing_snapshot'],true,512,JSON_THROW_ON_ERROR);$fee=(string)($snapshot['cancellation_fees'][$order['status']]??'0');
+        $snapshot=json_decode($order['pricing_snapshot'],true,512,JSON_THROW_ON_ERROR);$fee=$order['status']==='NO_SHIPPER_FOUND'?'0':(string)($snapshot['cancellation_fees'][$order['status']]??'0');
         $q=$this->db->prepare("UPDATE orders SET status='CANCELLED',cancellation_fee_minor=?,cancelled_at=now(),closed_at=now(),updated_at=now() WHERE order_id=?");$q->execute([$fee,$id]);
         $this->db->prepare("UPDATE order_match_offers SET status='CANCELLED',responded_at=now() WHERE order_id=? AND status='PENDING'")->execute([$id]);
         $this->db->prepare("UPDATE order_assignments SET assignment_status='ADMIN_CANCELLED',ended_at=now(),ended_reason='ADMIN_CANCELLATION' WHERE order_id=? AND assignment_status='ACTIVE'")->execute([$id]);

@@ -10,6 +10,11 @@ shipper_run(['GET', 'POST'], $method === 'POST' ? 'offer.respond_own' : 'offer.r
     static function (PDO $db, int $shipperId) use ($method): array {
         $service = new OfferService($db);
         if ($method === 'GET') return [200, $service->pending($shipperId)];
-        $input = shipper_body(['offer_id', 'note']);
+        $input = shipper_body(['offer_id', 'note', 'action']);
+        if (($input['action'] ?? null) === 'refresh') {
+            DeliveryInput::only($input, ['action']);
+            (new MatchingService($db))->dispatchNearby($shipperId);
+            return [200, $service->pending($shipperId)];
+        }
         return [200, $service->reject($shipperId, DeliveryInput::id($input['offer_id'] ?? null, 'offer_id'), DeliveryInput::text($input['note'] ?? null, 'note', 300, false))];
     });

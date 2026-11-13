@@ -1,0 +1,42 @@
+<?php
+declare(strict_types=1);
+require_once __DIR__.'/shipper_fixtures.php';
+require_once __DIR__.'/../app/Services/ShipperAvailabilityService.php';
+require_once __DIR__.'/../app/Services/MatchingService.php';
+require_once __DIR__.'/../app/Services/OfferService.php';
+try {
+    $db=shipper_test_db();
+    $availability=new ShipperAvailabilityService($db);
+    $matching=new MatchingService($db);
+    $offers=new OfferService($db);
+    $order=paid_order($db);
+    check(tx($db,fn()=>$matching->dispatchNearby(SHIPPER_A))===[], 'offline shipper cannot dispatch');
+    tx($db,fn()=>$availability->turnOn(SHIPPER_A,NEAR[0],NEAR[1]));
+    check($availability->status(SHIPPER_A)['availability']===true, 'availability persists across independent reads');
+    check(count(tx($db,fn()=>$matching->dispatchNearby(SHIPPER_A)))===1,'poll dispatches new paid order without worker');
+    check(count($offers->pending(SHIPPER_A)['items'])===1,'new offer appears immediately');
+    tx($db,fn()=>$matching->dispatchNearby(SHIPPER_A));
+    check((int)value($db,'SELECT count(*) FROM order_match_offers WHERE order_id=?',[$order])===1,'poll is idempotent');
+    tx($db,fn()=>$availability->turnOff(SHIPPER_A));
+    check(count($offers->pending(SHIPPER_A)['items'])===0,'offline cancels the pending invitation');
+    tx($db,fn()=>$availability->turnOn(SHIPPER_A,NEAR[0],NEAR[1]));
+    tx($db,fn()=>$matching->dispatchNearby(SHIPPER_A));
+    check(count($offers->pending(SHIPPER_A)['items'])===1,'online again receives an invitation cancelled only by going offline');
+    $offerId=(int)$offers->pending(SHIPPER_A)['items'][0]['offer_id'];
+    tx($db,fn()=>$offers->reject(SHIPPER_A,$offerId,null));
+    tx($db,fn()=>$matching->dispatchNearby(SHIPPER_A));
+    check(count($offers->pending(SHIPPER_A)['items'])===0,'explicit rejection is not offered again');
+    $new=paid_order($db);
+    $db->exec("UPDATE shipper_profiles SET last_location_at=now()-interval '11 minutes' WHERE user_id=3");
+    check(tx($db,fn()=>$matching->dispatchNearby(SHIPPER_A))===[],'stale GPS does not match');
+    tx($db,fn()=>$availability->turnOn(SHIPPER_A,NEAR[0],NEAR[1]));
+    $db->exec("INSERT INTO customer_profiles(user_id) VALUES(3)");
+    $db->exec("UPDATE orders SET customer_id=3 WHERE order_id=$new");
+    check(!array_key_exists($new,tx($db,fn()=>$matching->dispatchNearby(SHIPPER_A))),'shipper never receives own order');
+    $db->exec("UPDATE orders SET customer_id=2,pickup_latitude=21.0285,pickup_longitude=105.8542 WHERE order_id=$new");
+    check(!array_key_exists($new,tx($db,fn()=>$matching->dispatchNearby(SHIPPER_A))),'distant order excluded');
+    tx($db,fn()=>$availability->turnOff(SHIPPER_A));
+    check($availability->status(SHIPPER_A)['availability']===false,'offline state persists');
+    rejects(fn()=>tx($db,fn()=>$matching->dispatchNearby(SHIPPER_PENDING)),'SHIPPER_NOT_ELIGIBLE');
+    echo "Shipper live offers checks passed: $checks\n";
+} catch(Throwable $e){fwrite(STDERR,$e->getMessage()."\n".$e->getFile().':'.$e->getLine()."\n");exit(1);}

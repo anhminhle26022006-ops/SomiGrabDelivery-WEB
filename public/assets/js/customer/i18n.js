@@ -148,11 +148,13 @@
 
   function setLanguage(next) {
     if (!LANGUAGES[next]) return;
+    document.dispatchEvent(new Event('somi:before-preference-change'));
     write(LANG_KEY, next);
     window.location.reload();
   }
   function setCurrency(next) {
     if (!CURRENCIES[next]) return;
+    document.dispatchEvent(new Event('somi:before-preference-change'));
     write(CURRENCY_KEY, next);
     window.location.reload();
   }

@@ -119,6 +119,8 @@ CREATE TABLE shipper_profiles (
     user_id                    BIGINT PRIMARY KEY REFERENCES users(user_id) ON DELETE RESTRICT,
     vehicle_type               VARCHAR(80) NOT NULL,
     vehicle_registration       VARCHAR(40) NOT NULL,
+    application_details        JSONB CHECK (application_details IS NULL OR jsonb_typeof(application_details) = 'object'),
+    application_submitted_at   TIMESTAMPTZ,
     verification_status        VARCHAR(20) NOT NULL DEFAULT 'PENDING'
                                CHECK (verification_status IN ('PENDING', 'NEEDS_INFO', 'APPROVED', 'REJECTED')),
     availability               BOOLEAN NOT NULL DEFAULT FALSE,

@@ -59,7 +59,7 @@ function newOrder(PDO $db,string $currency='VND'):int{
     $first=$console->accounts(1,[]);$second=$console->accounts(1,['before_id'=>$first['next_before_id']]);check(count($first['items'])===50&&count($second['items'])===6,'cursor pagination');check(count(array_intersect(array_column($first['items'],'user_id'),array_column($second['items'],'user_id')))===0,'no duplicate page rows');
     $id=newOrder($db);$db->prepare("UPDATE orders SET status='SHIPPER_ASSIGNED',pricing_snapshot=CAST(? AS jsonb),paid_at=now() WHERE order_id=?")->execute([json_encode(['cancellation_fees'=>['SHIPPER_ASSIGNED'=>'7']]),$id]);
     $db->prepare('INSERT INTO order_assignments(order_id,shipper_id) VALUES(?,4)')->execute([$id]);
-    $db->prepare("INSERT INTO support_tickets(ticket_code,order_id,opened_by,category,subject,description) VALUES('TEST-TICKET',?,2,'DELIVERY','Test support','Fixture description')")->execute([$id]);$ticket=(int)value($db,'SELECT ticket_id FROM support_tickets LIMIT 1');
+    $db->prepare("INSERT INTO support_tickets(ticket_code,order_id,opened_by,opened_role,category,subject,description) VALUES('TEST-TICKET',?,2,'CUSTOMER','DELIVERY','Test support','Fixture description')")->execute([$id]);$ticket=(int)value($db,'SELECT ticket_id FROM support_tickets LIMIT 1');
     check(count(tx($db,fn()=>$console->tickets(1,[]))['items'])===1,'tickets list');
     check(tx($db,fn()=>$console->tickets(1,['id'=>$ticket]))['ticket']['description']==='Fixture description','ticket detail');
     rejects(fn()=>tx($db,fn()=>$console->ticketStatus(1,['ticket_id'=>$ticket,'status'=>'CLOSED','note'=>'skip'])),'TICKET_STATE_CONFLICT');

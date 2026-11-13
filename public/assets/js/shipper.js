@@ -17,7 +17,7 @@ function showSupport(){window.somiPerson3Open?.('tickets');}
 function openProfile(){document.getElementById('profileDropdown').classList.add('open');document.getElementById('profileBtn').setAttribute('aria-expanded','true')}
 // Sidebar navigation is handled once by shipper-navigation.js.
 // Header branding/navigation may also carry data-page; do not let it hide every view.
-document.getElementById('bellBtn')?.addEventListener('click',()=>go('notifications'));
+
 document.getElementById('chatForm')?.addEventListener('submit',e=>{e.preventDefault();window.somiPerson3Open?.('chat');});
 document.getElementById('supportForm')?.addEventListener('submit',e=>{e.preventDefault();window.somiPerson3Open?.('tickets');});
 
@@ -29,7 +29,7 @@ document.querySelectorAll('[data-profile-action="account"]').forEach(b=>b.addEve
 document.querySelectorAll('[data-notice-filter]').forEach(b=>b.addEventListener('click',()=>filterNotices(b.dataset.noticeFilter)));
 document.getElementById('markAll')?.addEventListener('click',()=>{notices.forEach(n=>n.unread=false);renderNotices();toast('Đã đánh dấu tất cả thông báo là đã đọc.')});
 function openContactChat(){window.somiPerson3Open?.('chat');}
-function closeContactChat(){document.getElementById('contactModal').classList.add('hidden');}
+function closeContactChat(){window.go?.('active');}
 
 // Offers/history load through shipper-offers.js and shipper-active.js; notifications use person3.js.
 

@@ -1,1 +1,1 @@
-<section id="page-earnings" class="page<?= $shipperPage === 'earnings' ? '' : ' hidden' ?>" aria-hidden="<?= $shipperPage === 'earnings' ? 'false' : 'true' ?>"><div class="p3-panel" data-p3-earnings role="status">Đang tải thu nhập / Loading earnings…</div></section>
+<section id="page-earnings" class="page<?= $shipperPage === 'earnings' ? '' : ' hidden' ?>" aria-hidden="<?= $shipperPage === 'earnings' ? 'false' : 'true' ?>"><div class="p3-panel" data-p3-earnings role="status">Đang tải thu nhập…</div></section>

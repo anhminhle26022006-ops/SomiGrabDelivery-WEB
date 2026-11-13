@@ -151,6 +151,7 @@ function customerIcon(string $paths, int $size = 20): string {
 <script defer src="<?= e(assetUrl('public/assets/vendor/bootstrap/bootstrap.bundle.min.js')) ?>"></script>
 <script defer src="<?= e(assetUrl($asset . 'lang/en.js')) ?>"></script>
 <script defer src="<?= e(assetUrl($asset . 'i18n.js')) ?>"></script>
+<?php require __DIR__.'/../shared/workspace-enhancements.php'; ?>
 <?php if ($liveCustomerView): ?>
 <?php if ($customerNeedsMap): ?>
 <script defer src="<?= e(assetUrl('public/assets/vendor/leaflet/leaflet.js')) ?>"></script>

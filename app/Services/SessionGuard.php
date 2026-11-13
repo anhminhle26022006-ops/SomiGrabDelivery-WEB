@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/../Config/database.php';
+require_once __DIR__ . '/../Domain/User.php';
 
 /**
  * Validates the signed-in session against the database in one round trip.
@@ -37,7 +38,7 @@ function somi_require_active_session(?array &$sessionUser = null, ?string $permi
     $user = $query->fetch();
     $issued = (float) ($_SESSION['somi_authenticated_at'] ?? 0);
     $last = (int) ($_SESSION['somi_last_activity'] ?? $issued);
-    if (!$user || $user['account_status'] !== 'ACTIVE' || !$issued
+    if (!$user || !\Somi\Domain\User::fromRow($user)->isActive() || !$issued
         || time() - $last > 1800
         || ($user['password_changed_at'] !== null && (float) (new DateTimeImmutable($user['password_changed_at']))->format('U.u') > $issued)
         || ($user['last_suspended_at'] !== null && (float) (new DateTimeImmutable($user['last_suspended_at']))->format('U.u') > $issued)) {

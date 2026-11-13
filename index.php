@@ -128,11 +128,14 @@ function linkTo(string $page, array $params = []): string {
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
-  <?php if ($page === 'admin'): ?>
+  <?php if ($page === 'admin' || $page === 'shipper' || in_array($page, $publicPages, true)): ?>
   <link rel="stylesheet" href="<?= e(assetUrl('public/assets/vendor/bootstrap/bootstrap.min.css')) ?>">
   <script defer src="<?= e(assetUrl('public/assets/vendor/bootstrap/bootstrap.bundle.min.js')) ?>"></script>
   <?php endif; ?>
   <link rel="stylesheet" href="<?= e(assetUrl('public/assets/css/app.css')) ?>">
+  <?php if ($page === 'shipper' || in_array($page, $publicPages, true)): ?>
+  <link rel="stylesheet" href="<?= e(assetUrl('public/assets/css/bootstrap-workspaces.css')) ?>">
+  <?php endif; ?>
   <?php if (in_array($page, ['shipper', 'admin'], true)): ?>
   <link rel="stylesheet" href="<?= e(assetUrl('public/assets/css/modules/' . $page . '.css')) ?>">
   <?php endif; ?>

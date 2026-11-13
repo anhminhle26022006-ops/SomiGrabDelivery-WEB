@@ -18,6 +18,8 @@ try {
     $detail = $profiles->detail(SHIPPER_A);
     check($detail['eligibility']['can_work'] && $detail['profile']['vehicle_registration'] === '59X1-00003', 'approved shipper can work');
     check(!array_key_exists('identity_number_ciphertext', $detail['profile']), 'profile never exposes identity number');
+    check($detail['account']['code'] === 'SH-00003' && $detail['account']['email'] === 'user3@example.invalid' && $detail['account']['phone'] === '0900000003', 'profile returns the shipper own contact details');
+    check(!array_key_exists('password_hash', $detail['account']), 'account block never exposes the password hash');
     check($profiles->detail(SHIPPER_PENDING)['eligibility']['blockers'] === ['KYC_NOT_APPROVED', 'IDENTITY_NOT_APPROVED'], 'blockers explain why a shipper cannot work');
     rejects(fn() => $profiles->detail(CUSTOMER), 'SHIPPER_PROFILE_REQUIRED');
     rejects(fn() => tx($db, fn() => $profiles->updateVehicle(SHIPPER_B, 'Xe máy', ' 59x1-00003 ')), 'VEHICLE_REGISTRATION_TAKEN');

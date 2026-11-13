@@ -10,7 +10,7 @@ const fs=require('fs'),assert=require('node:assert/strict'),{chromium}=require('
    const customer=fs.readFileSync('app/Views/customer/pages/account.php','utf8').replace(/<\?php[\s\S]*?\?>/g,'');
    const profile={full_name:'Fixture Customer',email:'fixture@example.invalid',phone:'0900000000',app_language:'vi'};
    const html=ship?`<div class="p3-panel" data-shipper-bank-editor></div>${panel}`:`<main data-customer-server><div data-server-error></div>${customer}</main><script type="application/json" id="customer-profile-data">${JSON.stringify({profile})}</script>`;
-   return route.fulfill({contentType:'text/html',body:`<!doctype html><html lang="vi"><meta charset="utf-8"><style>${fs.readFileSync('public/assets/css/person3.css','utf8')}</style><body data-page="${ship?'shipper':'customer'}" data-c-view="account">${html}<script>${fs.readFileSync(ship?'public/assets/js/person3.js':'public/assets/js/customer/server.js','utf8')}</script></body></html>`});
+   return route.fulfill({contentType:'text/html',body:`<!doctype html><html lang="vi"><meta charset="utf-8"><style>${fs.readFileSync('public/assets/css/person3.css','utf8')}</style><body data-page="${ship?'shipper':'customer'}" data-c-view="account" data-shipper-view="${ship?'account':''}">${html}<script>${fs.readFileSync(ship?'public/assets/js/person3.js':'public/assets/js/customer/server.js','utf8')}</script></body></html>`});
   }
   if(url.pathname.endsWith('bank-account.php')){
    if(body?.action==='REQUEST'){pending=body;data={request_id:'1'};}

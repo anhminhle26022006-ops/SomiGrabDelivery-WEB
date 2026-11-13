@@ -27,7 +27,7 @@
           <button class="c-current-location" type="button" data-use-location><span class="c-location-dot" aria-hidden="true"></span><span><strong data-location-title>Vị trí hiện tại của bạn</strong><small data-current-location>Đang lấy vị trí…</small><b data-location-action>Dùng vị trí này làm điểm lấy →</b></span></button>
           <p class="c-hint" data-location-status role="status" aria-live="polite"></p>
           <div class="c-field"><label class="form-label" for="pickup-detail">Địa chỉ lấy hàng</label><input class="form-control" id="pickup-detail" name="pickup-detail" autocomplete="street-address" placeholder="Nhập địa chỉ lấy hàng, kể cả khi gửi hộ"></div>
-          <div class="c-field"><label class="form-label" for="pickup-saved">Dùng địa chỉ đã lưu</label><select class="form-select" id="pickup-saved" data-saved></select></div>
+          <div class="c-field" hidden><label class="form-label" for="pickup-saved">Dùng địa chỉ đã lưu</label><select class="form-select" id="pickup-saved" data-saved></select></div>
           <div class="row g-3">
             <div class="c-field col-md-6"><label class="form-label" for="pickup-name">Người gửi</label><input class="form-control" id="pickup-name" name="pickup-name" autocomplete="name" placeholder="Họ và tên"></div>
             <div class="c-field col-md-6"><label class="form-label" for="pickup-phone">Số điện thoại</label><input class="form-control" id="pickup-phone" name="pickup-phone" type="tel" inputmode="numeric" autocomplete="tel" placeholder="0903 128 456"></div>
@@ -38,7 +38,7 @@
         <div class="c-address-pick" data-side="delivery">
           <div class="c-address-pick-head"><span class="c-stop-mark c-stop-b">B</span><strong>Điểm giao hàng</strong></div>
           <div class="c-field"><label class="form-label" for="delivery-detail">Địa chỉ giao hàng</label><input class="form-control" id="delivery-detail" name="delivery-detail" placeholder="Tìm và chọn địa chỉ người nhận"></div>
-          <div class="c-field"><label class="form-label" for="delivery-saved">Dùng địa chỉ đã lưu</label><select class="form-select" id="delivery-saved" data-saved></select></div>
+          <div class="c-field" hidden><label class="form-label" for="delivery-saved">Dùng địa chỉ đã lưu</label><select class="form-select" id="delivery-saved" data-saved></select></div>
           <div class="row g-3">
             <div class="c-field col-md-6"><label class="form-label" for="delivery-name">Người nhận</label><input class="form-control" id="delivery-name" name="delivery-name" placeholder="Họ và tên người nhận"></div>
             <div class="c-field col-md-6"><label class="form-label" for="delivery-phone">Số điện thoại người nhận</label><input class="form-control" id="delivery-phone" name="delivery-phone" type="tel" inputmode="numeric" placeholder="0987 654 321"></div>

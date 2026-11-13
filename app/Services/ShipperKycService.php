@@ -22,8 +22,9 @@ final class ShipperKycService
     {
         $profile = ShipperEligibility::profile($this->db, $shipperId);
         $q = $this->db->prepare(
-            'SELECT document_id, document_type, original_name, mime_type, byte_size, review_status, rejection_reason, uploaded_at
-             FROM shipper_documents WHERE shipper_id = ? AND deleted_at IS NULL ORDER BY document_id DESC LIMIT 50'
+            "SELECT d.document_id,d.document_type,d.original_name,d.mime_type,d.byte_size,d.review_status,d.rejection_reason,d.uploaded_at,f.file_id
+             FROM shipper_documents d LEFT JOIN private_files f ON f.object_key=d.object_key AND f.owner_id=d.shipper_id AND f.purpose='KYC' AND f.deleted_at IS NULL AND f.delete_after>now()
+             WHERE d.shipper_id=? AND d.deleted_at IS NULL AND (d.delete_after IS NULL OR d.delete_after>now()) ORDER BY d.document_id DESC LIMIT 50"
         );
         $q->execute([$shipperId]);
         return [

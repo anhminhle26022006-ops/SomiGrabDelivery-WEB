@@ -280,3 +280,24 @@ body[data-page="shipper"] .empty>strong:only-child{margin-bottom:0}
  * Thay mũi tên mặc định của trình duyệt bằng mũi tên cùng tông với nút. */
 body[data-page="shipper"] #offerSort{appearance:none;-webkit-appearance:none;min-height:42px;padding:10px 38px 10px 17px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23526580' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") right 14px center/14px 14px no-repeat;cursor:pointer}
 body[data-page="shipper"] #offerSort:hover{border-color:#c3d3e8}
+/* === Thẻ Thu nhập ở cột phải Tổng quan === */
+body[data-page="shipper"] .summarymoney{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:11px}
+body[data-page="shipper"] .summarymoney p{display:flex;flex-direction:column;gap:4px;margin:0;padding:14px;border:1px solid var(--line);border-radius:13px;background:#fbfcfe;color:var(--muted);font-size:11px;line-height:1.4}
+body[data-page="shipper"] .summarymoney strong{color:var(--navy);font-size:17px;line-height:1.25;letter-spacing:-.02em}
+
+/* === Điện thoại ===
+ * Hai thẻ số liệu mỗi hàng, chừa chỗ cho chữ dài, nội dung không tràn. */
+@media(max-width:760px){
+ body[data-page="shipper"] .card.metric{padding:15px 14px}
+ body[data-page="shipper"] .metricicon{width:34px;height:34px;margin-bottom:11px;font-size:16px}
+ body[data-page="shipper"] .metricvalue{font-size:21px}
+ body[data-page="shipper"] .metriclabel{font-size:11.5px}
+ body[data-page="shipper"] .metricmoney strong{font-size:15px}
+ body[data-page="shipper"] .empty{padding:32px 18px}
+ body[data-page="shipper"] .account-identity{gap:13px;margin-bottom:16px;padding-bottom:16px}
+ body[data-page="shipper"] .account-avatar{width:54px;height:54px;font-size:17px}
+}
+@media(max-width:420px){
+ body[data-page="shipper"] .cards.row>[class*="col-"]{flex:0 0 50%;max-width:50%}
+ body[data-page="shipper"] .metricvalue{font-size:19px}
+}

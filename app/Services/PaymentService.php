@@ -30,6 +30,13 @@ final class PaymentService
             AuditService::record($this->db,$customerId,'CUSTOMER','DEMO_PAYMENT_SIMULATED','PAYMENT',(int)$payment['payment_id'],[],['real_money'=>false]);
             return $this->read($customerId,$orderId);
         }
+        if($method==='BANK_TRANSFER'){
+            self::bankInstructions();
+            if($order['currency_code']!=='VND')throw new DeliveryApiError(422,'PAYMENT_CURRENCY_UNSUPPORTED','Manual transfers require VND.');
+            $q=$this->db->prepare("INSERT INTO payments(order_id,amount_minor,currency_code,method,provider,request_key) VALUES(?,?,?,?,'MANUAL_BANK',?) RETURNING *");
+            $q->execute([$orderId,$order['total_charge_minor'],$order['currency_code'],$method,$key]);
+            return $this->publicPayment($q->fetch());
+        }
         $provider=$this->provider->name();
         if($provider==='SEPAY'&&$order['currency_code']!=='VND')throw new DeliveryApiError(422,'PAYMENT_CURRENCY_UNSUPPORTED','SePay only supports VND.');
         $this->provider->assertConfigured();
@@ -142,6 +149,13 @@ final class PaymentService
         if($r&&$r['provider']==='DEMO')DemoMode::denyTransfer();
         if(!$r||$r['provider']!=='MANUAL_BANK')throw new DeliveryApiError(404,'REFUND_NOT_FOUND','Bank refund not found.');
         if($original!==$r['provider_payment_ref'])throw new DeliveryApiError(409,'ORIGINAL_METHOD_REQUIRED','Refund must reference the original reconciled payment.');
+        OrderLifecycleService::lock($this->db,(int)$r['order_id']);
+        $q=$this->db->prepare('SELECT b.* FROM customer_bank_accounts b JOIN orders o ON o.customer_id=b.customer_id WHERE o.order_id=? AND b.bank_account_id=? FOR SHARE OF b');
+        $q->execute([$r['order_id'],DeliveryInput::id($in['bank_account_id']??null,'bank_account_id')]);$bank=$q->fetch();
+        if(!$bank)throw new DeliveryApiError(409,'BANK_ACCOUNT_REQUIRED','Select the customer refund bank account.');
+        $q=$this->db->prepare('SELECT refund_bank_account_id FROM refunds WHERE refund_id=? FOR UPDATE');$q->execute([$refundId]);$frozen=$q->fetchColumn();
+        if($frozen!==null&&$frozen!==false&&(string)$frozen!==(string)$bank['bank_account_id'])throw new DeliveryApiError(409,'BANK_ACCOUNT_CONFLICT','Refund destination is already frozen.');
+        $this->db->prepare('UPDATE refunds SET refund_bank_account_id=? WHERE refund_id=?')->execute([$bank['bank_account_id'],$refundId]);
         $result=$this->applyVerified(['kind'=>'REFUND','event_id'=>'bank-refund:'.$reference,'payment_id'=>$r['payment_id'],'provider_payment_ref'=>$original,'refund_id'=>$refundId,'provider_refund_id'=>$reference,'amount_minor'=>$in['amount_minor']??null,'currency_code'=>$in['currency_code']??null,'status'=>'SUCCEEDED'],'MANUAL_BANK');
         $this->db->prepare('UPDATE refunds SET reconciliation_reference=?,reconciled_by=?,evidence_reference=? WHERE refund_id=?')->execute([$reference,$adminId,$evidence,$refundId]);
         AuditService::record($this->db,$adminId,'ADMIN','BANK_REFUND_RECONCILED','REFUND',$refundId,[],['bank_reference'=>$reference,'original_payment_reference'=>$original,'evidence_reference'=>$evidence]);return $result;

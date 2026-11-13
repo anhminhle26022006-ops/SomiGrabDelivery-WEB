@@ -187,13 +187,14 @@
       gpsWatch = null;
       return;
     }
-    if (gpsWatch !== null || !navigator.geolocation) return;
+    if (gpsWatch !== null) return;
+    if (!navigator.geolocation) { toast(t('Thiết bị không hỗ trợ GPS. Customer chưa thể theo dõi vị trí.', 'GPS is unavailable. Customer cannot track your location.')); return; }
     gpsWatch = navigator.geolocation.watchPosition((p) => {
       if (Date.now() - lastGpsSentAt < GPS_INTERVAL_MS) return;
       lastGpsSentAt = Date.now();
       api.sendLocation({ latitude: p.coords.latitude, longitude: p.coords.longitude, accuracy_meters: Math.round(p.coords.accuracy) })
         .catch((error) => { if (error.code === "NO_ACTIVE_DELIVERY") load(); });
-    }, () => {}, { enableHighAccuracy: true, maximumAge: 10000 });
+    }, (error) => { toast(error.code === 1 ? t('Hãy cấp quyền vị trí để customer theo dõi đơn trên bản đồ.', 'Allow location access so the customer can track this delivery.') : t('Chưa nhận được GPS. Kiểm tra định vị và kết nối.', 'GPS is unavailable. Check location settings and connectivity.')); }, { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 });
   }
 
   document.addEventListener('submit',e=>{if(!e.target.matches('[data-shipper-cancel-form]'))return;e.preventDefault();const button=e.target.querySelector('[data-cancellation-submit]');if(!button.disabled)act('REQUEST_CANCEL',button);});

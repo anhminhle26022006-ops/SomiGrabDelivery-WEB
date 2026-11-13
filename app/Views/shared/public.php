@@ -38,7 +38,7 @@ $vi = [
       <div class="eyebrow"><span class="status-dot"></span><span data-i18n="badge">Flexible Delivery Network</span></div>
       <h1><span data-i18n="hero1">Deliver More.</span><br><span class="hero-accent" data-i18n="hero2">Earn on Your Time.</span></h1>
       <p class="hero-description" data-i18n="herodesc">Somi connects customers with trusted part-time shippers, making every delivery simple, flexible, and transparent.</p>
-      <div class="hero-actions">
+      <div class="hero-actions d-flex flex-wrap gap-3">
         <a class="button button-dark" href="<?= linkTo('auth', ['next'=>'customer']) ?>" data-i18n="send">Send a Package <span>↗</span></a>
         <a class="button button-glass" href="<?= linkTo('auth', ['next'=>'shipper']) ?>" data-i18n="become">Become a Shipper <span>→</span></a>
       </div>
@@ -50,10 +50,10 @@ $vi = [
     <div><p class="eyebrow dark-eyebrow">A MORE FLEXIBLE WAY TO DELIVER</p><h2>Every delivery.<br><span class="muted">A little simpler.</span></h2></div>
     <p class="section-lead">One connected network for people who need to send a package and people who want to deliver on their own schedule.</p>
   </section>
-  <section class="feature-grid">
-    <article class="feature-card"><span class="feature-number">01</span><div class="feature-icon">↗</div><h3>Simple booking</h3><p>Create a delivery request with clear pickup and drop-off details.</p><a href="<?= linkTo('customers') ?>">For customers <span>→</span></a></article>
-    <article class="feature-card feature-card-dark"><span class="feature-number">02</span><div class="feature-icon">⌁</div><h3>Flexible earning</h3><p>Choose the offers that fit your time, route, and delivery preferences.</p><a href="<?= linkTo('shippers') ?>">For shippers <span>→</span></a></article>
-    <article class="feature-card"><span class="feature-number">03</span><div class="feature-icon">◎</div><h3>Transparent pricing</h3><p>Review estimated delivery fees before you confirm an order.</p><a href="<?= linkTo('pricing') ?>">View pricing <span>→</span></a></article>
+  <section class="feature-grid row g-3">
+    <div class="col-12 col-md-4"><article class="feature-card"><span class="feature-number">01</span><div class="feature-icon">↗</div><h3>Simple booking</h3><p>Create a delivery request with clear pickup and drop-off details.</p><a href="<?= linkTo('customers') ?>">For customers <span>→</span></a></article></div>
+    <div class="col-12 col-md-4"><article class="feature-card feature-card-dark"><span class="feature-number">02</span><div class="feature-icon">⌁</div><h3>Flexible earning</h3><p>Choose the offers that fit your time, route, and delivery preferences.</p><a href="<?= linkTo('shippers') ?>">For shippers <span>→</span></a></article></div>
+    <div class="col-12 col-md-4"><article class="feature-card"><span class="feature-number">03</span><div class="feature-icon">◎</div><h3>Transparent pricing</h3><p>Review estimated delivery fees before you confirm an order.</p><a href="<?= linkTo('pricing') ?>">View pricing <span>→</span></a></article></div>
   </section>
 </main>
 <?php elseif ($page === 'pricing'): require __DIR__ . '/pricing.php'; ?>
@@ -65,4 +65,4 @@ $vi = [
 </main>
 <?php endif; ?>
 <footer class="site-footer"><a class="brand" href="<?= linkTo('home') ?>"><strong>SOMI</strong><span>DELIVERY</span></a><span>© 2026 Somi Delivery</span><div><button type="button" data-legal="terms">Terms of Service</button><button type="button" data-legal="privacy">Privacy Policy</button></div></footer>
-<div class="modal-backdrop" data-legal-modal hidden><section class="modal" role="dialog" aria-modal="true" aria-labelledby="legal-title"><button class="modal-close" type="button" data-modal-close aria-label="Close">×</button><p class="eyebrow dark-eyebrow">SOMI DELIVERY</p><h2 id="legal-title" data-legal-title>Terms of Service</h2><p>This demo presents the information and policies for the Somi frontend. Production terms and privacy details should be reviewed before launch.</p><button class="button button-dark" type="button" data-modal-close>Close</button></section></div>
+<div class="somi-modal-backdrop" data-legal-modal hidden><section class="somi-modal" role="dialog" aria-modal="true" aria-labelledby="legal-title"><button class="modal-close" type="button" data-modal-close aria-label="Close">×</button><p class="eyebrow dark-eyebrow">SOMI DELIVERY</p><h2 id="legal-title" data-legal-title>Terms of Service</h2><p>This demo presents the information and policies for the Somi frontend. Production terms and privacy details should be reviewed before launch.</p><button class="button button-dark" type="button" data-modal-close>Close</button></section></div>

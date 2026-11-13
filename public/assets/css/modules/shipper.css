@@ -256,3 +256,16 @@ body[data-page="shipper"] .earnings-hub tbody td:first-child{font-weight:700;let
 body[data-page="shipper"] .earnings-hub tbody td:nth-child(2){white-space:nowrap}
 body[data-page="shipper"] .earnings-hub>.p3-panel>button{margin-top:16px;min-height:40px;padding:10px 18px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--ink);font-size:13px;font-weight:700}
 @media(max-width:640px){body[data-page="shipper"] .earnings-hub .p3-panel{padding:16px}}
+/* === Đơn đang giao: hàng thao tác ===
+ * Bỏ emoji màu trong nhãn nút, nút chính tách khỏi nhóm nút phụ. */
+body[data-page="shipper"] .delivery-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:18px;padding-top:16px;border-top:1px solid #eef2f7}
+body[data-page="shipper"] .delivery-actions>.outline,body[data-page="shipper"] .delivery-actions>.primary{display:inline-flex;align-items:center;gap:7px;min-height:42px;padding:10px 17px;font-size:12.5px;text-decoration:none}
+body[data-page="shipper"] .delivery-actions .outline:hover{border-color:#c3d3e8;background:#f7faff}
+/* Nút chính của mốc giao hàng đứng cuối hàng và nổi hơn nhóm nút phụ. */
+body[data-page="shipper"] .delivery-actions>.primary{order:2;margin-left:auto;box-shadow:0 6px 18px rgba(36,120,245,.22)}
+body[data-page="shipper"] .delivery-actions>[data-delivery-action="SHOW_CANCEL"]{order:3;border-color:#f0d8d5;color:#a4443a}
+body[data-page="shipper"] .delivery-actions>[data-delivery-action="SHOW_CANCEL"]:hover{background:#fff7f6}
+@media(max-width:620px){
+ body[data-page="shipper"] .delivery-actions>.outline,body[data-page="shipper"] .delivery-actions>.primary{flex:1 1 calc(50% - 5px);justify-content:center}
+ body[data-page="shipper"] .delivery-actions>.primary{flex-basis:100%;margin-left:0}
+}

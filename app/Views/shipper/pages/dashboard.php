@@ -22,7 +22,7 @@
         </section>
         <section class="card">
           <div class="sectiontitle"><div><h2>Thu nhập và chi trả</h2><p>Tổng hợp các khoản đã ghi nhận.</p></div><button class="textlink" data-goto="earnings">Chi tiết →</button></div>
-          <div data-p3-summary>Đang tải…</div>
+          <div class="summarymoney" data-p3-summary>Đang tải…</div>
         </section>
         <section class="card">
           <div class="sectiontitle"><div><h2>Thông báo mới</h2><p>Các cập nhật gần đây cần bạn chú ý.</p></div><button class="textlink" data-goto="notifications">Xem tất cả →</button></div>

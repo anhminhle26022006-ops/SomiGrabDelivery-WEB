@@ -32,3 +32,11 @@ Hồ sơ Tiền theo đơn luôn hiển thị ngân hàng customer, ngân hàng 
 Các thanh lọc tự cập nhật khi gõ sau 300 ms; lựa chọn trạng thái cập nhật ngay, không còn nút Áp dụng. Kết quả request cũ không được ghi đè nội dung tìm kiếm mới.
 
 Hộp thoại có nút Quay lại; X, Escape và Hủy trở về hộp thoại cha nếu có, chỉ đóng ra danh sách ở cấp đầu. Màn hình cha giữ nút xử lý, dữ liệu form và vị trí cuộn. Xác nhận biên lai thành công mở lại hồ sơ tài chính đã làm mới.
+
+## Badge công việc và thứ tự xử lý
+
+Sidebar hiển thị số việc cần admin xử lý cho hồ sơ shipper PENDING (cả danh sách tài khoản liên quan), ticket NEW/IN_PROGRESS, đơn chưa có shipper hoặc có yêu cầu shipper chờ quyết định, hồ sơ tài chính còn khoản nhận/hoàn/chi cần xử lý, ngân hàng hiện tại PENDING, quốc tịch PENDING, job FAILED và thông báo ADMIN chưa đọc. Hồ sơ NEEDS_INFO đang chờ người dùng bổ sung không được đếm như hồ sơ mới chờ admin duyệt. Một đơn có nhiều khoản tài chính chỉ được đếm một lần; dữ liệu DEMO không được đếm là việc chuyển tiền thật. Các phiên bản ngân hàng customer cũ không được đếm.
+
+Badge 0 được ẩn. Số liệu lấy từ server khi mở trang, sau thao tác xử lý và mỗi 30 giây khi tab đang hiển thị. Dòng cần xử lý có nhãn riêng và được xếp trước trên server, trước khi giới hạn trang. Phân trang dùng cặp mức ưu tiên và ID để không bỏ sót/lặp dòng khi đi từ nhóm cần xử lý sang nhóm còn lại. Thông báo giữ nguyên phạm vi vai trò ADMIN.
+
+Kiểm thử chuyên biệt: `tests/admin_work_queue.php` (bảng TEMP), `tests/admin_flow_browser.cjs` (badge desktop/mobile và giảm số sau duyệt), cùng các kiểm thử admin và tài chính hiện có. Không cần migration mới cho thay đổi này.

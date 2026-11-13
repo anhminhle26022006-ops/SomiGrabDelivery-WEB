@@ -1,6 +1,8 @@
 <?php // Customer: Dashboard (Tổng quan) ?>
-<section class="c-head">
+<div class="c-dashboard">
+<section class="c-head c-dashboard-heading">
   <div>
+    <span class="c-eyebrow">MỖI CHUYẾN GỬI, MỘT NIỀM TIN</span>
     <h1 data-greeting>Xin chào</h1>
     <p data-today>Theo dõi các đơn đang chạy và những việc cần bạn xử lý.</p>
   </div>
@@ -14,7 +16,7 @@
 <div class="row g-4 align-items-start">
   <div class="col-lg-7 vstack gap-4">
     <div data-live></div>
-    <section class="card card-body">
+    <section class="card card-body c-month-card">
       <h2>Tháng này</h2>
       <p class="c-panel-sub" data-month-label>Số liệu từ đầu tháng</p>
       <div class="c-figures" data-figures></div>
@@ -26,7 +28,7 @@
     <section class="card card-body" data-default-address></section>
   </div>
   <div class="col-lg-5 vstack gap-4">
-    <section class="card card-body">
+    <section class="card card-body c-attention-card">
       <div class="c-panel-head"><h2>Cần bạn xử lý</h2></div>
       <div class="c-todo" data-todo></div>
     </section>
@@ -40,3 +42,5 @@
   </div>
 </div>
 <section class="workspace-support"><div><h2 data-w-vi="Cần hỗ trợ cho một đơn hàng?" data-w-en="Need help with a delivery?">Cần hỗ trợ cho một đơn hàng?</h2><p data-w-vi="Tạo yêu cầu và theo dõi phản hồi ngay trong tài khoản." data-w-en="Create a support request and follow replies in your account.">Tạo yêu cầu và theo dõi phản hồi ngay trong tài khoản.</p></div><a class="btn btn-outline-dark" href="?page=customer&amp;view=reports" data-w-vi="Trung tâm hỗ trợ" data-w-en="Support centre">Trung tâm hỗ trợ</a></section>
+
+</div>

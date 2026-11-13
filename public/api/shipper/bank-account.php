@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+header('Cache-Control: no-store');
 require_once __DIR__.'/../_kernel.php';
 require_once __DIR__.'/../../../app/Services/ShipperBankService.php';
 somi_run_api(['GET','POST'],['SHIPPER'],'person3.use',true,function(PDO $db,int $id):array {

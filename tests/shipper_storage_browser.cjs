@@ -15,7 +15,7 @@ const {chromium}=require('playwright');
   return route.fulfill({contentType:'application/json',body:JSON.stringify(data)});
  });
  await page.goto('http://shipper.test/');await page.waitForFunction(()=>!document.getElementById('kycResubmitForm').hidden);
- await page.getByRole('button',{name:'Quản lý tài khoản nhận tiền'}).click();check(await page.evaluate(()=>window.openedTab)==='bank','account opens real bank panel');
+ check(await page.locator('[data-shipper-bank-editor]').count()===1,'account mounts the API bank editor inline');
  check(await page.locator('#payoutNumber').count()===0,'demo bank inputs removed');
  await page.locator('[name=document_file]').setInputFiles({name:'fixture.pdf',mimeType:'application/pdf',buffer:Buffer.from('%PDF-1.4 fixture')});
  await page.getByRole('button',{name:'Tải giấy tờ và nộp lại hồ sơ'}).click();await page.waitForFunction(()=>document.getElementById('kycUploadStatus').textContent.includes('Đã nộp'));

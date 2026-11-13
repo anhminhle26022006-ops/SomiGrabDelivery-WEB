@@ -169,7 +169,7 @@
         if (disposed || version !== locationVersion) return;
         const latitude = Number(p.coords.latitude), longitude = Number(p.coords.longitude);
         if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || Math.abs(latitude)>90 || Math.abs(longitude)>180) throw new Error('unavailable');
-        user = {latitude,longitude}; currentAddress = null; confirmed = null; render();
+        user = {latitude,longitude}; currentAddress = null; if(confirmed!==locationKey())confirmed=null; render();
         stage = 'address';
         $('[data-location-status]').textContent = t('Đã định vị. Đang tìm địa chỉ hiện tại…','Located. Looking up your current address…');
         const data = await api('customer/places.php','POST',{action:'reverse',latitude:latitude.toFixed(7),longitude:longitude.toFixed(7),language});
@@ -211,6 +211,15 @@
     updateRoute(); locate();
     return {
       address(side) {return {...(states[side].address || {country_code:'VN',province:'TP.HCM'}), address_detail:field(side+'-detail').value.trim(), latitude:field(side+'-latitude').value, longitude:field(side+'-longitude').value};},
+      restore(saved) {
+        for (const side of ['pickup','delivery']) {
+          const entry=saved?.[side];
+          if(entry?.address)apply(side,entry.address,addresses.some(a=>String(a.address_id)===String(entry.savedId))?String(entry.savedId):'');
+        }
+        confirmed=saved?.confirmed||null;
+        updateRoute();
+      },
+      snapshot() {return {...Object.fromEntries(['pickup','delivery'].map(side=>[side,{address:this.address(side),savedId:states[side].saved.value}])),confirmed};},
       async confirmPickup() {
         const pickup = position('pickup');
         if (!user || !pickup || distance(user,pickup)<=1+1e-9 || confirmed===locationKey()) return true;

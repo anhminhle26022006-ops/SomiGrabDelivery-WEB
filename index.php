@@ -88,8 +88,8 @@ if (!in_array($shipperView, $allowedShipperViews, true)) $shipperView = 'dashboa
 $shipperViewPages = [
     'dashboard' => 'dashboard', 'offers' => 'offers', 'detail' => 'active', 'active' => 'active',
     'history' => 'history', 'earnings' => 'earnings', 'account' => 'account', 'registration' => 'account',
-    'chat' => 'active', 'support' => 'active', 'cancel' => 'active', 'withdraw' => 'earnings',
-    'report' => 'earnings', 'notifications' => 'notifications',
+    'chat' => 'support', 'support' => 'support', 'cancel' => 'active', 'withdraw' => 'earnings',
+    'report' => 'earnings', 'notifications' => 'dashboard',
 ];
 $shipperPage = $shipperViewPages[$shipperView];
 

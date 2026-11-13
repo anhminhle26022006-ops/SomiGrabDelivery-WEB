@@ -3,14 +3,12 @@
 (() => {
   const api = window.SomiShipper;
   const { esc, toast } = api;
-  const GPS_INTERVAL_MS = 15000; // backend chặn dưới 5 giây; gửi 15 giây một lần là đủ cho bản đồ theo dõi
 
   const t=(vn,en)=>(window.SomiI18n?.lang||document.documentElement.lang)==='en'?en:vn;
   let cancelSubmission=null;
-  let delivery = null;
+  let delivery;
+  let loadPending = false, dataVersion = 0, pollTimer = null;
   let historyRows = [];
-  let gpsWatch = null;
-  let lastGpsSentAt = 0;
   let pendingEvidenceType = null;
 
   const STATUS = {
@@ -38,7 +36,7 @@
 
   // Nút bấm lấy từ next_actions của backend: giao diện không tự quyết định bước nào hợp lệ.
   function actionButtons(actions) {
-    const photos = delivery.evidence.length;
+    const photos = delivery.evidence?.length || 0;
     const map = {
       PICKUP: `<button class="primary blue" data-delivery-action="PICKUP">Đã lấy hàng</button>`,
       START_DELIVERY: `<button class="primary blue" data-delivery-action="START_DELIVERY">Bắt đầu giao</button>`,
@@ -59,6 +57,14 @@
   }
 
   function render() {
+    const overview = document.getElementById("overviewDelivery");
+    if (overview) {
+      overview.innerHTML = delivery
+        ? `<div class="orderid">${esc(delivery.order_code)} <span class="tag">${esc(STATUS[delivery.status] || delivery.status)}</span></div>
+          <div class="address" style="margin-top:12px"><strong>Điểm lấy hàng</strong><small>${esc(delivery.pickup_address)}</small><strong>Điểm giao hàng</strong><small>${esc(delivery.delivery_address)}</small></div>
+          ${progress(delivery.status)}<button class="primary" data-goto="active">Mở đơn đang giao →</button>`
+        : `<div class="empty"><strong>Bạn chưa có đơn đang giao</strong>Nhận một đơn ở mục Đơn giao phù hợp để bắt đầu.</div>`;
+    }
     const box = document.getElementById("activeDelivery");
     const count = document.getElementById("activeCount");
     if (count) count.textContent = delivery ? "1 đơn đang xử lý" : "Không có đơn";
@@ -77,12 +83,14 @@
       ${progress(d.status)}
       <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:15px">
         <a class="outline" style="text-decoration:none" href="tel:${esc(d.sender_phone)}">☎ Gọi người gửi</a><a class="outline" style="text-decoration:none" href="tel:${esc(d.receiver_phone)}">☎ Gọi người nhận</a>
+        <button class="outline" type="button" data-open-order-chat>${esc(t('Chat với khách hàng','Chat with customer'))}</button>
         ${actionButtons(d.next_actions)}
         ${['SHIPPER_ASSIGNED','PICKED_UP','IN_DELIVERY'].includes(d.status)&&d.cancellation_request?.decision!=='PENDING'?`<button class="outline" type="button" data-delivery-action="SHOW_CANCEL">${esc(t('Yêu cầu hủy / dừng đơn','Request cancellation / stop'))}</button>`:''}
       </div>
       ${d.cancellation_request?`<p role="status">${esc(t('Yêu cầu gần nhất: ','Latest request: '))}${esc(d.cancellation_request.decision)} ${esc(d.cancellation_request.decision_note||'')}</p>`:''}
-      <form id="cancelDeliveryPanel" class="hidden" data-shipper-cancel-form style="margin-top:14px">
-        <p>${esc(t('Trước khi lấy hàng: tự hủy do lỗi của bạn sẽ bị trừ điểm theo policy và đơn được tìm Shipper khác. Sự cố khách quan hoặc đã lấy hàng cần Admin duyệt; tiếp tục bảo quản hàng.','Before pickup: cancelling due to your fault deducts policy points and restarts matching. External issues or cancellation after pickup require Admin review; keep the parcel safe.'))}</p>
+      <form id="cancelDeliveryPanel" class="hidden delivery-request-form" data-shipper-cancel-form>
+        <div class="delivery-form-head"><h3>Yêu cầu hủy / dừng đơn</h3><button type="button" data-delivery-action="SHOW_CANCEL" aria-label="Đóng yêu cầu">✕</button></div>
+        <p>${esc(t('Nếu chưa lấy hàng, bạn có thể hủy nhận đơn để hệ thống tìm shipper khác. Điểm tin cậy được tính theo quy định. Nếu đã lấy hàng hoặc gặp sự cố khách quan, hãy gửi yêu cầu và giữ hàng an toàn trong lúc chờ duyệt.','Before pickup: cancelling due to your fault deducts policy points and restarts matching. External issues or cancellation after pickup require Admin review; keep the parcel safe.'))}</p>
         <label>${esc(t('Phân loại','Reason type'))}<select name="reason_code" class="outline"><option value="SHIPPER_FAULT">${esc(t('Lỗi của tôi','My fault'))}</option><option value="EXTERNAL_ISSUE">${esc(t('Sự cố khách quan, cần xác minh','External issue requiring review'))}</option></select></label>
         <label style="display:block">${esc(t('Lý do','Reason'))}<textarea name="reason" required maxlength="1000" style="display:block;width:100%"></textarea></label>
         <label><input type="checkbox" name="acknowledged" required> ${esc(t('Tôi đã đọc điều kiện và xác nhận nội dung trên','I have read the conditions and confirm these details'))}</label>
@@ -111,23 +119,33 @@
 
   // ---------- Dữ liệu ----------
   function show(result) {
+    dataVersion++;
+    if (JSON.stringify(delivery) === JSON.stringify(result.delivery)) return;
     delivery = result.delivery;
+    document.dispatchEvent(new CustomEvent("somi:delivery-chat", {detail:delivery}));
     render();
     syncGps();
   }
 
   async function load() {
     try {
-      show(await api.currentDelivery());
+      if (loadPending) return;
+      loadPending = true;
+      const version = dataVersion;
+      const result = await api.currentDelivery();
+      if (version === dataVersion) show(result);
     } catch (error) {
-      toast(error.message);
-    }
+      const overview = document.getElementById("overviewDelivery");
+      if (overview) overview.textContent = error.message;
+      if (!delivery) toast(error.message);
+    } finally { loadPending = false; }
   }
 
   async function act(action, button) {
     if (action === "SHOW_CANCEL") return document.getElementById("cancelDeliveryPanel")?.classList.toggle("hidden");
     if (action === "SHOW_FAIL") return document.getElementById("failPanel")?.classList.toggle("hidden");
     const orderId = delivery.order_id;
+    dataVersion++;
     button.disabled = true;
     try {
       if(action==='REQUEST_CANCEL'){
@@ -181,20 +199,7 @@
   // ---------- GPS ----------
   // Chỉ theo dõi vị trí khi đang có đơn; hết đơn thì dừng để không thu thập vị trí ngoài giờ giao.
   function syncGps() {
-    const tracking = delivery && ["SHIPPER_ASSIGNED", "PICKED_UP", "IN_DELIVERY", "RETURNING"].includes(delivery.status) && !delivery.returned_at;
-    if (!tracking) {
-      if (gpsWatch !== null) navigator.geolocation.clearWatch(gpsWatch);
-      gpsWatch = null;
-      return;
-    }
-    if (gpsWatch !== null) return;
-    if (!navigator.geolocation) { toast(t('Thiết bị không hỗ trợ GPS. Customer chưa thể theo dõi vị trí.', 'GPS is unavailable. Customer cannot track your location.')); return; }
-    gpsWatch = navigator.geolocation.watchPosition((p) => {
-      if (Date.now() - lastGpsSentAt < GPS_INTERVAL_MS) return;
-      lastGpsSentAt = Date.now();
-      api.sendLocation({ latitude: p.coords.latitude, longitude: p.coords.longitude, accuracy_meters: Math.round(p.coords.accuracy) })
-        .catch((error) => { if (error.code === "NO_ACTIVE_DELIVERY") load(); });
-    }, (error) => { toast(error.code === 1 ? t('Hãy cấp quyền vị trí để customer theo dõi đơn trên bản đồ.', 'Allow location access so the customer can track this delivery.') : t('Chưa nhận được GPS. Kiểm tra định vị và kết nối.', 'GPS is unavailable. Check location settings and connectivity.')); }, { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 });
+    document.dispatchEvent(new CustomEvent('somi:delivery-update', {detail: delivery}));
   }
 
   document.addEventListener('submit',e=>{if(!e.target.matches('[data-shipper-cancel-form]'))return;e.preventDefault();const button=e.target.querySelector('[data-cancellation-submit]');if(!button.disabled)act('REQUEST_CANCEL',button);});
@@ -216,6 +221,12 @@
       event.target.value = "";
     });
     load();
+    pollTimer = setInterval(() => { if (!document.hidden) load(); }, 5000);
+    document.addEventListener('somi:delivery-refresh', load);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) load(); });
+    window.addEventListener('online', load);
+    window.addEventListener('pagehide', () => clearInterval(pollTimer));
+    window.addEventListener('pageshow', e => { if (e.persisted) { load(); pollTimer = setInterval(() => { if (!document.hidden) load(); }, 5000); } });
     if (document.getElementById("historyRows")) {
       api.history().then((result) => { historyRows = result.items; renderHistory(); }).catch((error) => toast(error.message));
     }

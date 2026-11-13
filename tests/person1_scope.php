@@ -48,7 +48,7 @@ try {
     check(count($files['items'])===1&&(int)$files['items'][0]['file_id']===$file,'only submitted KYC files');
     check(!isset($files['items'][0]['object_key']),'no private object keys exposed');
     rejects(fn()=>tx($db,fn()=>$media->listing(CUSTOMER,['shipper_id'=>SHIPPER_A])),'PERMISSION_DENIED');
-    rejects(fn()=>tx($db,fn()=>$media->listing(ADMIN,['order_id'=>$order])),'RELATED_TICKET_REQUIRED');
+    check(is_array(tx($db,fn()=>$media->listing(ADMIN,['order_id'=>$order]))['items']),'admin can inspect order evidence without a support ticket');
     $db->prepare("INSERT INTO support_tickets(ticket_code,order_id,opened_by,category,subject,description) VALUES('MEDIA-TEST',?,2,'OTHER','Fixture','Fixture')")->execute([$order]);
     $db->prepare("INSERT INTO order_assignments(order_id,shipper_id) VALUES(?,3)")->execute([$order]);
     $db->prepare("INSERT INTO deliveries(order_id,assignment_id) SELECT order_id,assignment_id FROM order_assignments WHERE order_id=?")->execute([$order]);
@@ -58,6 +58,6 @@ try {
     $db->prepare("UPDATE private_files SET delete_after=now()-interval '1 second' WHERE file_id IN (?,?)")->execute([$file,$photo]);
     check(count(tx($db,fn()=>$media->listing(ADMIN,['shipper_id'=>SHIPPER_A]))['items'])===0,'expired KYC hidden');
     check(count(tx($db,fn()=>$media->listing(ADMIN,['order_id'=>$order]))['items'])===0,'expired evidence hidden');
-    check((int)value($db,"SELECT count(*) FROM audit_logs WHERE action IN ('KYC_FILES_LIST','ORDER_EVIDENCE_LIST')")===4,'sensitive lists audited');
+    check((int)value($db,"SELECT count(*) FROM audit_logs WHERE action IN ('KYC_FILES_LIST','ORDER_EVIDENCE_LIST')")===5,'all five successful sensitive list reads audited');
     echo "PASS: $checks Person 1 scope checks; TEMP tables only; no provider calls or funds.\n";
 }catch(Throwable $e){if(isset($db)&&$db->inTransaction())$db->rollBack();fwrite(STDERR,get_class($e).': '.$e->getMessage()."\n");exit(1);}

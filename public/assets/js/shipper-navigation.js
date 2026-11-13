@@ -3,11 +3,12 @@
   const viewToPage = {
     dashboard: "dashboard", offers: "offers", detail: "active", active: "active",
     history: "history", earnings: "earnings", account: "account", registration: "account", notifications: "notifications",
-    chat: "active", support: "active", cancel: "active", withdraw: "earnings", report: "earnings"
+    chat: "support", support: "support", cancel: "active", withdraw: "earnings", report: "earnings"
   };
-  const knownPages = new Set(["dashboard", "offers", "active", "history", "earnings", "account", "notifications"]);
-  const pageToView = { dashboard: "dashboard", offers: "offers", active: "active", history: "history", earnings: "earnings", account: "account", notifications: "notifications" };
+  const knownPages = new Set(["dashboard", "offers", "active", "history", "earnings", "account", "notifications", "support"]);
+  const pageToView = { dashboard: "dashboard", offers: "offers", active: "active", history: "history", earnings: "earnings", account: "account", notifications: "notifications", support: "support" };
   function navigate(requestedPage, updateUrl = true) {
+    if (requestedPage === 'notifications') { window.SomiNotifications?.open(); return true; }
     const page = knownPages.has(requestedPage) ? requestedPage : "dashboard";
     const target = document.getElementById(`page-${page}`);
     const pages = [...document.querySelectorAll("main .page")];
@@ -45,10 +46,17 @@
   window.go = navigate;
   document.addEventListener("DOMContentLoaded", () => {
     const tabs = document.getElementById("shipperNav");
+    const menu=document.querySelector('.shipper-menu-toggle');
+    function closeMenu(restore=false){tabs?.classList.remove('is-open');menu?.setAttribute('aria-expanded','false');if(restore)menu?.focus();}
+    menu?.addEventListener('click',()=>{const open=menu.getAttribute('aria-expanded')!=='true';menu.setAttribute('aria-expanded',String(open));tabs?.classList.toggle('is-open',open);});
+    document.addEventListener('pointerdown',e=>{if(!tabs?.contains(e.target)&&!menu?.contains(e.target))closeMenu();});
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'&&menu?.getAttribute('aria-expanded')==='true'){closeMenu(true);}});
+    window.addEventListener('resize',()=>{if(window.innerWidth>760)closeMenu();});
     tabs?.addEventListener("click", (event) => {
       const link = event.target.closest("a[data-page]");
       if (!link || !tabs.contains(link) || event.defaultPrevented || event.button !== 0
           || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      closeMenu();
       if (navigate(link.dataset.page)) event.preventDefault();
     });
     document.addEventListener("click", (event) => {

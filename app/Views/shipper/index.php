@@ -1,19 +1,21 @@
 <?php
-// Shipper module UI based on the approved responsive shipper demo.
+// Shipper workspace.
+if ($shipperPage === 'notifications') $shipperPage = 'dashboard';
 ?>
 
 <header class="topbar">
   <div class="brand">SOMI <small>DELIVERY</small></div>
+  <button type="button" class="shipper-menu-toggle" aria-controls="shipperNav" aria-expanded="false" aria-label="Mở menu điều hướng"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
   <nav class="nav" id="shipperNav" aria-label="Điều hướng người giao">
     <a class="<?= $shipperPage === 'dashboard' ? 'active' : '' ?>" href="?page=shipper&amp;view=dashboard" data-page="dashboard" aria-controls="page-dashboard"<?= $shipperPage === 'dashboard' ? ' aria-current="page"' : '' ?>>Tổng quan</a>
     <a class="<?= $shipperPage === 'offers' ? 'active' : '' ?>" href="?page=shipper&amp;view=offers" data-page="offers" aria-controls="page-offers"<?= $shipperPage === 'offers' ? ' aria-current="page"' : '' ?>>Đơn giao phù hợp</a>
     <a class="<?= $shipperPage === 'active' ? 'active' : '' ?>" href="?page=shipper&amp;view=active" data-page="active" aria-controls="page-active"<?= $shipperPage === 'active' ? ' aria-current="page"' : '' ?>>Đơn đang giao</a>
     <a class="<?= $shipperPage === 'history' ? 'active' : '' ?>" href="?page=shipper&amp;view=history" data-page="history" aria-controls="page-history"<?= $shipperPage === 'history' ? ' aria-current="page"' : '' ?>>Lịch sử giao hàng</a>
     <a class="<?= $shipperPage === 'earnings' ? 'active' : '' ?>" href="?page=shipper&amp;view=earnings" data-page="earnings" aria-controls="page-earnings"<?= $shipperPage === 'earnings' ? ' aria-current="page"' : '' ?>>Thu nhập</a>
+    <a class="<?= $shipperPage === 'support' ? 'active' : '' ?>" href="?page=shipper&amp;view=support" data-page="support" aria-controls="page-support"<?= $shipperPage === 'support' ? ' aria-current="page"' : '' ?>>Trung tâm hỗ trợ</a>
   </nav>
 
   <div class="top-actions">
-    <button type="button" class="outline" data-workspace-switch="CUSTOMER">Switch to Customer</button>
     <div class="language-picker" data-language-picker>
       <button class="language-trigger" type="button" aria-label="Choose language" aria-expanded="false" data-language-trigger><span data-language-flag aria-hidden="true"><svg class="language-flag-svg" viewBox="0 0 30 20" aria-hidden="true" focusable="false"><rect width="30" height="20" rx="2" fill="#17356b"/><path d="M0 0L30 20M30 0L0 20" stroke="#fff" stroke-width="5"/><path d="M0 0L30 20M30 0L0 20" stroke="#c8102e" stroke-width="2"/><path d="M15 0V20M0 10H30" stroke="#fff" stroke-width="7"/><path d="M15 0V20M0 10H30" stroke="#c8102e" stroke-width="3.5"/></svg></span><span data-language-current>EN</span><span class="language-chevron" aria-hidden="true">⌄</span></button>
       <div class="language-menu" data-language-menu hidden>
@@ -21,61 +23,46 @@
         <button type="button" class="language-option" data-language-option="vi"><svg class="language-flag-svg" viewBox="0 0 30 20" aria-hidden="true" focusable="false"><rect width="30" height="20" rx="2" fill="#da251d"/><path d="M15 3.5L16.8 8.4L22 8.5L17.9 11.6L19.4 16.5L15 13.6L10.6 16.5L12.1 11.6L8 8.5L13.2 8.4Z" fill="#ffde00"/></svg><span>Tiếng Việt</span><span class="language-code">VI</span></button>
       </div>
     </div>
-    <button class="iconbtn" id="bellBtn" title="Thông báo" aria-label="Thông báo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 9a6 6 0 0 0-12 0c0 6-2.5 7.5-2.5 7.5h17S18 15 18 9"/><path d="M10.5 20a1.7 1.7 0 0 0 3 0"/></svg><span class="badge-count" id="bellCount" data-unread hidden>0</span></button>
+    <button class="iconbtn" id="bellBtn" type="button" aria-expanded="false" aria-controls="shipperNotificationPopup" title="Thông báo" aria-label="Thông báo"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false"><path d="M18 9a6 6 0 0 0-12 0c0 6-2.5 7.5-2.5 7.5h17S18 15 18 9"/><path d="M10.5 20a1.7 1.7 0 0 0 3 0"/></svg><span class="badge-count" id="bellCount" data-unread hidden>0</span></button>
     <div class="profile">
       <button class="profilebtn" id="profileBtn" aria-expanded="false">
         <span class="avatar" id="avatar"><span>NA</span></span>
       </button>
       <div class="dropdown" id="profileDropdown">
-        <div class="drophead"><strong>Nguyễn Văn A</strong><span>Quản lý tài khoản & trợ giúp</span></div>
+        <div class="drophead"><strong data-shipper-name>Đang tải…</strong><span>Quản lý tài khoản & trợ giúp</span></div>
         <button data-profile-action="account">👤 Tài khoản & hồ sơ</button>
         <button data-profile-action="support">🎧 <span class="shipper-copy-en">Support center</span><span class="shipper-copy-vi">Trung tâm hỗ trợ</span></button>
         <button data-profile-action="policy">📄 <span class="shipper-copy-en">Policies & terms</span><span class="shipper-copy-vi">Chính sách &amp; điều khoản</span></button>
+        <button type="button" data-workspace-switch="CUSTOMER">⇄ <span class="shipper-copy-en">Switch to Customer</span><span class="shipper-copy-vi">Chuyển sang Khách hàng</span></button>
         <button class="danger" data-signout>↪ <span class="shipper-copy-en">Sign out</span><span class="shipper-copy-vi">Đăng xuất</span></button>
       </div>
     </div>
   </div>
+  <section id="shipperNotificationPopup" class="shipper-notification-popup" role="dialog" aria-label="Thông báo" tabindex="-1" hidden>
+    <header class="notification-popup-head"><div><h2 data-notification-title>Thông báo</h2><p data-notification-count>Đang tải…</p></div><button type="button" data-notification-close aria-label="Đóng thông báo">✕</button></header>
+    <div class="notification-popup-toolbar"><div><button type="button" data-notification-filter="all" aria-pressed="true">Tất cả</button><button type="button" data-notification-filter="unread" aria-pressed="false">Chưa đọc</button></div><button type="button" data-notification-read-all>Đọc tất cả</button></div>
+    <p data-notification-status role="status" aria-live="polite" hidden></p>
+    <div class="notification-popup-list" data-notification-list></div>
+    <footer><button type="button" data-notification-refresh>Làm mới</button><button type="button" data-notification-more hidden>Xem thêm</button></footer>
+  </section>
 </header>
 <main>
+  <?php if ($shipperPage !== 'support'): ?>
   <div class="shipper-status d-flex flex-wrap align-items-center gap-2" role="group" aria-label="Trạng thái nhận đơn">
-    <button class="toggle on" id="availabilityToggle" aria-label="Bật tắt nhận đơn"></button><strong>Trạng thái nhận đơn</strong>
-    <span class="pill" id="availabilityPill">ĐANG NHẬN ĐƠN</span>
-    <p class="muted" id="availabilityHelp">Bạn sẽ nhận được các đơn phù hợp khi trực tuyến.</p>
+    <button class="toggle" id="availabilityToggle" disabled aria-label="Bật tắt nhận đơn"></button><strong>Trạng thái nhận đơn</strong>
+    <span class="pill" id="availabilityPill">Đang tải…</span>
+    <p class="muted" id="availabilityHelp">Đang kiểm tra trạng thái nhận đơn…</p>
   </div>
+  <?php endif; ?>
   <?php require __DIR__ . '/pages/' . $shipperPage . '.php'; ?>
-  <?php require __DIR__.'/../shared/person3-panel.php'; ?>
-</main>
-<div id="contactModal" class="modalback hidden" role="dialog" aria-modal="true" aria-labelledby="contactTitle">
-  <div class="somi-modal">
-    <div class="modalhead"><div><span class="eyebrow">LIÊN HỆ THEO ĐƠN</span><h2 id="contactTitle">Liên hệ người nhận</h2><span class="muted" style="font-size:12px">Đơn SOMI-240126</span></div><button class="outline" aria-label="Đóng" onclick="closeContactChat()">✕</button></div>
-    <div class="modalbody">
-      <div class="recipient-summary"><div class="recipient-avatar">NA</div><div><b>Nguyễn Minh Anh</b><span>Người nhận · 090 000 0000</span><small>241 Võ Văn Tần, Phường 5, Quận 3</small></div></div>
-      <div class="contact-actions"><a class="primary blue" href="tel:0900000000">☎ Gọi người nhận</a><span class="pill">● Chat trong đơn hàng</span></div>
-      <div class="chatmessages" id="chatMessages"><div class="chat-date">Hôm nay · Đơn SOMI-240126</div><div class="bubble"><small>Shipper · 14:32</small>Chào anh/chị, tôi đang trên đường giao đơn hàng.</div><div class="bubble theirs"><small>Người nhận · 14:34</small>Vâng, vui lòng gọi tôi khi đến nơi nhé.</div><div class="bubble mine"><small>Bạn · 14:36</small>Tôi đã đến nơi, anh/chị có thể nhận hàng chưa ạ?</div></div>
-      <form class="chatcompose" id="chatForm"><input id="chatInput" placeholder="Nhập tin nhắn cho người nhận..." autocomplete="off" required><button class="primary blue" type="submit">Gửi</button></form>
-      <p class="muted demo-disclaimer">Chat và cuộc gọi là mô phỏng; thông tin liên hệ sẽ lấy từ dữ liệu đơn khi tích hợp backend.</p>
-    </div>
+  <?php if ($shipperPage !== 'support'): ?>
+  <div hidden data-shipper-support-utility>
+    <?php require __DIR__.'/../shared/person3-panel.php'; ?>
   </div>
-</div>
+  <?php endif; ?>
+</main>
 <div id="orderDetailModal" class="modalback hidden" role="dialog" aria-modal="true" aria-labelledby="orderDetailTitle">
   <div class="somi-modal detailmodal"><div class="modalhead"><div><span class="eyebrow">THÔNG TIN ĐƠN GIAO</span><h2 id="orderDetailTitle">Chi tiết đơn</h2></div><button class="outline" aria-label="Đóng" onclick="closeOrderDetail()">✕</button></div><div class="modalbody" id="orderDetailBody"></div></div>
-</div>
-<div id="shipperSupportModal" class="shipper-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="shipperSupportTitle">
-  <section class="shipper-dialog">
-    <header class="shipper-dialog-head"><div><span class="eyebrow"><span class="shipper-copy-en">SHIPPER HELP</span><span class="shipper-copy-vi">TRỢ GIÚP NGƯỜI GIAO</span></span><h2 id="shipperSupportTitle"><span class="shipper-copy-en">Support center</span><span class="shipper-copy-vi">Trung tâm hỗ trợ</span></h2><p><span class="shipper-copy-en">Find answers or send a request to the SOMI support team.</span><span class="shipper-copy-vi">Tìm câu trả lời hoặc gửi yêu cầu đến đội ngũ hỗ trợ SOMI.</span></p></div><button type="button" class="outline" data-close-shipper-modal aria-label="Close">✕</button></header>
-    <div class="shipper-dialog-body">
-      <div class="shipper-support-grid">
-        <div class="shipper-support-main">
-          <h3><span class="shipper-copy-en">Frequently asked questions</span><span class="shipper-copy-vi">Câu hỏi thường gặp</span></h3>
-          <details><summary><span class="shipper-copy-en">What should I do if I cannot reach the recipient?</span><span class="shipper-copy-vi">Tôi cần làm gì khi không liên hệ được người nhận?</span></summary><p><span class="shipper-copy-en">Try calling or messaging once more, record the issue on the active delivery, then contact support. Do not mark the delivery complete unless the parcel was handed over.</span><span class="shipper-copy-vi">Hãy thử gọi hoặc nhắn thêm một lần, ghi nhận sự cố trong đơn đang giao rồi liên hệ hỗ trợ. Chỉ xác nhận hoàn tất khi đã bàn giao hàng.</span></p></details>
-          <details><summary><span class="shipper-copy-en">When will delivery earnings be paid?</span><span class="shipper-copy-vi">Khi nào thu nhập giao hàng được thanh toán?</span></summary><p><span class="shipper-copy-en">Earnings are held while delivery is in progress. After successful completion, the platform fee is deducted and the net amount is sent to your verified bank account.</span><span class="shipper-copy-vi">Thu nhập được giữ trong quá trình vận chuyển. Khi giao thành công, phí sàn được khấu trừ và số tiền thực nhận được chuyển vào tài khoản ngân hàng đã xác minh.</span></p></details>
-          <details><summary><span class="shipper-copy-en">How do I report a safety or parcel issue?</span><span class="shipper-copy-vi">Báo sự cố an toàn hoặc hàng hóa như thế nào?</span></summary><p><span class="shipper-copy-en">Use the active order support form and include the order number, issue type, and a short description. For urgent danger, contact local emergency services first.</span><span class="shipper-copy-vi">Dùng biểu mẫu hỗ trợ trong đơn đang giao, ghi mã đơn, loại sự cố và mô tả ngắn. Nếu có nguy hiểm khẩn cấp, hãy liên hệ cơ quan cứu hộ địa phương trước.</span></p></details>
-        </div>
-        <button type="button" class="primary blue" onclick="document.getElementById('shipperSupportModal').classList.add('hidden');window.somiPerson3Open?.('tickets')"><span class="shipper-copy-en">Open support tickets</span><span class="shipper-copy-vi">Mở yêu cầu hỗ trợ</span></button>
-      </div>
-      <div class="shipper-support-footer"><div><b><span class="shipper-copy-en">Still need help?</span><span class="shipper-copy-vi">Bạn vẫn cần trợ giúp?</span></b><span><span class="shipper-copy-en">Our support team is available for delivery and account questions.</span><span class="shipper-copy-vi">Đội ngũ hỗ trợ tiếp nhận câu hỏi về giao hàng và tài khoản.</span></span></div><a class="outline" href="mailto:support@somi.example">✉ support@somi.example</a></div>
-    </div>
-  </section>
 </div>
 <div id="shipperPolicyModal" class="shipper-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="shipperPolicyTitle">
   <section class="shipper-dialog shipper-policy-dialog">
@@ -124,7 +111,7 @@ body[data-page="shipper"] .shipper-policy-dialog>.shipper-dialog-body>.shipper-d
 </style>
 <script>
 (() => {
-  const support = document.getElementById('shipperSupportModal');
+
   const policy = document.getElementById('shipperPolicyModal');
   let locale = localStorage.getItem('somi-language') === 'vi' ? 'vi' : 'en';
   const shipperCopy = {
@@ -197,13 +184,15 @@ body[data-page="shipper"] .shipper-policy-dialog>.shipper-dialog-body>.shipper-d
     const nodes = [];
     while (walker.nextNode()) {
       const node = walker.currentNode;
-      if (!node.parentElement.closest('.shipper-copy-en,.shipper-copy-vi,script,style,.language-option')) nodes.push(node);
+      if (!node.parentElement.closest('.shipper-copy-en,.shipper-copy-vi,script,style,.language-option,[data-support-localized]')) nodes.push(node);
     }
     nodes.forEach(node => { const updated = localizeText(node.nodeValue); if (updated !== node.nodeValue) node.nodeValue = updated; });
     document.querySelectorAll('input[placeholder],textarea[placeholder]').forEach(input => {
+      if (input.closest('[data-support-localized]')) return;
       const placeholder = localizeText(input.placeholder); if (placeholder !== input.placeholder) input.placeholder = placeholder;
     });
     document.querySelectorAll('[aria-label],[title]').forEach(element => ['aria-label','title'].forEach(attribute => {
+      if (element.closest('[data-support-localized]')) return;
       const value = element.getAttribute(attribute); if (!value) return;
       const updated = localizeText(value); if (updated !== value) element.setAttribute(attribute, updated);
     }));
@@ -280,7 +269,7 @@ body[data-page="shipper"] .shipper-policy-dialog>.shipper-dialog-body>.shipper-d
       event.preventDefault(); event.stopImmediatePropagation();
       document.getElementById('profileDropdown')?.classList.remove('open');
       document.getElementById('profileBtn')?.setAttribute('aria-expanded', 'false');
-      (action === 'support' ? support : policy).classList.remove('hidden');
+      if (action === 'support') window.somiPerson3Open?.('tickets'); else policy.classList.remove('hidden');
     } else if (action === 'logout') {
       event.preventDefault(); event.stopImmediatePropagation();
       localStorage.removeItem('somi-demo-session');
@@ -288,13 +277,13 @@ body[data-page="shipper"] .shipper-policy-dialog>.shipper-dialog-body>.shipper-d
     }
   }, true);
   document.querySelectorAll('[data-close-shipper-modal]').forEach(button => button.addEventListener('click', () => {
-    support.classList.add('hidden'); policy.classList.add('hidden');
+    policy.classList.add('hidden');
   }));
-  [support, policy].forEach(modal => modal.addEventListener('click', event => {
+  [policy].forEach(modal => modal.addEventListener('click', event => {
     if (event.target === modal) modal.classList.add('hidden');
   }));
   document.addEventListener('keydown', event => {
-    if (event.key === 'Escape') { support.classList.add('hidden'); policy.classList.add('hidden'); }
+    if (event.key === 'Escape') { policy.classList.add('hidden'); }
   });
   document.querySelectorAll('[data-policy-tab]').forEach(tab => tab.addEventListener('click', () => {
     document.querySelectorAll('[data-policy-tab]').forEach(item => item.classList.toggle('selected', item === tab));
@@ -303,10 +292,10 @@ body[data-page="shipper"] .shipper-policy-dialog>.shipper-dialog-body>.shipper-d
   document.addEventListener('DOMContentLoaded', scheduleShipperTranslation);
   const shipperLanguageObserver = new MutationObserver(scheduleShipperTranslation);
   shipperLanguageObserver.observe(document.body, {subtree:true,childList:true,characterData:true});
-  document.getElementById('shipperHelpForm')?.addEventListener('submit', event => { event.preventDefault(); document.getElementById('shipperSupportModal').classList.add('hidden'); window.somiPerson3Open?.('tickets'); });
 })();
 </script>
 <?php // Module giao diện nối API Shipper (Người 2). Chỉ nạp những file đã có trong mã nguồn. ?>
-<?php foreach (['shipper-api', 'shipper-header', 'shipper-dashboard', 'shipper-offers', 'shipper-active', 'shipper-account'] as $shipperModule): ?>
+<?php foreach (['shipper-api', 'shipper-header', 'shipper-notifications', 'shipper-offers', 'shipper-tracking', 'shipper-active', 'shipper-account', 'shipper-dashboard'] as $shipperModule): ?>
 <?php if (is_file(__DIR__ . '/../../../public/assets/js/' . $shipperModule . '.js')): ?><script defer src="<?= e(assetUrl('public/assets/js/' . $shipperModule . '.js')) ?>"></script><?php endif; ?>
 <?php endforeach; ?>
+<?php require __DIR__.'/../shared/workspace-enhancements.php'; ?>

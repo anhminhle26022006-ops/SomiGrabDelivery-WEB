@@ -31,7 +31,7 @@ if (!is_string($customerView) || !array_key_exists($customerView, $customerViews
 $person3View = in_array($customerView, ['report','reports','notifications'], true);
 $liveCustomerView = in_array($customerView, ['dashboard','create','orders','order','payment','account','matching','tracking','addresses'], true);
 $asset = 'public/assets/js/customer/';
-$customerNeedsMap = in_array($customerView,['create','addresses'],true);
+$customerNeedsMap = in_array($customerView,['create','addresses','order','tracking','matching','payment'],true);
 
 $nav = [
     'dashboard' => ['Tổng quan', 'home'],
@@ -96,7 +96,11 @@ function customerIcon(string $paths, int $size = 20): string {
           <li><a class="dropdown-item" href="?page=customer&amp;view=account">Tài khoản</a></li>
           <li><a class="dropdown-item" href="?page=customer&amp;view=addresses">Sổ địa chỉ</a></li>
           <li><a class="dropdown-item" href="?page=customer&amp;view=reports">Báo cáo của tôi</a></li>
-          <?php if ($hasShipperWorkspace): ?><li><button class="dropdown-item" type="button" data-workspace-switch="SHIPPER">Chuyển sang Shipper</button></li><?php endif; ?>
+          <?php if ($hasShipperWorkspace): ?>
+          <li><button class="dropdown-item" type="button" data-workspace-switch="SHIPPER" data-copy-en="Switch to Shipper workspace" data-copy-vi="Chuyển sang Shipper">Chuyển sang Shipper</button></li>
+          <?php else: ?>
+          <li><button class="dropdown-item" type="button" data-bs-toggle="modal" data-bs-target="#shipperApplicationModal" data-copy-en="Become a Shipper" data-copy-vi="Đăng ký làm Shipper">Đăng ký làm Shipper</button></li>
+          <?php endif; ?>
           <li><hr class="dropdown-divider"></li>
           <li><button class="dropdown-item text-danger" type="button" data-signout>Đăng xuất</button></li>
         </ul>
@@ -106,31 +110,25 @@ function customerIcon(string $paths, int $size = 20): string {
 
   <main data-geoapify-key="<?= e(getenv('GEOAPIFY_BROWSER_API_KEY') ?: '') ?>" class="c-main" id="c-main"<?= $liveCustomerView ? ' data-customer-server aria-busy="true"' : '' ?>>
     <div data-account-banner></div>
-    <?php if ($customerView === 'dashboard'): ?>
-  <?php if ($hasShipperWorkspace): ?>
-  <div class="card card-body mb-3">
-    <strong data-copy-en="Also a Shipper?" data-copy-vi="Bạn cũng là Shipper?">Bạn cũng là Shipper?</strong>
-    <p class="text-muted mb-2" data-copy-en="Your account has a Shipper workspace." data-copy-vi="Tài khoản của bạn có không gian Shipper.">Tài khoản của bạn có không gian Shipper.</p>
-    <button class="btn btn-outline-dark" type="button" data-workspace-switch="SHIPPER" data-copy-en="Switch to Shipper workspace" data-copy-vi="Chuyển sang Shipper">Chuyển sang Shipper</button>
-  </div>
-  <?php else: ?>
-  <div class="card card-body mb-3">
-    <h2 class="h5" data-copy-en="Become a Shipper" data-copy-vi="Đăng ký làm Shipper">Đăng ký làm Shipper</h2>
-    <p class="text-muted" data-copy-en="Apply with your vehicle details. Your Shipper workspace will be available after Admin review." data-copy-vi="Đăng ký thông tin phương tiện. Không gian Shipper sẽ hoạt động sau khi Admin duyệt.">Đăng ký thông tin phương tiện. Không gian Shipper sẽ hoạt động sau khi Admin duyệt.</p>
-    <form data-shipper-application-form>
-      <div class="row g-2">
-        <div class="col-md-6"><label class="form-label" for="switchVehicleType" data-copy-en="Vehicle type" data-copy-vi="Loại phương tiện">Loại phương tiện</label><input class="form-control" id="switchVehicleType" name="vehicle_type" maxlength="80" required placeholder="Motorbike, bicycle, car"></div>
-        <div class="col-md-6"><label class="form-label" for="switchVehicleRegistration" data-copy-en="Vehicle registration" data-copy-vi="Biển số xe">Biển số xe</label><input class="form-control" id="switchVehicleRegistration" name="vehicle_registration" maxlength="40" required placeholder="License plate or registration number"></div>
-      </div>
-      <p class="text-danger small mt-2" data-switch-error role="alert" hidden></p>
-      <button class="btn btn-dark mt-2" type="submit" data-copy-en="Apply to become a Shipper" data-copy-vi="Gửi đăng ký Shipper">Gửi đăng ký Shipper</button>
-    </form>
-  </div>
-  <?php endif; ?>
-<?php endif; ?>
     <?php if ($person3View): require __DIR__.'/../shared/person3-panel.php'; else: require __DIR__ . '/pages/' . $customerView . '.php'; endif; ?>
     <?php if (in_array($customerView,['order','tracking'],true)) require __DIR__.'/../shared/person3-panel.php'; ?>
   </main>
+
+  <?php if (!$hasShipperWorkspace): ?>
+  <div class="modal fade" id="shipperApplicationModal" tabindex="-1" aria-labelledby="shipperApplicationTitle" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-lg">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="modal-title h5" id="shipperApplicationTitle" data-copy-en="Become a Shipper" data-copy-vi="Đăng ký làm Shipper">Đăng ký làm Shipper</h2>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+        </div>
+        <div class="modal-body">
+          <?php require __DIR__.'/../shared/shipper-application-form.php'; ?>
+        </div>
+      </div>
+    </div>
+  </div>
+  <?php endif; ?>
 
   <nav class="c-tabbar d-md-none" aria-label="Điều hướng nhanh">
     <?php
@@ -153,6 +151,7 @@ function customerIcon(string $paths, int $size = 20): string {
 <script defer src="<?= e(assetUrl('public/assets/vendor/bootstrap/bootstrap.bundle.min.js')) ?>"></script>
 <script defer src="<?= e(assetUrl($asset . 'lang/en.js')) ?>"></script>
 <script defer src="<?= e(assetUrl($asset . 'i18n.js')) ?>"></script>
+<?php require __DIR__.'/../shared/workspace-enhancements.php'; ?>
 <?php if ($liveCustomerView): ?>
 <?php if ($customerNeedsMap): ?>
 <script defer src="<?= e(assetUrl('public/assets/vendor/leaflet/leaflet.js')) ?>"></script>

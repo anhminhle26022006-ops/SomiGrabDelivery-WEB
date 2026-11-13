@@ -10,6 +10,8 @@ if (($argv[1] ?? '') !== '--apply') {
     fwrite(STDERR, "Usage: php database/migrate-customer-orders.php --apply\nApplies versioned backend migrations to the configured SOMI database.\n");
     exit(2);
 }
+require_once __DIR__.'/../app/Services/ShipperApplicationSchema.php';
+require_once __DIR__.'/../app/Services/WorkspaceProfileSchema.php';
 $db = null;
 try {
     $db = somi_db();
@@ -20,11 +22,13 @@ try {
     if($db->query("SELECT EXISTS(SELECT 1 FROM information_schema.columns WHERE table_schema='somi' AND table_name='schema_migrations' AND column_name='version')")->fetchColumn()){
         $db->exec('INSERT INTO somi.backend_migrations(version,applied_at) SELECT version,applied_at FROM somi.schema_migrations ON CONFLICT(version) DO NOTHING');
     }
-    foreach (['20261105_customer_orders', '20261105_approved_pricing', '20261105_service_range_40km', '20261105_distance_weight_pricing', '20261106_person1_backend','20261107_person1_compat','20261108_common_parcel_categories','20261110_shipper_delivery','20261111_person3','20261111_person3_complete','20261111_customer_currency_choice','20261111_person3_supabase','20261112_no_shipper_refund','20261112_shipper_policy_workflows'] as $version) {
+    foreach (['20261105_customer_orders', '20261105_approved_pricing', '20261105_service_range_40km', '20261105_distance_weight_pricing', '20261106_person1_backend','20261107_person1_compat','20261108_common_parcel_categories','20261110_shipper_delivery','20261111_person3','20261111_person3_complete','20261111_customer_currency_choice','20261111_person3_supabase','20261112_no_shipper_refund','20261112_shipper_policy_workflows','20261113_workspace_notifications','20261113_shipper_application','20261113_admin_kyc_access','20261113_manual_escrow','20261113_admin_finance','20261113_account_avatars'] as $version) {
     $q = $db->prepare('SELECT 1 FROM somi.backend_migrations WHERE version = :version');
     $q->execute(['version' => $version]);
     if ($q->fetchColumn()) continue;
-    if ($version === '20261105_service_range_40km') ServiceRangeRelease::apply($db);
+    if ($version === '20261113_account_avatars') WorkspaceProfileSchema::apply($db);
+    elseif ($version === '20261113_shipper_application') ShipperApplicationSchema::apply($db);
+    elseif ($version === '20261105_service_range_40km') ServiceRangeRelease::apply($db);
     else {
     $sql = file_get_contents(__DIR__ . '/migrations/' . $version . '.sql');
     $sql = preg_replace('/^BEGIN;\s*|^COMMIT;\s*/m', '', $sql);

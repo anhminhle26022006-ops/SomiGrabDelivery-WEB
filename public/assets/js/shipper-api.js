@@ -59,6 +59,15 @@
     if (typeof window.toast === "function") window.toast(message);
   }
 
+  // Quãng đường hiển thị theo ngôn ngữ đang chọn: tiếng Việt dùng dấu phẩy thập phân.
+  // API trả chuỗi dạng "7.650" nên nếu in thẳng sẽ bị đọc nhầm thành 7650 km.
+  function distance(value) {
+    const number = Number(value);
+    if (!Number.isFinite(number)) return String(value ?? "");
+    const locale = document.documentElement.lang === "vi" ? "vi-VN" : "en-US";
+    return number.toLocaleString(locale, { maximumFractionDigits: 1 });
+  }
+
   // Vị trí hiện tại của thiết bị. Trình duyệt chỉ cấp khi trang chạy HTTPS hoặc localhost.
   function position() {
     return new Promise((resolve, reject) => {
@@ -72,8 +81,10 @@
   }
 
   window.SomiShipper = {
-    esc, money, toast, position,
+    esc, money, distance, toast, position,
     profile: () => request("profile.php"),
+    accountProfile: () => request("../account/profile.php"),
+    updateName: (fullName) => request("../account/profile.php", "PUT", { full_name: fullName }),
     dashboard: (range) => request("dashboard.php?range=" + encodeURIComponent(range)),
     updateVehicle: (vehicle) => request("profile.php", "PUT", vehicle),
     kyc: () => request("kyc.php"),
@@ -86,6 +97,7 @@
     availability: () => request("availability.php"),
     setAvailability: (body) => request("availability.php", "POST", body),
     offers: () => request("offers.php"),
+    refreshOffers: () => request("offers.php", "POST", { action: "refresh" }),
     rejectOffer: (offerId) => request("offers.php", "POST", { offer_id: String(offerId) }),
     acceptOffer: (offerId) => request("accept-offer.php", "POST", { offer_id: String(offerId) }),
     currentDelivery: () => request("deliveries.php"),

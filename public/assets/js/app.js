@@ -378,7 +378,7 @@
     const nodes = [];
     while (walker.nextNode()) nodes.push(walker.currentNode);
     nodes.forEach((node) => {
-      if (node.parentElement?.closest('[data-copy-en], script, style')) return;
+      if (node.parentElement?.closest('[data-copy-en], [data-support-localized], .shipper-copy-en, .shipper-copy-vi, script, style')) return;
       const current = node.nodeValue.trim();
       const translated = toVietnamese ? viText[current] : reverseText[current];
       if (translated) node.nodeValue = node.nodeValue.replace(current, translated);
@@ -396,6 +396,7 @@
     };
     const reversePlaceholders = Object.fromEntries(Object.entries(placeholders).map(([en, vi]) => [vi, en]));
     $$("input[placeholder], textarea[placeholder]").forEach((element) => {
+      if (element.closest('[data-support-localized]')) return;
       const current = element.getAttribute("placeholder");
       const translated = toVietnamese ? placeholders[current] : reversePlaceholders[current];
       if (translated) element.setAttribute("placeholder", translated);
@@ -568,6 +569,16 @@
     };
     const render = () => {
       const signup = mode === "signup";
+      const adminRole = $('input[name="role"][value="admin"]', form);
+      if (signup && adminRole?.checked) {
+        $('input[name="role"][value="customer"]', form).checked = true;
+      }
+      if (adminRole) {
+        adminRole.closest("label").hidden = signup;
+        adminRole.disabled = signup;
+      }
+      const rolePicker = $(".auth-role-picker", form);
+      if (rolePicker) rolePicker.style.gridTemplateColumns = `repeat(${signup ? 2 : 3}, minmax(0, 1fr))`;
       const role = $('input[name="role"]:checked', form)?.value || "customer";
       const isAdmin = role === "admin";
       signinFields.hidden = signup;
@@ -880,25 +891,6 @@
       }
     }));
 
-    $$(`[data-shipper-application-form]`).forEach((form) => form.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      const error = $("[data-switch-error]", form);
-      const button = $("button[type='submit']", form);
-      error.hidden = true;
-      button.disabled = true;
-      try {
-        await postSwitch({
-          target: "SHIPPER",
-          vehicle_type: form.elements.vehicle_type.value.trim(),
-          vehicle_registration: form.elements.vehicle_registration.value.trim()
-        });
-        window.location.href = "?page=shipper";
-      } catch (requestError) {
-        error.textContent = requestError.message;
-        error.hidden = false;
-        button.disabled = false;
-      }
-    }));
   }
 
   function setupShipperReview() {

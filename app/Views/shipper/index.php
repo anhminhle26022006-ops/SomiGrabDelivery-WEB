@@ -231,8 +231,25 @@ body[data-page="shipper"] .shipper-policy-dialog>.shipper-dialog-body>.shipper-d
     dateMenu?.querySelectorAll('[data-date-range]').forEach(option => option.setAttribute('aria-pressed', String(option.dataset.dateRange === range)));
     renderDashboardPeriod(range);
   };
+  // Chỉ còn phần chữ mô tả của từng kỳ. Số liệu thật lấy từ API shipper/dashboard.php
+  // và do public/assets/js/shipper-dashboard.js hiển thị khi nhận sự kiện somi:shipper-range.
+  const dashboardPeriods = {
+    today:{description:['A quick look at your delivery activity today.','Xem nhanh tình trạng hoạt động hôm nay của bạn.'],period:['today','hôm nay']},
+    yesterday:{description:['Your delivery activity yesterday.','Tình hình hoạt động giao hàng hôm qua của bạn.'],period:['yesterday','hôm qua']},
+    week:{description:['Your delivery activity this week.','Tình hình hoạt động giao hàng tuần này của bạn.'],period:['this week','tuần này']},
+    month:{description:['Your delivery activity this month.','Tình hình hoạt động giao hàng tháng này của bạn.'],period:['this month','tháng này']}
+  };
   function renderDashboardPeriod(range) {
-    window.dispatchEvent(new CustomEvent('somi:shipper-period', {detail:{range}}));
+    const data = dashboardPeriods[range];
+    if (!data) return;
+    const text = pair => pair[locale === 'vi' ? 1 : 0];
+    document.querySelectorAll('[data-dashboard-description]').forEach(el => { el.textContent = text(data.description); });
+    document.querySelectorAll('[data-period-stat]').forEach(el => {
+      el.textContent = el.dataset.periodStat === 'deliveries'
+        ? (locale === 'vi' ? `Đơn hoàn thành ${data.period[1]}` : `Deliveries completed ${data.period[0]}`)
+        : (locale === 'vi' ? `Tỷ lệ nhận đơn ${data.period[1]}` : `Acceptance rate ${data.period[0]}`);
+    });
+    document.dispatchEvent(new CustomEvent('somi:shipper-range', { detail: { range } }));
   }
   if (dateTrigger && dateMenu) {
     document.addEventListener('somi:language-change', () => renderDateRange(localStorage.getItem('somi-shipper-date-range') || 'today'));
@@ -278,6 +295,6 @@ body[data-page="shipper"] .shipper-policy-dialog>.shipper-dialog-body>.shipper-d
 })();
 </script>
 <?php // Module giao diện nối API Shipper (Người 2). Chỉ nạp những file đã có trong mã nguồn. ?>
-<?php foreach (['shipper-api', 'shipper-notifications', 'shipper-offers', 'shipper-tracking', 'shipper-active', 'shipper-account', 'shipper-dashboard'] as $shipperModule): ?>
+<?php foreach (['shipper-api', 'shipper-header', 'shipper-notifications', 'shipper-offers', 'shipper-tracking', 'shipper-active', 'shipper-account', 'shipper-dashboard'] as $shipperModule): ?>
 <?php if (is_file(__DIR__ . '/../../../public/assets/js/' . $shipperModule . '.js')): ?><script defer src="<?= e(assetUrl('public/assets/js/' . $shipperModule . '.js')) ?>"></script><?php endif; ?>
 <?php endforeach; ?>

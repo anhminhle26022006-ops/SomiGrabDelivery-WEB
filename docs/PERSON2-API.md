@@ -18,9 +18,9 @@ Base `/public/api/`. Workspace phải là SHIPPER trừ hai endpoint Customer �
 
 | Endpoint | Method | Quyền | Nội dung |
 |---|---|---|---|
-| `shipper/dashboard.php?range=today` | GET | `delivery.update_assigned` | Thống kê của Shipper đăng nhập: `range` là `today`, `yesterday`, `week`, `month`; trả `{range, timezone, start, end, completed_deliveries, delivery_seconds}` |
 | `shipper/profile.php` | GET | `profile.read_own` | `{profile, eligibility:{can_work, blockers}, has_active_delivery}` |
 | `shipper/profile.php` | PUT | `profile.update_own` | `{vehicle_type, vehicle_registration}`. Hồ sơ đang APPROVED sẽ về PENDING và tắt nhận đơn |
+| `shipper/dashboard.php` | GET | `profile.read_own` | `?range=today\|yesterday\|week\|month`. Số liệu trang Tổng quan: `{current, previous, deliveries_change_percent, rating, reliability_score}` |
 | `shipper/kyc.php` | GET | `profile.read_own` | Trạng thái duyệt, lý do bị trả về, tài liệu đã nộp |
 | `shipper/kyc.php` | POST | `profile.update_own` | `{identity?, documents?}`. Chỉ khi NEEDS_INFO hoặc REJECTED |
 | `shipper/availability.php` | GET, POST | `offer.read_own`, `offer.respond_own` | `{available:true, latitude, longitude}` hoặc `{available:false}` |
@@ -91,3 +91,18 @@ Hai file đầu dùng TEMP TABLE nên không ghi vào dữ liệu thật. File t
 - **File dùng chung đã chạm.** `database/migrate-customer-orders.php` (thêm tên migration) và `app/Views/shipper/index.php` (nạp module JS). Cần Người 1 xem qua khi merge.
 
 Trạng thái nhận đơn được lưu trong database và khôi phục sau khi tải lại trang. Khi bật nhận đơn, giao diện kiểm tra offer mỗi 5 giây, cập nhật GPS mỗi 2 phút và làm mới GPS khi quay lại tab. POST refresh bổ sung phân phối đơn khi worker chưa chạy liên tục; worker vẫn cần cho việc quét toàn hệ thống.
+
+## Trang Tổng quan (cập nhật 13/11/2026)
+
+`ShipperDashboardService` tính số liệu từ `order_assignments` và `order_match_offers`, không lưu bảng tổng hợp riêng. Mỗi kỳ là khoảng nửa mở tính theo giờ Việt Nam và được so với kỳ liền trước cùng loại; tuần bắt đầu từ thứ Hai.
+
+- `deliveries` đếm assignment `COMPLETED`, `returns` đếm assignment `RETURNED`, cả hai theo `ended_at`.
+- `acceptance_rate_percent` là số offer `ACCEPTED` chia cho số offer đã có kết quả trong kỳ. Offer còn `PENDING` không tính. Giá trị là `null` khi chưa có offer nào.
+- `deliveries_change_percent` là `null` khi kỳ trước không có đơn.
+- `rating.average` là `null` khi chưa có lượt đánh giá.
+
+API hồ sơ (`shipper/profile.php`) trả thêm khối `account` gồm `code`, `email`, `phone`, `joined_at` để trang Tài khoản hiển thị dữ liệu thật. Các trường này chỉ đọc.
+
+Giao diện: `shipper-dashboard.js` điền bốn thẻ số liệu và thẻ Đơn đang giao, `shipper-header.js` điền tên và chữ viết tắt trên thanh đầu trang. Thẻ thu nhập vẫn do `person3.js` của Người 3 điền. Thẻ "Thời gian hoạt động" đã bỏ vì hệ thống không ghi nhận thời gian trực tuyến; thay bằng tỷ lệ nhận đơn.
+
+Các trường khu vực, địa chỉ, dòng xe và màu xe chưa hỗ trợ lưu được khóa trên trang Tài khoản. Họ tên được cập nhật qua account/profile.php. API Tổng quan cũng trả delivery_seconds (thời gian xử lý phân công trong kỳ), completed_deliveries, timezone, start và end.

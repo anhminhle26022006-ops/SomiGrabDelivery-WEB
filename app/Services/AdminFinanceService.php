@@ -24,6 +24,10 @@ final class AdminFinanceService {
         AccessControl::requirePermission($this->db,$admin,'ADMIN','payment.reconcile');AccessControl::requirePermission($this->db,$admin,'ADMIN','payout.manage');
         AccessControl::requirePermission($this->db,$admin,'ADMIN','order.read_all');$o=$this->rows('SELECT * FROM orders WHERE order_id=?',[$order])[0]??null;if(!$o)throw new DeliveryApiError(404,'ORDER_NOT_FOUND','Order not found.');
         $customer=$this->rows('SELECT user_id,full_name FROM users WHERE user_id=?',[$o['customer_id']])[0];
+        $customer['bank']=$this->bank($this->rows('SELECT * FROM customer_bank_accounts WHERE customer_id=? ORDER BY bank_account_id DESC LIMIT 1',[$o['customer_id']])[0]??null);
+        $shippers=$this->rows("SELECT DISTINCT ON(a.shipper_id) a.shipper_id,u.full_name,a.assignment_status FROM order_assignments a JOIN users u ON u.user_id=a.shipper_id WHERE a.order_id=? ORDER BY a.shipper_id,a.assignment_id DESC",[$order]);
+        foreach($shippers as &$shipper){$shipper['bank']=$this->bank($this->rows("SELECT bank_account_id,bank_name,account_holder,review_status,review_note,convert_from(account_number_enc,'UTF8') AS encrypted_payload FROM shipper_bank_accounts WHERE shipper_id=? AND replaced_at IS NULL",[$shipper['shipper_id']])[0]??null);}unset($shipper);
+        try{$adminBank=PaymentService::bankInstructions();}catch(DeliveryApiError $e){if($e->errorCode!=='BANK_NOT_CONFIGURED')throw $e;$adminBank=null;}
         $payment=$this->rows('SELECT payment_id,amount_minor,currency_code,method,provider,status,provider_payment_ref,paid_at FROM payments WHERE order_id=?',[$order])[0]??null;
         $refunds=$this->rows('SELECT * FROM refunds WHERE order_id=? ORDER BY refund_id',[$order]);
         $payouts=$this->rows('SELECT p.*,u.full_name AS shipper_name,e.order_id FROM shipper_payouts p JOIN shipper_earnings e USING(earning_id) JOIN users u ON u.user_id=p.shipper_id WHERE e.order_id=? ORDER BY payout_id',[$order]);
@@ -32,7 +36,7 @@ final class AdminFinanceService {
         $earnings=$this->rows('SELECT e.*,u.full_name AS shipper_name FROM shipper_earnings e JOIN users u ON u.user_id=e.shipper_id WHERE order_id=?',[$order]);
         $evidence=$this->rows('SELECT evidence_id,action,target_id,created_at FROM finance_evidence WHERE order_id=? ORDER BY evidence_id',[$order]);
         AuditService::record($this->db,$admin,'ADMIN','ORDER_FINANCE_READ','ORDER',$order);
-        return ['order'=>$o,'customer'=>$customer,'payment'=>$payment,'refunds'=>$refunds,'payouts'=>$payouts,'earnings'=>$earnings,'evidence'=>$evidence,'is_demo'=>DemoMode::user($this->db,(int)$o['customer_id'])];
+        return ['order'=>$o,'customer'=>$customer,'shippers'=>$shippers,'admin_bank'=>$adminBank,'payment'=>$payment,'refunds'=>$refunds,'payouts'=>$payouts,'earnings'=>$earnings,'evidence'=>$evidence,'is_demo'=>DemoMode::user($this->db,(int)$o['customer_id'])];
     }
     private function bank(?array $b):?array{if(!$b)return null;try{$b['account_number']=EncryptedPayload::open($b['encrypted_payload'])['account_number'];$b['readable']=true;}catch(Throwable $e){$b['account_number']=null;$b['readable']=false;$b['needs_reentry']=true;}unset($b['encrypted_payload']);return $b;}
     public function banks(int $admin,array $in):array{

@@ -144,11 +144,11 @@
     const id = esc(offer.offer_id);
     return `<article class="order" data-offer="${id}">
       <div class="orderhead"><div><span class="orderid">${esc(offer.order_code)}</span><span class="tag">Còn <b data-countdown="${id}">${secondsLeft(offer)}</b> giây</span></div>
-        <span class="muted" style="font-size:11px">Cách điểm lấy hàng ${esc(offer.distance_to_pickup_km)} km</span></div>
+        <span class="muted" style="font-size:11px">Cách điểm lấy hàng ${esc(api.distance(offer.distance_to_pickup_km))} km</span></div>
       <div class="route"><div class="routepoints"><span class="dot"></span><span class="routebar"></span><span class="dot red"></span></div>
         <div class="address"><strong>Điểm lấy hàng</strong><small>${esc(offer.pickup_address)}</small><div style="height:12px"></div><strong>Điểm giao hàng</strong><small>${esc(offer.delivery_address)}</small></div>
         <div class="pay"><small>Thu nhập dự kiến</small><strong>${esc(earningText(offer))}</strong><small class="feehint">Đối soát sau khi giao thành công</small></div></div>
-      <div class="orderfoot"><div class="mini">⌖ <span><b>${esc(offer.distance_km)} km</b><br>Quãng đường</span></div>
+      <div class="orderfoot"><div class="mini">⌖ <span><b>${esc(api.distance(offer.distance_km))} km</b><br>Quãng đường</span></div>
         <div class="mini">◷ <span><b>${esc(offer.estimated_duration_minutes ?? "?")} phút</b><br>Ước tính</span></div>
         <div class="mini">▣ <span><b>${esc(offer.category_name_vi)}</b><br>${esc(offer.estimated_weight_kg)} kg</span></div>
         <div class="orderactions"><button class="outline" data-offer-detail="${id}">Xem chi tiết</button><button class="outline rejectbtn" data-offer-reject="${id}">Từ chối</button><button class="primary blue" data-offer-accept="${id}">Nhận đơn</button></div></div>
@@ -187,7 +187,7 @@
     if (!body || !offer) return;
     const id = esc(offer.offer_id);
     document.getElementById("orderDetailTitle").textContent = "Chi tiết đơn " + offer.order_code;
-    body.innerHTML = `<div class="detail-summary"><div><h3>${esc(offer.order_code)}</h3><p>${esc(offer.distance_km)} km, khoảng ${esc(offer.estimated_duration_minutes ?? "?")} phút</p></div>
+    body.innerHTML = `<div class="detail-summary"><div><h3>${esc(offer.order_code)}</h3><p>${esc(api.distance(offer.distance_km))} km, khoảng ${esc(offer.estimated_duration_minutes ?? "?")} phút</p></div>
         <div class="detail-earning"><small>Thu nhập dự kiến</small><b>${esc(earningText(offer))}</b><span>Đối soát sau khi giao thành công</span></div></div>
       <div class="detail-grid"><section class="detailbox"><h3>Hàng vận chuyển</h3><b>${esc(offer.category_name_vi)}</b><span>${esc(offer.estimated_weight_kg)} kg</span><p>${esc(offer.parcel_description || "Không có mô tả thêm.")}</p></section>
         <section class="detailbox"><h3>Liên hệ</h3><p>Tên và số điện thoại người gửi, người nhận chỉ hiển thị sau khi bạn nhận đơn.</p></section></div>

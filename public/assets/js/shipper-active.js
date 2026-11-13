@@ -40,11 +40,11 @@
     const map = {
       PICKUP: `<button class="primary blue" data-delivery-action="PICKUP">Đã lấy hàng</button>`,
       START_DELIVERY: `<button class="primary blue" data-delivery-action="START_DELIVERY">Bắt đầu giao</button>`,
-      ADD_DELIVERY_PHOTO: `<button class="outline" data-evidence="DELIVERY_PHOTO">📷 Thêm ảnh giao hàng (${photos})</button>`,
-      DELIVERED: `<button class="primary blue" data-delivery-action="DELIVERED">✓ Đã giao hàng thành công</button>`,
+      ADD_DELIVERY_PHOTO: `<button class="outline" data-evidence="DELIVERY_PHOTO">Thêm ảnh giao hàng (${photos})</button>`,
+      DELIVERED: `<button class="primary blue" data-delivery-action="DELIVERED">Đã giao hàng thành công</button>`,
       FAIL: `<button class="outline" data-delivery-action="SHOW_FAIL">Không thể giao hàng…</button>`,
-      ADD_RETURN_PHOTO: `<button class="outline" data-evidence="RETURN_PHOTO">📷 Thêm ảnh hoàn hàng (${photos})</button>`,
-      RETURNED: `<button class="primary blue" data-delivery-action="RETURNED">✓ Đã trả hàng cho người gửi</button>`,
+      ADD_RETURN_PHOTO: `<button class="outline" data-evidence="RETURN_PHOTO">Thêm ảnh hoàn hàng (${photos})</button>`,
+      RETURNED: `<button class="primary blue" data-delivery-action="RETURNED">Đã trả hàng cho người gửi</button>`,
     };
     return actions.map((action) => map[action] || "").join("");
   }
@@ -75,14 +75,14 @@
     }
     const d = delivery;
     box.innerHTML = `
-      <div class="sectiontitle"><div><h2>${esc(d.order_code)}</h2><p>${esc(d.category_name_vi)}, ${esc(d.estimated_weight_kg)} kg, quãng đường ${esc(d.distance_km)} km</p></div><span class="pill">${STATUS[d.status] || esc(d.status)}</span></div>
+      <div class="sectiontitle"><div><h2>${esc(d.order_code)}</h2><p>${esc(d.category_name_vi)}, ${esc(d.estimated_weight_kg)} kg, quãng đường ${esc(api.distance(d.distance_km))} km</p></div><span class="pill">${STATUS[d.status] || esc(d.status)}</span></div>
       <div class="route"><div class="routepoints"><span class="dot"></span><span class="routebar" style="height:34px"></span><span class="dot red"></span></div>
         <div class="address"><strong>Điểm lấy hàng: ${esc(d.sender_name)}</strong><small>${esc(d.pickup_address)}</small><div style="height:18px"></div>
           <strong>Điểm giao hàng: ${esc(d.receiver_name)}</strong><small>${esc(d.delivery_address)}</small></div></div>
       ${d.customer_note ? `<p class="muted" style="font-size:12px">Ghi chú của khách: ${esc(d.customer_note)}</p>` : ""}
       ${progress(d.status)}
-      <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:15px">
-        <a class="outline" style="text-decoration:none" href="tel:${esc(d.sender_phone)}">☎ Gọi người gửi</a><a class="outline" style="text-decoration:none" href="tel:${esc(d.receiver_phone)}">☎ Gọi người nhận</a>
+      <div class="delivery-actions">
+        <a class="outline call-link" href="tel:${esc(d.sender_phone)}">Gọi người gửi</a><a class="outline call-link" href="tel:${esc(d.receiver_phone)}">Gọi người nhận</a>
         <button class="outline" type="button" data-open-order-chat>${esc(t('Chat với khách hàng','Chat with customer'))}</button>
         ${actionButtons(d.next_actions)}
         ${['SHIPPER_ASSIGNED','PICKED_UP','IN_DELIVERY'].includes(d.status)&&d.cancellation_request?.decision!=='PENDING'?`<button class="outline" type="button" data-delivery-action="SHOW_CANCEL">${esc(t('Yêu cầu hủy / dừng đơn','Request cancellation / stop'))}</button>`:''}

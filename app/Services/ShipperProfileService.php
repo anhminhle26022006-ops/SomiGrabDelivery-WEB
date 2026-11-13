@@ -32,7 +32,20 @@ final class ShipperProfileService
             'eligibility' => ['can_work' => !$blockers, 'blockers' => $blockers],
             'has_active_delivery' => (bool) $q->fetchColumn(),
             'account' => $this->account($shipperId),
+            'application' => $this->application($profile),
         ];
+    }
+
+    /** Only return the applicant's display fields; encrypted licence numbers stay server-side. */
+    private function application(array $profile): ?array
+    {
+        $details = json_decode($profile['application_details'] ?? 'null', true);
+        if (!is_array($details)) return null;
+        return array_intersect_key($details, array_flip([
+            'residential_address','operating_area','emergency_contact_name','emergency_contact_phone',
+            'emergency_contact_relationship','vehicle_brand','vehicle_model','vehicle_color',
+            'license_class','license_expires_on','license_no_expiry','insurance_expires_on',
+        ]));
     }
 
     /**

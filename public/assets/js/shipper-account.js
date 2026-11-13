@@ -10,6 +10,18 @@
   function fill(data, kyc) {
     document.getElementById('kycResubmitForm').hidden=!kyc.can_resubmit;
     const profile = data.profile;
+    const application = data.application || {};
+    const fields = {shipperArea:'operating_area',shipperAddress:'residential_address',vehicleColor:'vehicle_color',licenseExpiry:'license_expires_on',insuranceExpiry:'insurance_expires_on',serviceArea:'operating_area',emergencyName:'emergency_contact_name',emergencyPhone:'emergency_contact_phone'};
+    for (const [id,key] of Object.entries(fields)) {
+      const input = document.getElementById(id);if (!input) continue;
+      input.disabled=false;input.readOnly=true;input.value=application[key] || '';input.placeholder='Chưa có thông tin';
+    }
+    const brand=document.getElementById('vehicleBrand');if(brand){brand.disabled=false;brand.readOnly=true;brand.value=[application.vehicle_brand,application.vehicle_model].filter(Boolean).join(' ');brand.placeholder='Chưa có thông tin';}
+    const documents=document.getElementById('kycDocuments');
+    if(documents)documents.innerHTML=(kyc.documents||[]).map(file=>{
+      const url='public/api/storage.php?'+new URLSearchParams({file_id:file.file_id,content:'1'});
+      return '<p>'+api.esc(file.document_type)+' · '+api.esc(file.original_name||'')+' '+(file.file_id?'<a target="_blank" rel="noopener" href="'+api.esc(url+'&disposition=inline')+'">Xem tài liệu</a> · <a href="'+api.esc(url)+'" download>Tải xuống</a>':'Tệp không còn khả dụng')+'</p>';
+    }).join('') || '<p>Chưa có tài liệu đã nộp.</p>';
     api.paintProfile?.(data);
     const name = document.getElementById("shipperName");
     if (name) name.value = profile.full_name;
@@ -34,7 +46,8 @@
 
   async function load() {
     try {
-      const [data, kyc, account] = await Promise.all([api.profile(), api.kyc(), api.accountProfile()]);
+      const [data, kyc] = await Promise.all([api.profile(), api.kyc()]);
+      const account = data.account ? {profile:{...data.account,user_id:data.account.code}} : await api.accountProfile();
       fill(data, kyc);
       document.getElementById('shipperPhone').value = account.profile.phone || '';
       document.getElementById('shipperEmail').value = account.profile.email || '';

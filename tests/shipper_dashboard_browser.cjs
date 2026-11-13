@@ -31,12 +31,12 @@ const php = spawn(process.env.SOMI_TEST_PHP || 'C:/xampp/php/php.exe', ['-S', '1
         if (range === 'week') await new Promise(r => setTimeout(r, 250));
         return route.fulfill({json:{range, timezone:'Asia/Ho_Chi_Minh', start:'2026-11-13T00:00:00+07:00', end:'2026-11-14T00:00:00+07:00', completed_deliveries:range === 'month' ? 90 : 12, delivery_seconds:5400, current:{deliveries:range === 'month' ? 90 : 12, acceptance_rate_percent:60, offers_accepted:3, offers_decided:5}, previous:{deliveries:0}, deliveries_change_percent:null, rating:{average:'4.3',count:8}}});
       }
-      if (url.pathname.endsWith('/shipper/profile.php')) return route.fulfill({json:{profile}});
+      if (url.pathname.endsWith('/shipper/profile.php')) return route.fulfill({json:{profile,application:{residential_address:'API residence',operating_area:'API area',vehicle_brand:'API brand',vehicle_color:'Red',emergency_contact_name:'API emergency'}}});
       if (url.pathname.endsWith('/account/profile.php')) {
         if (req.method() === 'PUT') name = req.postDataJSON().full_name;
         return route.fulfill({json:{profile:{full_name:name, user_id:77, phone:'0900000077', email:'fixture@example.invalid'}}});
       }
-      if (url.pathname.endsWith('/kyc.php')) return route.fulfill({json:{can_resubmit:false}});
+      if (url.pathname.endsWith('/kyc.php')) return route.fulfill({json:{can_resubmit:false,documents:[{file_id:'42',document_type:'IDENTITY_FRONT',original_name:'Fixture <img src=x>.png'}]}});
       if (url.pathname.endsWith('/availability.php')) return route.fulfill({json:{availability:false, can_work:true, blockers:[]}});
       if (url.pathname.endsWith('/deliveries.php')) return route.fulfill({json:{delivery:active ? {order_code:'API-77', status:'PICKED_UP', pickup_address:'<img src=x onerror=alert(1)>', delivery_address:'API destination', evidence:[], next_actions:[]} : null}});
       return route.fulfill({json:{items:[], totals:[]}});
@@ -90,6 +90,11 @@ const php = spawn(process.env.SOMI_TEST_PHP || 'C:/xampp/php/php.exe', ['-S', '1
     await page.goto(base + '/__shipper-test?view=account');
     await page.waitForFunction(() => document.getElementById('shipperPhone').value === '0900000077');
     assert.equal(await page.locator('#shipperEmail').inputValue(), 'fixture@example.invalid');
+    assert.equal(await page.locator('#shipperAddress').inputValue(), 'API residence');
+    assert.equal(await page.locator('#vehicleBrand').inputValue(), 'API brand');
+    assert.equal(await page.locator('#emergencyName').inputValue(), 'API emergency');
+    assert.equal(await page.locator('#kycDocuments img').count(), 0);
+    assert.match(await page.locator('#kycDocuments a').first().getAttribute('href'), /file_id=42&content=1&disposition=inline/);
     await page.locator('#shipperName').fill('Updated API Name');
     await page.locator('#saveProfileBtn').click();
     await page.waitForFunction(() => document.querySelector('[data-shipper-name]').textContent === 'Updated API Name');
@@ -97,6 +102,8 @@ const php = spawn(process.env.SOMI_TEST_PHP || 'C:/xampp/php/php.exe', ['-S', '1
     assert.deepEqual(errors, []);
     const unauthenticated = await page.request.get(base + '/public/api/shipper/dashboard.php');
     assert.equal(unauthenticated.status(), 401, 'dashboard requires a real authenticated session');
+    const privateFile = await page.request.get(base + '/public/api/storage.php?file_id=42&content=1&disposition=inline');
+    assert.equal(privateFile.status(), 401, 'direct image API requires an authenticated session');
     console.log('PASS: Shipper dashboard/profile HTTP fixtures, date selection race, error/empty states, escaping and mobile layout.');
   } finally { await browser?.close(); php.kill(); }
 })().catch(error => {console.error(error); process.exitCode = 1;});

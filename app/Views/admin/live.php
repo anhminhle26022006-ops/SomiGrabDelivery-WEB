@@ -3,13 +3,13 @@ require_once __DIR__.'/_entry.php';
 $adminSections=[
  'index'=>['Tổng quan','Overview','house'], 'users'=>['Tài khoản','Accounts','user-group'],
  'customers'=>['Khách hàng','Customers','users'], 'shippers'=>['Shipper & KYC','Shippers & KYC','motorcycle'],
- 'orders'=>['Đơn hàng','Orders','box'], 'payments'=>['Thanh toán','Payments','wallet'], 'refunds'=>['Hoàn tiền','Refunds','rotate-left'],
+ 'orders'=>['Đơn hàng','Orders','box'], 'payments'=>['Tiền theo đơn','Order finances','wallet'], 'bank-accounts'=>['Duyệt ngân hàng','Bank reviews','building-columns'],
  'complaints'=>['Ticket hỗ trợ','Support tickets','headset'], 'reviews'=>['Đánh giá','Reviews','star'],
  'categories'=>['Danh mục kiện hàng','Parcel categories','layer-group'], 'policies'=>['Giá & chính sách','Pricing & policies','sliders'],
  'nationality'=>['Yêu cầu quốc tịch','Nationality requests','earth-asia'], 'notifications'=>['Thông báo của tôi','My notifications','bell'],
  'audit-logs'=>['Nhật ký quản trị','Audit logs','shield-halved'], 'operations'=>['Email & tác vụ','Email & jobs','list-check']
 ];
-$liveView=['backend'=>'policies','disputes'=>'complaints'][$adminView]??$adminView;
+$liveView=['backend'=>'policies','disputes'=>'complaints','refunds'=>'payments'][$adminView]??$adminView;
 if(!isset($adminSections[$liveView]))$liveView='index';
 ?>
 <link rel="stylesheet" href="<?= e(assetUrl('public/assets/css/modules/admin-live.css')) ?>">
@@ -30,7 +30,7 @@ if(!isset($adminSections[$liveView]))$liveView='index';
    <div class="admin-heading"><div><span class="subtitle">SOMI OPERATIONS</span><h1 data-admin-vi="<?= e($adminSections[$liveView][0]) ?>" data-admin-en="<?= e($adminSections[$liveView][1]) ?>"><?= e($adminSections[$liveView][0]) ?></h1><p class="admin-muted" data-admin-vi="Quản lý hoạt động giao hàng từ dữ liệu hệ thống." data-admin-en="Manage delivery operations using live system data.">Quản lý hoạt động giao hàng từ dữ liệu hệ thống.</p></div><button type="button" class="btn btn-outline-secondary admin-btn" data-admin-refresh><i class="fa-solid fa-rotate" aria-hidden="true"></i><span data-admin-vi="Làm mới" data-admin-en="Refresh">Làm mới</span></button></div>
    <div data-admin-status role="status" aria-live="polite"></div>
    <section data-admin-content aria-busy="true"><p data-admin-vi="Đang tải dữ liệu…" data-admin-en="Loading data…">Đang tải dữ liệu…</p></section>
-   <?php if ($liveView==='payments') require __DIR__.'/payout-panel.php'; ?>
+
    <?php if ($liveView==='operations') require __DIR__.'/person3-operations.php'; ?>
   </div>
  </main>

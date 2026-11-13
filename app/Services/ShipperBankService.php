@@ -10,8 +10,8 @@ final class ShipperBankService
     public function __construct(private PDO $db) {}
     private function rows(string $sql,array $args=[]):array {$q=$this->db->prepare($sql);$q->execute($args);return $q->fetchAll();}
     public function current(int $user):array {
-        $r=$this->rows("SELECT bank_account_id,bank_code,bank_name,account_holder,verified_at,convert_from(account_number_enc,'UTF8') AS encrypted FROM shipper_bank_accounts WHERE shipper_id=? AND replaced_at IS NULL",[$user])[0]??null;
-        if(!$r)return ['bank_account'=>null];$p=EncryptedPayload::open($r['encrypted']);unset($r['encrypted']);$r['account_number_masked']='••••'.substr($p['account_number'],-4);return ['bank_account'=>$r];
+        $r=$this->rows("SELECT bank_account_id,bank_code,bank_name,account_holder,review_status,review_note,verified_at,convert_from(account_number_enc,'UTF8') AS encrypted FROM shipper_bank_accounts WHERE shipper_id=? AND replaced_at IS NULL",[$user])[0]??null;
+        if(!$r)return ['bank_account'=>null];try{$p=EncryptedPayload::open($r['encrypted']);}catch(Throwable $e){unset($r['encrypted']);return ['bank_account'=>$r+['account_number'=>null,'account_number_masked'=>'','needs_reentry'=>true]];}unset($r['encrypted']);$r['account_number']=$p['account_number'];$r['account_number_masked']='••••'.substr($p['account_number'],-4);return ['bank_account'=>$r];
     }
     public function request(int $user,array $in):array {
         DeliveryInput::only($in,['bank_code','bank_name','account_holder','account_number','current_password','client_key']);
@@ -47,7 +47,7 @@ final class ShipperBankService
         if(!password_verify($code,$r['token_hash'])){$this->db->prepare('UPDATE bank_account_changes SET attempts=attempts+1 WHERE request_id=?')->execute([$id]);return ['code'=>'OTP_INCORRECT','error'=>'Code is incorrect.'];}
         $bank=EncryptedPayload::open($r['encrypted_payload']);
         $this->db->prepare('UPDATE shipper_bank_accounts SET replaced_at=now() WHERE shipper_id=? AND replaced_at IS NULL')->execute([$user]);
-        $account=$this->rows('INSERT INTO shipper_bank_accounts(shipper_id,bank_code,bank_name,account_number_enc,account_holder,verified_at) VALUES(?,?,?,?,?,now()) RETURNING bank_account_id',[$user,$bank['bank_code'],$bank['bank_name'],EncryptedPayload::seal(['account_number'=>$bank['account_number']]),$bank['account_holder']])[0];
+        $account=$this->rows("INSERT INTO shipper_bank_accounts(shipper_id,bank_code,bank_name,account_number_enc,account_holder,verified_at,review_status) VALUES(?,?,?,?,?,now(),'PENDING') RETURNING bank_account_id",[$user,$bank['bank_code'],$bank['bank_name'],EncryptedPayload::seal(['account_number'=>$bank['account_number']]),$bank['account_holder']])[0];
         $this->db->prepare('UPDATE bank_account_changes SET consumed_at=now(),encrypted_payload=NULL,bank_account_id=? WHERE request_id=?')->execute([$account['bank_account_id'],$id]);
         AuditService::record($this->db,$user,'SHIPPER','BANK_ACCOUNT_CHANGED','SHIPPER_BANK_ACCOUNT',(int)$account['bank_account_id']);
         return $account+['confirmed'=>true];

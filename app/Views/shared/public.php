@@ -40,7 +40,7 @@ $vi = [
       <p class="hero-description" data-i18n="herodesc">Somi connects customers with trusted part-time shippers, making every delivery simple, flexible, and transparent.</p>
       <div class="hero-actions d-flex flex-wrap gap-3">
         <a class="button button-dark" href="<?= linkTo('auth', ['next'=>'customer']) ?>" data-i18n="send">Send a Package <span>↗</span></a>
-        <a class="button button-glass" href="<?= linkTo('auth', ['next'=>'shipper']) ?>" data-i18n="become">Become a Shipper <span>→</span></a>
+        <a class="button button-glass" href="<?= linkTo('auth', ['next'=>'shipper']) ?>" ><span data-i18n="become">Become a Shipper</span> <span aria-hidden="true">→</span></a>
       </div>
       <a class="text-link" href="<?= linkTo('how') ?>"><span data-i18n="explore">Explore how Somi works</span> <span>↗</span></a>
     </div>
@@ -52,7 +52,7 @@ $vi = [
   </section>
   <section class="feature-grid row g-3">
     <div class="col-12 col-md-4"><article class="feature-card"><span class="feature-number">01</span><div class="feature-icon">↗</div><h3>Simple booking</h3><p>Create a delivery request with clear pickup and drop-off details.</p><a href="<?= linkTo('customers') ?>">For customers <span>→</span></a></article></div>
-    <div class="col-12 col-md-4"><article class="feature-card feature-card-dark"><span class="feature-number">02</span><div class="feature-icon">⌁</div><h3>Flexible earning</h3><p>Choose the offers that fit your time, route, and delivery preferences.</p><a href="<?= linkTo('shippers') ?>">For shippers <span>→</span></a></article></div>
+    <div class="col-12 col-md-4"><article class="feature-card feature-card-dark"><span class="feature-number">02</span><div class="feature-icon">◷</div><h3>Flexible earning</h3><p>Choose the offers that fit your time, route, and delivery preferences.</p><a href="<?= linkTo('shippers') ?>">For shippers <span>→</span></a></article></div>
     <div class="col-12 col-md-4"><article class="feature-card"><span class="feature-number">03</span><div class="feature-icon">◎</div><h3>Transparent pricing</h3><p>Review estimated delivery fees before you confirm an order.</p><a href="<?= linkTo('pricing') ?>">View pricing <span>→</span></a></article></div>
   </section>
 </main>
@@ -60,8 +60,8 @@ $vi = [
 <?php else: $content = $en[$page]; ?>
 <main class="info-page">
   <section class="info-hero"><p class="eyebrow dark-eyebrow"><?= e($content[0]) ?></p><h1><?= e($content[1]) ?></h1><p><?= e($content[2]) ?></p>
-  <?php if ($page === 'customers' || $page === 'pricing'): ?><a class="button button-dark" href="<?= linkTo('auth',['next'=>'customer']) ?>">Send a Package <span>↗</span></a><?php elseif ($page === 'shippers'): ?><a class="button button-dark" href="<?= linkTo('auth',['next'=>'shipper']) ?>">Become a Shipper <span>↗</span></a><?php endif; ?></section>
-  <section class="info-cards"><?php foreach ($content[3] as $i=>$title): ?><article class="info-card"><span class="feature-number">0<?= $i+1 ?></span><div class="feature-icon"><?= ['↗','⌁','◎'][$i] ?></div><h2><?= e($title) ?></h2><p><?= e($content[4][$i]) ?></p></article><?php endforeach; ?></section>
+  <?php if ($page === 'customers' || $page === 'pricing'): ?><a class="button button-dark" href="<?= linkTo('auth',['next'=>'customer']) ?>"><span data-i18n="send">Send a Package</span> <span aria-hidden="true">↗</span></a><?php elseif ($page === 'shippers'): ?><a class="button button-dark" href="<?= linkTo('auth',['next'=>'shipper']) ?>"><span data-i18n="become">Become a Shipper</span> <span aria-hidden="true">↗</span></a><?php endif; ?></section>
+  <section class="info-cards"><?php foreach ($content[3] as $i=>$title): ?><article class="info-card"><span class="feature-number">0<?= $i+1 ?></span><div class="feature-icon"><?= ['↗','◷','◎'][$i] ?></div><h2><?= e($title) ?></h2><p><?= e($content[4][$i]) ?></p></article><?php endforeach; ?></section>
 </main>
 <?php endif; ?>
 <footer class="site-footer"><a class="brand" href="<?= linkTo('home') ?>"><strong>SOMI</strong><span>DELIVERY</span></a><span>© 2026 Somi Delivery</span><div><button type="button" data-legal="terms">Terms of Service</button><button type="button" data-legal="privacy">Privacy Policy</button></div></footer>

@@ -106,6 +106,9 @@ try{
     $q=$db->prepare("INSERT INTO private_files(owner_id,ticket_id,purpose,object_key,original_name,mime_type,byte_size,checksum_sha256) VALUES(2,?,'TICKET',?,'fixture.pdf','application/pdf',7,?) RETURNING file_id");$q->execute([$ticket['ticket_id'],$object,hash('sha256','fixture')]);$fileId=(int)$q->fetchColumn();
     $signed=$storage->signed($fileId,2,'CUSTOMER');parse_str($signed['download_query'],$query);
     check($storage->download($fileId,2,'CUSTOMER',$query)['path']===$path,'signed owner download');
+    check($storage->content($fileId,2,'CUSTOMER')['path']===$path,'direct authenticated owner download');
+    rejects(fn()=>$storage->content($fileId,3,'CUSTOMER'),'FILE_NOT_FOUND');
+    check(tx($db,fn()=>$storage->content($fileId,1,'ADMIN'))['path']===$path,'direct admin read requires permissions and audit');
     check(count(tx($db,fn()=>$storage->listing(1,['ticket_id'=>$ticket['ticket_id']]))['items'])===1,'admin lists related support files');
     check(isset(tx($db,fn()=>$storage->signed($fileId,1,'ADMIN'))['download_query']),'admin signed ticket file audited');
     rejects(fn()=>tx($db,fn()=>$storage->listing(3,['ticket_id'=>$ticket['ticket_id']])),'PERMISSION_DENIED');

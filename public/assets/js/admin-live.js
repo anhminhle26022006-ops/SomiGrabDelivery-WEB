@@ -5,8 +5,8 @@ const $=(s,scope=root)=>scope.querySelector(s),$$=(s,scope=root)=>[...scope.quer
 let vi=false;try{vi=localStorage.getItem('somi-language')==='vi';}catch{}
 const t=(a,b)=>vi?a:b,h=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const view=root.dataset.view,content=$('[data-admin-content]'),status=$('[data-admin-status]'),dialog=$('[data-admin-dialog]'),body=$('[data-dialog-body]');
-let loading=false,queued=false,previewUrl=null,previewGeneration=0;
-function clearPreview(){previewGeneration++;if(previewUrl){URL.revokeObjectURL(previewUrl);previewUrl=null;}}
+let loading=false,queued=false,previewUrl=null,previewGeneration=0,previewController=null,previewFile=null;
+function clearPreview(){previewGeneration++;previewController?.abort();previewController=null;previewFile=null;if(previewUrl){URL.revokeObjectURL(previewUrl);previewUrl=null;}}
 dialog.addEventListener('close',clearPreview);window.addEventListener('pagehide',clearPreview);
 let generation=0,rows=[],next=null,cursor=null,filters={},busy=false,policyData={};
 const labels={ACTIVE:['Hoạt động','Active'],SUSPENDED:['Đã khóa','Suspended'],CLOSED:['Đã đóng','Closed'],PENDING_VERIFICATION:['Chờ xác minh','Unverified'],PENDING:['Chờ xử lý','Pending'],APPROVED:['Đã duyệt','Approved'],REJECTED:['Từ chối','Rejected'],NEEDS_INFO:['Cần bổ sung','Needs information'],PENDING_PAYMENT:['Chờ thanh toán','Awaiting payment'],SEARCHING_SHIPPER:['Đang tìm shipper','Finding shipper'],NO_SHIPPER_FOUND:['Chưa có shipper','No shipper'],SHIPPER_ASSIGNED:['Đã phân công','Assigned'],PICKED_UP:['Đã lấy hàng','Picked up'],IN_DELIVERY:['Đang giao','In delivery'],DELIVERED:['Đã giao','Delivered'],RETURNING:['Đang hoàn','Returning'],RETURNED:['Đã hoàn','Returned'],CANCELLED:['Đã hủy','Cancelled'],NEW:['Mới','New'],IN_PROGRESS:['Đang xử lý','In progress'],RESOLVED:['Đã giải quyết','Resolved'],PAID:['Đã thanh toán','Paid'],PROCESSING:['Đang xử lý','Processing'],SUCCEEDED:['Thành công','Succeeded'],FAILED:['Thất bại','Failed'],REFUNDED:['Đã hoàn tiền','Refunded'],PARTIALLY_REFUNDED:['Hoàn một phần','Partially refunded'],ALLOWED:['Cho phép','Allowed'],RESTRICTED:['Hạn chế','Restricted'],PROHIBITED:['Cấm','Prohibited']};
@@ -72,7 +72,7 @@ if(a==='first'||a==='next'){cursor=a==='first'?null:next;await load();return;}
 if(a==='export'){if(!rows.length)return;const columns=Object.keys(rows[0]).filter(k=>!['old_value','new_value'].includes(k));const cell=v=>'"'+String(typeof v==='object'?JSON.stringify(v):v??'').replace(/^[=+@\-\t\r]/,"'$&").replaceAll('"','""')+'"';const csv='\uFEFF'+[columns,...rows.map(r=>columns.map(k=>r[k]))].map(r=>r.map(cell).join(',')).join('\r\n');const href=URL.createObjectURL(new Blob([csv],{type:'text/csv;charset=utf-8'}));const link=document.createElement('a');link.href=href;link.download='somi-admin-'+view+'-page.csv';link.click();setTimeout(()=>URL.revokeObjectURL(href),1000);return;}
 if(a==='ticket-replies'){const data=await api('support/replies.php?ticket_id='+encodeURIComponent(id)+(b.dataset.before?'&before_id='+b.dataset.before:''));open(t('Trao đổi hỗ trợ','Support conversation'),table([t('Người gửi','Sender'),t('Nội dung','Message'),t('Thời gian','Time')],data.items.map(r=>[h(r.sender_role),'<div class="wrap">'+h(r.body)+'</div>',h(date(r.created_at))]))+'<div class="admin-actions">'+btn(t('Viết phản hồi','Write reply'),'ticket-write',id)+(data.next_cursor?btn(t('Phản hồi cũ hơn','Older replies'),'ticket-replies',id,'data-before="'+h(data.next_cursor)+'"'):'')+'</div>');return;}
 if(a==='ticket-write'){const clientKey=crypto.randomUUID?.()||Array.from(crypto.getRandomValues(new Uint8Array(20)),v=>v.toString(16).padStart(2,'0')).join('');form(t('Phản hồi ticket','Reply to ticket'),'<label>'+h(t('Nội dung','Message'))+'<textarea name="body" class="form-control" required maxlength="8000"></textarea></label>',t('Gửi phản hồi','Send reply'),data=>api('support/replies.php','POST',{ticket_id:id,body:data.body,client_key:clientKey}));return;}
-if(a==='ticket-files'){const data=await api('storage.php?ticket_id='+encodeURIComponent(id));open(t('Tệp hỗ trợ','Support files'),data.items.map(f=>'<p>'+h(f.original_name)+' '+btn(t('Tải xuống','Download'),'private-download',f.file_id)+'</p>').join('')||h(t('Chưa có tệp','No files')));return;}
+if(a==='ticket-files'){const data=await api('storage.php?ticket_id='+encodeURIComponent(id));open(t('Tệp hỗ trợ','Support files'),data.items.map(f=>'<p>'+h(f.original_name)+' '+(f.mime_type?.startsWith('image/')?btn(t('Xem ảnh','View image'),'private-preview',f.file_id):'')+btn(t('Tải xuống','Download'),'private-download',f.file_id)+'</p>').join('')||h(t('Chưa có tệp','No files')));return;}
 if(a==='application-details'){
  const result=await api('admin/shipper-application.php?'+new URLSearchParams({shipper_id:id}));
  const d=result.details;
@@ -81,16 +81,33 @@ if(a==='application-details'){
 }
 if(a==='media-kyc'||a==='media-evidence'){const key=a==='media-kyc'?'shipper_id':'order_id';const data=await api('admin/files.php?'+new URLSearchParams({[key]:id,...(b.dataset.before?{before_id:b.dataset.before}:{})}));open(t('Tài liệu đã nộp','Submitted files'),table([t('Loại','Type'),t('Tên tệp','Filename'),t('Thời gian','Time'),''],data.items.map(f=>[h(f.kind),h(f.original_name),h(date(f.created_at)),(f.mime_type.startsWith('image/')?btn(t('Xem ảnh','View image'),'private-preview',f.file_id):'')+btn(t('Tải xuống','Download'),'private-download',f.file_id)]))+(data.next_before_id?btn(t('Trang tiếp','Next page'),a,id,'data-before="'+h(data.next_before_id)+'"'):''));return;}
 if(a==='private-preview'){
- const current=++previewGeneration;
- const data=await api('storage.php?file_id='+encodeURIComponent(id));
- const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),30000);
- try{const response=await fetch('public/api/storage.php?'+data.download_query,{credentials:'same-origin',signal:controller.signal});if(!response.ok){const payload=await response.json().catch(()=>({}));const e=new Error(payload.error||t('Không thể tải ảnh.','Unable to load image.'));e.status=response.status;throw e;}
+ open(t('Ảnh tài liệu','Document image'),'<p data-file-status role="status">'+h(t('Đang tải ảnh…','Loading image…'))+'</p><img data-private-image hidden alt="'+h(t('Tài liệu đã nộp','Submitted document'))+'" style="display:block;max-width:100%;max-height:70vh;margin:auto"><div class="admin-actions">'+btn(t('Tải xuống','Download'),'private-download',id)+'</div>');
+ const current=previewGeneration;
+ previewController=new AbortController();const controller=previewController,timer=setTimeout(()=>controller.abort(),30000);
+ try{
+ const response=await fetch('public/api/storage.php?'+new URLSearchParams({file_id:id,content:'1',disposition:'inline'}),{credentials:'same-origin',signal:controller.signal});
+ if(!response.ok){const payload=await response.json().catch(()=>({}));const error=new Error(payload.error||t('Không thể tải ảnh.','Unable to load image.'));error.status=response.status;throw error;}
  const blob=await response.blob();if(!['image/jpeg','image/png','image/webp'].includes(blob.type))throw new Error(t('Định dạng này chỉ hỗ trợ tải xuống.','Download this file to view it.'));
  if(current!==previewGeneration||!dialog.open)return;
- open(t('Ảnh tài liệu (ghi audit)','Document image (audited)'),'<img data-private-image alt="'+h(t('Tài liệu đã nộp','Submitted document'))+'" style="display:block;max-width:100%;max-height:70vh;margin:auto">');previewUrl=URL.createObjectURL(blob);$('[data-private-image]').src=previewUrl;
- }finally{clearTimeout(timer);}return;
+ previewUrl=URL.createObjectURL(blob);previewFile={id,url:previewUrl,name:'document.'+blob.type.split('/')[1]};const filename=response.headers.get('Content-Disposition')?.match(/filename\*=UTF-8''([^;]+)/i);if(filename){try{previewFile.name=decodeURIComponent(filename[1]);}catch{}};const img=$('[data-private-image]');img.src=previewUrl;
+ await img.decode();if(current!==previewGeneration||!dialog.open)return;
+ img.hidden=false;$('[data-file-status]').textContent='';
+ }catch(error){if(current===previewGeneration&&dialog.open){$('[data-file-status]').textContent=error.name==='AbortError'?t('Tải ảnh quá thời gian. Hãy thử lại.','Image loading timed out. Please retry.'):errorText(error);}}finally{clearTimeout(timer);}return;
 }
-if(a==='private-download'){const data=await api('storage.php?file_id='+encodeURIComponent(id));const link=document.createElement('a');link.href='public/api/storage.php?'+data.download_query;link.download='';link.click();return;}
+if(a==='private-download'){
+ const link=document.createElement('a');link.download='';
+ if(previewFile?.id===id){link.href=previewFile.url;link.download=previewFile.name;link.click();return;}
+ b.disabled=true;const original=b.textContent;b.textContent=t('Đang tải…','Downloading…');
+ const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),30000);
+ try{
+ const response=await fetch('public/api/storage.php?'+new URLSearchParams({file_id:id,content:'1'}),{credentials:'same-origin',signal:controller.signal});
+ if(!response.ok){const payload=await response.json().catch(()=>({}));const error=new Error(payload.error||t('Không thể tải tệp.','Unable to download file.'));error.status=response.status;throw error;}
+ const blob=await response.blob(),url=URL.createObjectURL(blob);link.href=url;
+ const filename=response.headers.get('Content-Disposition')?.match(/filename\*=UTF-8''([^;]+)/i);
+ if(filename){try{link.download=decodeURIComponent(filename[1]);}catch{}}
+ link.click();setTimeout(()=>URL.revokeObjectURL(url),60000);
+ }finally{clearTimeout(timer);b.disabled=false;b.textContent=original;}return;
+}
 if(a==='shipper-cancellations'){
  const data=await api('admin/shipper-cancellations.php?'+new URLSearchParams({...(id?{order_id:id}:{}),...(b.dataset.before?{before_id:b.dataset.before}:{})}));
  open(t('Yêu cầu dừng/hủy Shipper','Shipper cancellation requests'),table([t('Đơn','Order'),'Shipper',t('Lý do','Reason'),t('Trạng thái','Status'),''],data.items.map(r=>[h(r.order_code),h(r.requested_by),h(r.reason),h(r.decision),r.decision==='PENDING'?btn(t('Duyệt yêu cầu','Review request'),'review-shipper-cancel',r.cancellation_request_id):'']))+(data.next_before_id?btn(t('Trang tiếp','Next page'),'shipper-cancellations',id,'data-before="'+h(data.next_before_id)+'"'):''));return;
@@ -112,8 +129,8 @@ if(a==='cancel-order'){form(t('Hủy đơn trước lấy hàng','Cancel before 
 if(a==='request-refund'||a==='request-return-refund'){form(t('Yêu cầu hoàn tiền theo chính sách','Request policy-based refund'),'<p class="admin-muted">'+h(t('Backend tính số tiền từ thanh toán và phí đã chốt; không đánh dấu hoàn thành khi chưa đối soát.','The server calculates the amount from captured payment and frozen fees; completion requires reconciliation.'))+'</p>',t('Tạo yêu cầu','Request refund'),()=>api('admin/refunds.php','POST',{order_id:id,reason:a==='request-return-refund'?'RETURN_FEE_DEDUCTION':'CUSTOMER_CANCELLATION'}));return;}
 if(a==='restore-score'){form(t('Khôi phục điểm tin cậy','Restore reliability'),'<div class="admin-form-grid">'+field('score',t('Điểm mới (không thấp hơn ngưỡng hiện hành)','New score (at least the current threshold)'),'','number','required min="0" step="0.01"')+'</div>'+note(),t('Xác nhận','Confirm'),data=>api('admin/actions.php','POST',{action:'RESTORE_SCORE',shipper_id:id,score:data.score,reason:data.note}));return;}
 if(a==='category'||a==='new-category'){category(id);return;}
-if(a==='payment'||a==='refund'){payment(id,a==='refund');return;}
-if(a==='bank-payment'||a==='refund-evidence'){reconcile(id,a==='refund-evidence'?'refund':'payment');return;}
+if(a==='payment'||a==='refund'){return payment(id,a==='refund');}
+if(a==='bank-payment'||a==='refund-evidence'){return reconcile(id,a==='refund-evidence'?'refund':'payment');}
 if(a==='reconcile-payment'||a==='retry-job'){form(t('Yêu cầu xử lý lại','Request processing'),'<p class="admin-muted">'+h(t('Tác vụ được worker xử lý. Làm mới để xem kết quả.','A worker will process the job. Refresh to see the result.'))+'</p>',t('Xác nhận','Confirm'),()=>api(a==='retry-job'?'admin/jobs.php':'admin/payments.php','POST',a==='retry-job'?{job_id:id}:{payment_id:id}));return;}
 if(a==='audit'){const r=rows.find(x=>String(x.audit_id)===id);open(t('Chi tiết audit','Audit details'),details([['ID',r.audit_id],[t('Hành động','Action'),r.action],[t('Người thực hiện','Actor'),r.actor_kind+' #'+r.actor_id],[t('Thời gian','Time'),date(r.created_at)]])+'<h2>'+h(t('Trước','Before'))+'</h2><pre>'+h(typeof r.old_value==='string'?r.old_value:JSON.stringify(r.old_value,null,2))+'</pre><h2>'+h(t('Sau','After'))+'</h2><pre>'+h(typeof r.new_value==='string'?r.new_value:JSON.stringify(r.new_value,null,2))+'</pre>');return;}
 if(a==='policy')return policy(id);if(a==='new-policy'){policyForm();return;}if(a==='clone-policy'){policyForm(policyData.current);return;}

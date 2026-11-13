@@ -58,6 +58,11 @@ app_check(!isset($stored['license_number'])&&str_starts_with($stored['license_nu
 app_check((int)$db->query('SELECT count(*) FROM shipper_documents WHERE deleted_at IS NULL')->fetchColumn()===7,'All documents linked');
 app_check(!str_contains($db->query('SELECT string_agg(new_value::text,\' \') FROM audit_logs')->fetchColumn(),$input['license_number']),'Licence absent from audit');
 $read=app_tx($db,fn()=>$svc->forAdmin(1,2));app_check(!isset($read['details']['license_number_ciphertext']),'Admin response excludes ciphertext');
+$own=(new ShipperProfileService($db))->detail(2);
+app_check($own['application']['residential_address']===$valid['residential_address'],'Applicant reads saved application address');
+app_check(!isset($own['application']['license_number_ciphertext'])&&!isset($own['application']['license_number']),'Own display payload excludes licence secrets');
+$status=(new ShipperKycService($db))->status(2);
+app_check(count($status['documents'])===7 && !empty($status['documents'][0]['file_id']),'Submitted KYC returns authorized file identifiers');
 app_reject(fn()=>app_tx($db,fn()=>$svc->forAdmin(3,2)),'PERMISSION_DENIED');
 app_tx($db,fn()=>$storage->signed(1,2,'CUSTOMER'));app_check(true,'Applicant can access own KYC');
 app_reject(fn()=>app_tx($db,fn()=>$storage->signed(1,3,'CUSTOMER')),'FILE_NOT_FOUND');

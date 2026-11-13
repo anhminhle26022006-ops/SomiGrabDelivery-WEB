@@ -18,10 +18,10 @@ Base `/public/api/`. Workspace phải là SHIPPER trừ hai endpoint Customer �
 
 | Endpoint | Method | Quyền | Nội dung |
 |---|---|---|---|
-| `shipper/profile.php` | GET | `profile.read_own` | `{profile, eligibility:{can_work, blockers}, has_active_delivery}` |
+| `shipper/profile.php` | GET | `profile.read_own` | `{profile, eligibility:{can_work, blockers}, has_active_delivery, account, application}` |
 | `shipper/profile.php` | PUT | `profile.update_own` | `{vehicle_type, vehicle_registration}`. Hồ sơ đang APPROVED sẽ về PENDING và tắt nhận đơn |
 | `shipper/dashboard.php` | GET | `profile.read_own` | `?range=today\|yesterday\|week\|month`. Số liệu trang Tổng quan: `{current, previous, deliveries_change_percent, rating, reliability_score}` |
-| `shipper/kyc.php` | GET | `profile.read_own` | Trạng thái duyệt, lý do bị trả về, tài liệu đã nộp |
+| `shipper/kyc.php` | GET | `profile.read_own` | Trạng thái duyệt, lý do bị trả về, tài liệu đã nộp kèm `file_id` để xem/tải qua storage có session |
 | `shipper/kyc.php` | POST | `profile.update_own` | `{identity?, documents?}`. Chỉ khi NEEDS_INFO hoặc REJECTED |
 | `shipper/availability.php` | GET, POST | `offer.read_own`, `offer.respond_own` | `{available:true, latitude, longitude}` hoặc `{available:false}` |
 | `shipper/offers.php` | GET | `offer.read_own` | `{items}` các offer còn hạn, chưa có thông tin liên hệ |
@@ -106,3 +106,5 @@ API hồ sơ (`shipper/profile.php`) trả thêm khối `account` gồm `code`, 
 Giao diện: `shipper-dashboard.js` điền bốn thẻ số liệu và thẻ Đơn đang giao, `shipper-header.js` điền tên và chữ viết tắt trên thanh đầu trang. Thẻ thu nhập vẫn do `person3.js` của Người 3 điền. Thẻ "Thời gian hoạt động" đã bỏ vì hệ thống không ghi nhận thời gian trực tuyến; thay bằng tỷ lệ nhận đơn.
 
 Các trường khu vực, địa chỉ, dòng xe và màu xe chưa hỗ trợ lưu được khóa trên trang Tài khoản. Họ tên được cập nhật qua account/profile.php. API Tổng quan cũng trả delivery_seconds (thời gian xử lý phân công trong kỳ), completed_deliveries, timezone, start và end.
+
+`application` trong GET hồ sơ chỉ trả các trường hiển thị của người đang đăng nhập (địa chỉ, khu vực, liên hệ khẩn cấp, hãng/dòng/màu xe, hạn giấy tờ); không trả số GPLX hoặc ciphertext. Trang Tài khoản hiển thị dữ liệu này ở chế độ chỉ đọc và danh sách KYC có liên kết xem/tải thật.

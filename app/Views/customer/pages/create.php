@@ -73,7 +73,7 @@
           <label class="c-tile"><input type="radio" name="schedule" value="now" checked><strong>Giao ngay</strong><small>Shipper đến lấy trong khoảng 15 đến 30 phút</small></label>
           <label class="c-tile"><input type="radio" name="schedule" value="later"><strong>Hẹn giờ lấy hàng</strong><small>Chọn thời điểm trong 7 ngày tới</small></label>
         </div>
-        <div class="c-field" data-later hidden style="margin-top:16px"><label class="form-label" for="schedule-at">Thời điểm lấy hàng</label><input class="form-control" id="schedule-at" name="schedule-at" type="datetime-local"></div>
+        <div class="c-field" data-later hidden style="margin-top:16px"><label class="form-label" for="schedule-at">Thời điểm lấy hàng (giờ Việt Nam, UTC+7)</label><input class="form-control" id="schedule-at" name="schedule-at" type="datetime-local" aria-describedby="schedule-help"><small class="c-hint" id="schedule-help">Hẹn trước ít nhất 30 phút, tối đa 7 ngày. Sau khi thanh toán được xác nhận, SOMI bắt đầu tìm shipper trước giờ hẹn 15 phút và ưu tiên đơn đến hẹn. Thời gian thực tế phụ thuộc shipper nhận đơn.</small></div>
       </section>
 
       <!-- Step 4: review -->

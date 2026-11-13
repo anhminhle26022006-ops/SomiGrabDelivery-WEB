@@ -23,7 +23,10 @@ try{
     check($form['fields']['signature']===base64_encode(hash_hmac('sha256',$canonical,getenv('SEPAY_SECRET_KEY'),true)),'documented signature order');
     check($form['action']==='https://pay-sandbox.sepay.vn/v1/checkout/init'&&$form['fields']['lang']==='en','sandbox checkout and English');
     check($provider->form($payment,'vi')['fields']['signature']===$form['fields']['signature'],'language is not signed');
-    foreach(['GATEWAY','CARD','BANK_TRANSFER']as $method){$p=array_replace($payment,['method'=>$method]);$fields=$provider->form($p,'vi')['fields'];check($method==='GATEWAY'?!isset($fields['payment_method']):$fields['payment_method']===$method,'method '.$method);}
+    foreach(['GATEWAY','CARD','BANK_TRANSFER']as $method){$p=array_replace($payment,['method'=>$method]);$fields=$provider->form($p,'vi')['fields'];check($fields['payment_method']===($method==='GATEWAY'?'BANK_TRANSFER':$method),'method '.$method);}
+    $qr=$provider->form(array_replace($payment,['method'=>'GATEWAY']),'vi')['fields'];
+    $qrCanonical=str_replace('payment_method=CARD','payment_method=BANK_TRANSFER',$canonical);
+    check($qr['signature']===base64_encode(hash_hmac('sha256',$qrCanonical,getenv('SEPAY_SECRET_KEY'),true)),'QR choice is included in the signed checkout fields');
     rejects(fn()=>$provider->checkout(array_replace($payment,['currency_code'=>'USD']),'fixture'),'PAYMENT_CURRENCY_UNSUPPORTED');
     $event=['notification_type'=>'ORDER_PAID','order'=>['order_invoice_number'=>'SOMI-TEST-P7','order_status'=>'CAPTURED','order_currency'=>'VND','order_amount'=>'100000.00'],'transaction'=>['id'=>'fixture-transaction','transaction_type'=>'PAYMENT','transaction_status'=>'APPROVED','transaction_currency'=>'VND','transaction_amount'=>'100000']];
     $headers=['X-Secret-Key'=>str_repeat('i',32)];$raw=json_encode($event,JSON_THROW_ON_ERROR);

@@ -32,7 +32,7 @@ try {
     check(tx($db,fn()=>$matching->dispatch($scheduled))['result']==='SCHEDULED','future paid appointment does not match or time out early');
     check(!in_array($scheduled,$matching->ordersNeedingDispatch(),true),'worker excludes appointments outside matching window');
     check(!array_key_exists($scheduled,tx($db,fn()=>$matching->dispatchNearby(SHIPPER_A))),'shipper polling excludes future appointments');
-    $db->exec("UPDATE orders SET pricing_snapshot=jsonb_set(pricing_snapshot,'{schedule,at}',to_jsonb(now()+interval '28 minutes')) WHERE order_id=$scheduled");
+    $db->exec("UPDATE orders SET pricing_snapshot=jsonb_set(pricing_snapshot,'{schedule,at}',to_jsonb(now()+interval '13 minutes')) WHERE order_id=$scheduled");
     check(in_array($scheduled,$matching->ordersNeedingDispatch(),true),'worker finds due appointment');
     check(tx($db,fn()=>$matching->dispatchNearby(SHIPPER_A))[$scheduled]['result']==='OFFERED','due appointment matches despite payment two hours ago');
     $pending=$offers->pending(SHIPPER_A)['items'];

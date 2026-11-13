@@ -12,7 +12,7 @@ $vi = [
  'pricing'=>[]
 ];
 ?>
-<header class="site-header <?= $page === 'home' ? 'header-home' : '' ?>">
+<header id="site-top" class="site-header <?= $page === 'home' ? 'header-home' : '' ?>">
   <a class="brand" href="<?= linkTo('home') ?>"><strong>SOMI</strong><span>DELIVERY</span></a>
   <nav class="desktop-nav" aria-label="Main navigation">
     <?php foreach (['how'=>'How It Works','customers'=>'For Customers','shippers'=>'For Shippers','pricing'=>'Pricing'] as $key=>$label): ?>
@@ -64,5 +64,5 @@ $vi = [
   <section class="info-cards"><?php foreach ($content[3] as $i=>$title): ?><article class="info-card"><span class="feature-number">0<?= $i+1 ?></span><div class="feature-icon"><?= ['↗','◷','◎'][$i] ?></div><h2><?= e($title) ?></h2><p><?= e($content[4][$i]) ?></p></article><?php endforeach; ?></section>
 </main>
 <?php endif; ?>
-<footer class="site-footer"><a class="brand" href="<?= linkTo('home') ?>"><strong>SOMI</strong><span>DELIVERY</span></a><span>© 2026 Somi Delivery</span><div><button type="button" data-legal="terms">Terms of Service</button><button type="button" data-legal="privacy">Privacy Policy</button></div></footer>
+<?php require __DIR__ . '/footer.php'; ?>
 <div class="somi-modal-backdrop" data-legal-modal hidden><section class="somi-modal" role="dialog" aria-modal="true" aria-labelledby="legal-title"><button class="modal-close" type="button" data-modal-close aria-label="Close">×</button><p class="eyebrow dark-eyebrow">SOMI DELIVERY</p><h2 id="legal-title" data-legal-title>Terms of Service</h2><p>This demo presents the information and policies for the Somi frontend. Production terms and privacy details should be reviewed before launch.</p><button class="button button-dark" type="button" data-modal-close>Close</button></section></div>

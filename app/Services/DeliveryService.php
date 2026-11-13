@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/DeliveryContext.php';
+require_once __DIR__ . '/OrderSchedule.php';
 
 /** Đơn đang giao của Shipper, lịch sử, và hai mốc đầu: lấy hàng và bắt đầu giao. */
 final class DeliveryService
@@ -15,7 +16,7 @@ final class DeliveryService
                     o.pickup_label, o.pickup_address, o.pickup_latitude, o.pickup_longitude, o.sender_name, o.sender_phone,
                     o.delivery_label, o.delivery_address, o.delivery_latitude, o.delivery_longitude, o.receiver_name, o.receiver_phone,
                     o.distance_km, o.estimated_duration_minutes, o.estimated_weight_kg, o.parcel_description, o.customer_note,
-                    c.name_vi AS category_name_vi, c.name_en AS category_name_en,
+                    c.name_vi AS category_name_vi, c.name_en AS category_name_en, o.pricing_snapshot->'schedule' AS schedule,
                     d.delivery_id, d.picked_up_at, d.delivery_started_at, d.arrived_at, d.delivered_at, d.failure_reason_code,
                     d.return_started_at, d.returned_at, d.customer_return_confirmed_at
              FROM order_assignments a
@@ -27,11 +28,14 @@ final class DeliveryService
         $q->execute([$shipperId]);
         $delivery = $q->fetch();
         if (!$delivery) return ['delivery' => null];
+        $delivery['schedule'] = $delivery['schedule'] === null ? null : json_decode($delivery['schedule'], true, 32, JSON_THROW_ON_ERROR);
         $q = $this->db->prepare("SELECT e.evidence_id,e.evidence_type,e.mime_type,e.byte_size,e.uploaded_at,f.file_id FROM delivery_evidence e JOIN private_files f ON f.object_key=e.object_key AND f.owner_id=e.uploaded_by AND f.order_id=? AND f.purpose='EVIDENCE' WHERE e.delivery_id=? AND e.deleted_at IS NULL AND f.deleted_at IS NULL AND f.delete_after>now() ORDER BY e.evidence_id");
         $q->execute([$delivery['order_id'],$delivery['delivery_id']]);
         $delivery['evidence'] = $q->fetchAll();
         $q=$this->db->prepare("SELECT cancellation_request_id,decision,reason,decision_note FROM cancellation_requests WHERE assignment_id=? AND requester_role='SHIPPER' ORDER BY cancellation_request_id DESC LIMIT 1");$q->execute([$delivery['assignment_id']]);$delivery['cancellation_request']=$q->fetch()?:null;
         $delivery['next_actions'] = self::nextActions($delivery);
+        if (($delivery['schedule']['mode'] ?? null) === 'later' && strtotime($delivery['schedule']['at']) > time())
+            $delivery['next_actions'] = array_values(array_diff($delivery['next_actions'], ['PICKUP']));
         return ['delivery' => $delivery];
     }
 
@@ -102,6 +106,9 @@ final class DeliveryService
     {
         $ctx = DeliveryContext::lockActive($this->db, $shipperId, $orderId);
         if ($ctx['order']['status'] === 'PICKED_UP') return $this->current($shipperId);
+        $schedule = OrderSchedule::fromOrder($ctx['order']);
+        if ($schedule !== null && strtotime($schedule['at']) > time())
+            throw new DeliveryApiError(409, 'PICKUP_TOO_EARLY', 'Wait until the scheduled pickup time before confirming pickup.');
         DeliveryContext::transition($this->db, $ctx['order'], 'PICKED_UP', $shipperId, 'SHIPPER');
         $this->db->prepare('UPDATE orders SET picked_up_at = now() WHERE order_id = ?')->execute([$orderId]);
         $this->db->prepare('UPDATE deliveries SET picked_up_at = now(), updated_at = now() WHERE delivery_id = ?')->execute([$ctx['delivery']['delivery_id']]);

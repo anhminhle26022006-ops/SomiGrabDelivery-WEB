@@ -4,6 +4,7 @@ require_once __DIR__ . '/CustomerAddressService.php';
 require_once __DIR__ . '/PricingContextProvider.php';
 require_once __DIR__ . '/DistanceWeightPrice.php';
 require_once __DIR__ . '/PickupSchedule.php';
+require_once __DIR__ . '/OrderSchedule.php';
 
 final class OrderQuoteService
 {
@@ -18,7 +19,7 @@ final class OrderQuoteService
     public function create(int $customerId, array $input): array
     {
         DeliveryInput::only($input, ['pickup', 'delivery', 'parcel', 'customer_note', 'currency_code', 'schedule']);
-        $schedule = PickupSchedule::validate($input['schedule'] ?? null);
+        $schedule = OrderSchedule::normalize($input['schedule'] ?? null);
         if (array_key_exists('currency_code', $input) && !in_array($input['currency_code'], ['VND', 'USD'], true)) DeliveryInput::invalid('currency_code');
         $pickup = $this->point($customerId, $input['pickup'] ?? null);
         $delivery = $this->point($customerId, $input['delivery'] ?? null);

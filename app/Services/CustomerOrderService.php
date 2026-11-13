@@ -34,7 +34,7 @@ final class CustomerOrderService
         if ($q->fetchColumn()) throw new DeliveryApiError(409, 'QUOTE_ALREADY_USED', 'Quote was already used. Retry with the original idempotency key.');
         if (!$quote['valid']) throw new DeliveryApiError(409, 'QUOTE_EXPIRED', 'Quote expired. Request a new quote.');
         $s = json_decode($quote['snapshot'], true, 512, JSON_THROW_ON_ERROR);
-        PickupSchedule::validate($s['schedule'] ?? null, true);
+        OrderSchedule::assertNotExpired($s['schedule'] ?? ['mode' => 'now']);
         (new OrderQuoteService($this->db, new HttpPricingContextProvider()))->requireCategory((int) $s['parcel']['category_id']);
         $p = $s['pickup']; $d = $s['delivery']; $parcel = $s['parcel']; $fees = $s['components']; $context = $s['context'];
         $data = [
@@ -74,9 +74,11 @@ final class CustomerOrderService
             if (!array_key_exists($status, OrderLifecycleService::TRANSITIONS)) DeliveryInput::invalid('status');
             $where .= ' AND status = :status'; $params['status'] = $status;
         }
-        $q = $this->db->prepare('SELECT order_id, order_code, status, currency_code, total_charge_minor, pickup_address, delivery_address, receiver_name, parcel_description, created_at, paid_at, cancelled_at FROM orders WHERE ' . $where . ' ORDER BY order_id DESC LIMIT ' . ($limit + 1));
+        $q = $this->db->prepare("SELECT order_id, order_code, status, currency_code, total_charge_minor, pickup_address, delivery_address, receiver_name, parcel_description, created_at, paid_at, cancelled_at, pricing_snapshot->'schedule' AS schedule FROM orders WHERE " . $where . ' ORDER BY order_id DESC LIMIT ' . ($limit + 1));
         $q->execute($params);
         $items = $q->fetchAll();
+        foreach ($items as &$item) $item['schedule'] = $item['schedule'] === null ? null : json_decode($item['schedule'], true, 32, JSON_THROW_ON_ERROR);
+        unset($item);
         $more = count($items) > $limit;
         if ($more) array_pop($items);
         return ['items' => $items, 'next_before_id' => $more ? (string) $items[count($items) - 1]['order_id'] : null];

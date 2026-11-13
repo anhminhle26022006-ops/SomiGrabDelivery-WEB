@@ -5,6 +5,8 @@
  * you add new Vietnamese text to the customer pages.
  */
 window.SomiLangEN = {
+  "Thời điểm lấy hàng (giờ Việt Nam, UTC+7)": "Pickup time (Vietnam time, UTC+7)",
+  "Hẹn trước ít nhất 30 phút, tối đa 7 ngày. Sau khi thanh toán được xác nhận, SOMI bắt đầu tìm shipper trước giờ hẹn 15 phút và ưu tiên đơn đến hẹn. Thời gian thực tế phụ thuộc shipper nhận đơn.": "Schedule 30 minutes to 7 days ahead. After verified payment, SOMI starts matching 15 minutes before pickup and prioritizes due appointments. Actual timing depends on shipper availability.",
   "Chọn điểm lấy và điểm giao. Xem báo giá trước khi xác nhận đơn hàng.": "Choose pickup and delivery locations. Review the quote before confirming your order.",
   "Địa chỉ lấy hàng": "Pickup address",
   "Địa chỉ giao hàng": "Delivery address",

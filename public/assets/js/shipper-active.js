@@ -77,6 +77,7 @@
     }
     const d = delivery;
     box.innerHTML = `
+      ${d.schedule?.mode === 'later' ? `<p class="alert alert-primary" role="status">${esc(t('Hẹn lấy hàng: ','Scheduled pickup: '))}${esc(new Date(d.schedule.at).toLocaleString(document.documentElement.lang === 'en' ? 'en-GB' : 'vi-VN',{timeZone:'Asia/Ho_Chi_Minh'}))} (UTC+7). ${esc(t('Chỉ xác nhận lấy hàng từ giờ hẹn.','Confirm pickup only at or after the appointment time.'))}</p>` : ''}
       <div class="sectiontitle"><div><h2>${esc(d.order_code)}</h2><p>${esc(d.category_name_vi)}, ${esc(d.estimated_weight_kg)} kg, quãng đường ${esc(api.distance(d.distance_km))} km</p></div><span class="pill">${d.arrived_at&&d.status==='IN_DELIVERY'?'ĐÃ ĐẾN NƠI':STATUS[d.status] || esc(d.status)}</span></div>
       <div class="route"><div class="routepoints"><span class="dot"></span><span class="routebar" style="height:34px"></span><span class="dot red"></span></div>
         <div class="address"><strong>Điểm lấy hàng: ${esc(d.sender_name)}</strong><small>${esc(d.pickup_address)}</small><div style="height:18px"></div>

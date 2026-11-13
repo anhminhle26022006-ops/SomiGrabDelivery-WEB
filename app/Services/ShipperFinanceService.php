@@ -101,7 +101,7 @@ final class ShipperFinanceService
         if($e['payout_status']!=='PENDING')return null;
         if(DemoMode::user($this->db,(int)$e['shipper_id']))return null; // Demo earnings never reserve a bank transfer.
         if($this->refundHold((int)$e['order_id']))return null;
-        $bank=$this->rows('SELECT bank_account_id FROM shipper_bank_accounts WHERE shipper_id=? AND replaced_at IS NULL AND verified_at IS NOT NULL FOR SHARE',[$e['shipper_id']])[0]??null;if(!$bank)return null;
+        $bank=$this->rows("SELECT bank_account_id FROM shipper_bank_accounts WHERE shipper_id=? AND replaced_at IS NULL AND verified_at IS NOT NULL AND COALESCE(to_jsonb(shipper_bank_accounts)->>'review_status','APPROVED')='APPROVED' FOR SHARE",[$e['shipper_id']])[0]??null;if(!$bank)return null;
         $fx=$e['currency_code']==='USD'?($this->rows('SELECT * FROM payout_fx_quotes WHERE earning_id=?',[$earningId])[0]??null):null;
         if($e['currency_code']==='USD'&&!$fx)return null;
         return $this->rows("INSERT INTO shipper_payouts(earning_id,shipper_id,bank_account_id,source_amount_minor,source_currency,payout_amount_minor,fx_rate,fx_provider,fx_reference,status,failure_reason) VALUES(?,?,?,?,?,CASE WHEN ?='USD' THEN ceil(?::numeric*?::numeric/100)::bigint ELSE ?::bigint END,?,?,?,'PROCESSING','MANUAL_TRANSFER_REVIEW_REQUIRED') ON CONFLICT(earning_id) DO UPDATE SET earning_id=EXCLUDED.earning_id RETURNING payout_id,status",[$earningId,$e['shipper_id'],$bank['bank_account_id'],$e['gross_amount_minor'],$e['currency_code'],$e['currency_code'],$e['gross_amount_minor'],$fx['rate']??'1',$e['gross_amount_minor'],$fx['rate']??null,$fx['provider']??null,$fx['reference']??null])[0];
@@ -117,6 +117,7 @@ final class ShipperFinanceService
         $p=$this->rows('SELECT * FROM shipper_payouts WHERE payout_id=? FOR UPDATE',[$id])[0];
         if(($in['currency_code']??null)!=='VND'||!is_string($in['amount_minor']??null)||$in['amount_minor']!==(string)$p['payout_amount_minor'])DeliveryInput::invalid('amount_minor');
         if($p['status']==='SUCCEEDED'){if($p['provider_payout_ref']!==$ref||$p['evidence_reference']!==$proof)throw new DeliveryApiError(409,'PAYOUT_CONFLICT','Payout already reconciled.');return ['payout_id'=>$id,'status'=>'SUCCEEDED'];}
+        $bank=$this->rows("SELECT COALESCE(to_jsonb(b)->>'review_status','APPROVED') AS review_status FROM shipper_bank_accounts b WHERE bank_account_id=?",[$p['bank_account_id']])[0]??null;if(!$bank||$bank['review_status']!=='APPROVED')throw new DeliveryApiError(409,'BANK_REVIEW_REQUIRED','Approve the shipper bank account before payout.');
         if($p['status']!=='PROCESSING')throw new DeliveryApiError(409,'PAYOUT_CONFLICT','Payout is not processing.');
         if($this->refundHold((int)$row['order_id']))throw new DeliveryApiError(409,'REFUND_REVIEW_REQUIRED','Review refund before reconciliation.');
         $this->db->prepare("UPDATE shipper_payouts SET status='SUCCEEDED',provider_payout_ref=?,evidence_reference=?,failure_reason=NULL,completed_at=now() WHERE payout_id=?")->execute([$ref,$proof,$id]);

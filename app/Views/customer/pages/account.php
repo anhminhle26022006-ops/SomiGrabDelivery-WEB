@@ -10,6 +10,7 @@
   <div class="col-lg-4"><aside class="card card-body c-profile" data-profile></aside></div>
 
   <div class="col-lg-8 vstack gap-4">
+    <section class="card card-body"><?php require __DIR__.'/../../shared/avatar-editor.php'; ?></section>
     <section class="card card-body">
       <h2>Thông tin cá nhân</h2>
       <p class="c-panel-sub">Đổi email cần xác thực lại email mới.</p>

@@ -54,11 +54,11 @@ try{
     rejects(fn()=>tx($db,fn()=>$svc->chat(3,'CUSTOMER',['order_id'=>$id],false)),'ORDER_NOT_FOUND');
     check(count(tx($db,fn()=>$svc->chat(4,'SHIPPER',['order_id'=>$id],false))['items'])===1,'assigned shipper reads chat');
     tx($db,fn()=>$svc->chat(4,'SHIPPER',['order_id'=>$id,'read_through_id'=>$m['message_id']],true));check(value($db,'SELECT read_at IS NOT NULL FROM chat_messages WHERE message_id=?',[$m['message_id']])===true,'peer read receipt');
-    check($svc->notifications(4,[],false)['unread_count']===1,'chat notification one time');
-    $notification=$svc->notifications(4,[],false)['items'][0]['notification_id'];
-    rejects(fn()=>tx($db,fn()=>$svc->notifications(2,['notification_id'=>$notification,'read'=>true],true)),'NOTIFICATION_NOT_FOUND');
-    tx($db,fn()=>$svc->notifications(4,['notification_id'=>$notification,'read'=>true],true));check($svc->notifications(4,[],false)['unread_count']===0,'mark read');
-    tx($db,fn()=>$svc->notifications(4,['notification_id'=>$notification,'read'=>false],true));check($svc->notifications(4,[],false)['unread_count']===1,'mark unread');
+    check($svc->notifications(4,'SHIPPER',[],false)['unread_count']===1,'chat notification one time');
+    $notification=$svc->notifications(4,'SHIPPER',[],false)['items'][0]['notification_id'];
+    rejects(fn()=>tx($db,fn()=>$svc->notifications(2,'CUSTOMER',['notification_id'=>$notification,'read'=>true],true)),'NOTIFICATION_NOT_FOUND');
+    tx($db,fn()=>$svc->notifications(4,'SHIPPER',['notification_id'=>$notification,'read'=>true],true));check($svc->notifications(4,'SHIPPER',[],false)['unread_count']===0,'mark read');
+    tx($db,fn()=>$svc->notifications(4,'SHIPPER',['notification_id'=>$notification,'read'=>false],true));check($svc->notifications(4,'SHIPPER',[],false)['unread_count']===1,'mark unread');
     $ticketBody=['order_id'=>$id,'category'=>'DELIVERY','subject'=>'Test','description'=>'Need help','client_key'=>'ticket-test-0001'];
     $ticket=tx($db,fn()=>$svc->tickets(2,'CUSTOMER',$ticketBody,true))['ticket'];tx($db,fn()=>$svc->tickets(2,'CUSTOMER',$ticketBody,true));check((int)value($db,'SELECT count(*) FROM support_tickets')===1,'ticket retry dedup');
     rejects(fn()=>$svc->tickets(3,'CUSTOMER',['id'=>$ticket['ticket_id']],false),'TICKET_NOT_FOUND');
@@ -165,7 +165,7 @@ try{
     check(count(tx($db,fn()=>$svc->replies(2,'CUSTOMER',['ticket_id'=>$ticket['ticket_id']],false))['items'])===2,'two-way ticket conversation');
     $db->prepare("UPDATE support_tickets SET status='CLOSED',closed_at=now() WHERE ticket_id=?")->execute([$ticket['ticket_id']]);
     rejects(fn()=>tx($db,fn()=>$svc->replies(2,'CUSTOMER',array_replace($replyBody,['client_key'=>'reply-test-closed']),true)),'TICKET_CLOSED');
-    $latest=value($db,'SELECT max(notification_id) FROM notifications WHERE user_id=2');tx($db,fn()=>$svc->notifications(2,['all'=>true,'read'=>true,'through_id'=>$latest],true));check($svc->notifications(2,[],false)['unread_count']===0,'mark-all respects owner and high-water ID');
+    $latest=value($db,'SELECT max(notification_id) FROM notifications WHERE user_id=2');tx($db,fn()=>$svc->notifications(2,'CUSTOMER',['all'=>true,'read'=>true,'through_id'=>$latest],true));check($svc->notifications(2,'CUSTOMER',[],false)['unread_count']===0,'mark-all respects owner and high-water ID');
     $bankSvc=new ShipperBankService($db);$db->prepare('UPDATE users SET password_hash=? WHERE user_id=4')->execute([password_hash('FixturePassword!234',PASSWORD_DEFAULT)]);
     $bankInput=['bank_code'=>'TEST','bank_name'=>'Fixture bank','account_holder'=>'Fixture Shipper','account_number'=>'000009876543','current_password'=>'FixturePassword!234','client_key'=>'bank-change-test-1'];
     check(tx($db,fn()=>$bankSvc->request(4,array_replace($bankInput,['current_password'=>'wrong'])))['code']==='PASSWORD_INCORRECT','bank request requires current password');

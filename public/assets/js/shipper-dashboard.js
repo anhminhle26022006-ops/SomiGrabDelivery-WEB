@@ -37,6 +37,11 @@
   function renderSummary() {
     if (!summary) return;
     const now = summary.current;
+    const minutes = Math.floor((summary.delivery_seconds || 0) / 60);
+    const hours = document.querySelector('[data-period-value="hours"]');
+    if (hours) hours.textContent = vi() ? `${Math.floor(minutes / 60)} giờ ${minutes % 60} phút` : `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
+    const status = document.querySelector('[data-dashboard-status]');
+    if (status) { status.hidden = true; status.textContent = ''; }
     set("dashDeliveries", esc(now.deliveries));
 
     // Mũi tên và màu chỉ xuất hiện khi kỳ trước có đơn để so sánh.
@@ -82,6 +87,8 @@
       if (id !== requestId) return;
       ["dashDeliveries", "dashAcceptance", "dashRating"].forEach((target) => set(target, "—"));
       set("dashDeliveriesTrend", `<span class="muted">${esc(error.message)}</span>`);
+      const status = document.querySelector('[data-dashboard-status]');
+      if (status) { status.hidden = false; status.textContent = error.message; }
     }
   }
 
@@ -132,6 +139,13 @@
     loadSummary();
   });
 
+  window.addEventListener('somi:shipper-period', event => {
+    if (!COMPARISON[event.detail?.range]) return;
+    range = event.detail.range;
+    loadSummary();
+  });
+  document.addEventListener('somi:language-change', () => { renderSummary(); renderDelivery(); });
+  document.addEventListener('somi:delivery-update', event => { delivery = event.detail; renderDelivery(); });
   range = COMPARISON[savedRange()] ? savedRange() : "today";
   loadSummary();
   loadDelivery();

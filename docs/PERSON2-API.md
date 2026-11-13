@@ -26,6 +26,7 @@ Base `/public/api/`. Workspace phải là SHIPPER trừ hai endpoint Customer �
 | `shipper/availability.php` | GET, POST | `offer.read_own`, `offer.respond_own` | `{available:true, latitude, longitude}` hoặc `{available:false}` |
 | `shipper/offers.php` | GET | `offer.read_own` | `{items}` các offer còn hạn, chưa có thông tin liên hệ |
 | `shipper/offers.php` | POST | `offer.respond_own` | `{offer_id, note?}` từ chối |
+| `shipper/offers.php` | POST | `offer.respond_own` | `{action:"refresh"}` ghép tối đa 5 đơn đã thanh toán gần shipper và trả offer còn hạn; giữ nguyên điều kiện GPS/KYC/không nhận đơn của mình |
 | `shipper/accept-offer.php` | POST | `offer.respond_own` | `{offer_id}`. 201 khi vừa nhận, 200 khi gọi lại |
 | `shipper/deliveries.php` | GET | `delivery.update_assigned` | Đơn đang giao kèm `next_actions`; `?history=1` cho lịch sử |
 | `shipper/deliveries.php` | POST | `delivery.update_assigned` | `{order_id, action:"PICKUP"\|"START_DELIVERY"}` |
@@ -39,6 +40,12 @@ Base `/public/api/`. Workspace phải là SHIPPER trừ hai endpoint Customer �
 Mã lỗi riêng: `SHIPPER_NOT_ELIGIBLE` (403), `OFFER_EXPIRED`, `OFFER_LOST_RACE`, `OFFER_NOT_PENDING`, `ORDER_NOT_AVAILABLE`, `PAYMENT_NOT_CONFIRMED`, `AVAILABILITY_OFF`, `ACTIVE_DELIVERY_EXISTS`, `INVALID_ORDER_STATE`, `EVIDENCE_REQUIRED`, `EVIDENCE_LIMIT_REACHED`, `RETURN_NOT_HANDED_OVER`, `NO_ACTIVE_DELIVERY`, `KYC_NOT_RESUBMITTABLE`, `VEHICLE_REGISTRATION_TAKEN` (đều 409) và `LOCATION_RATE_LIMITED` (429).
 
 ## Quy tắc nghiệp vụ
+
+**Tổng quan.** Bộ lọc ngày dùng múi giờ `Asia/Ho_Chi_Minh`, tuần bắt đầu thứ Hai và khoảng thời gian `[start, end)`. Số đơn hoàn thành đếm toàn bộ assignment `COMPLETED` theo `delivered_at`, không bị giới hạn 50 dòng của lịch sử. `delivery_seconds` là tổng thời gian từ nhận đến kết thúc phân công giao nhau với khoảng đã chọn, không phải thời gian bật nhận đơn. Đơn đang giao và đánh giá lấy từ `deliveries.php` và `profile.php`; không hiển thị số liệu mẫu khi API lỗi. Hồ sơ cá nhân đọc `account/profile.php`; PUT chỉ cập nhật `full_name`. Các trường chưa có API cập nhật được khóa trên giao diện.
+
+**Trung tâm hỗ trợ.** Trang riêng `?page=shipper&view=support` chứa ticket, phản hồi, tệp và tài khoản nhận tiền. Mục `tab=chat&id=<order_id>` mở hội thoại đúng đơn; alias `view=chat` cũng dẫn đến trang hỗ trợ. Trang khác không hiển thị form hỗ trợ hoặc tự tải danh sách ticket. Chat dùng API `interactions.php`, cập nhật mỗi 8 giây khi trang đang hiển thị, giữ nguyên bản nháp khi nhận tin mới và giữ `client_key`/file đã upload khi gửi lại sau lỗi. Đây là chat theo đơn với các thành viên được API cấp quyền; trao đổi với bộ phận hỗ trợ nằm trong ticket. Mỗi tệp đính kèm tối đa 5 MiB, tối đa 5 tệp/tin nhắn. Kiểm thử: `node tests/shipper_support_browser.cjs`; ảnh desktop/mobile tạo tại `tests/.runtime/support/`.
+
+**Tách workspace.** Migration `20261113_workspace_notifications` gắn `notifications.recipient_role` và `support_tickets.opened_role`. API lấy workspace từ session đã xác thực, không từ tham số client. Feed, badge, phân trang, đánh dấu từng thông báo và đánh dấu tất cả đều lọc cả `user_id` và `recipient_role`. Sự kiện tạo đơn, xác nhận thanh toán, hoàn tiền và chưa tìm được người giao chỉ gửi CUSTOMER; offer và chi trả chỉ gửi SHIPPER. Ticket, phản hồi và tệp liên quan cũng giới hạn theo workspace. Dữ liệu cũ được phân loại bằng đơn hàng, phân công và vai trò đã lưu; bản ghi không xác định chắc chắn vẫn được giữ với role NULL và không xuất hiện trong feed cá nhân. Kiểm thử tài khoản có hai vai trò: `php tests/workspace_notifications.php` (TEMP TABLE).
 
 **Điều kiện hoạt động.** `ShipperEligibility` là nơi duy nhất quyết định Shipper có được làm việc hay không: tài khoản ACTIVE, hồ sơ APPROVED, giấy tờ APPROVED và điểm tin cậy không thấp hơn `lock_threshold` của chính sách điểm đang hiệu lực (nếu Admin đã ban hành). Availability, matching và accept đều gọi cùng class này.
 
@@ -68,7 +75,8 @@ Ghi vào `order_events` bằng `OrderLifecycleService::event()` trong cùng tran
 ```powershell
 php tests/shipper_matching.php     # 53 kiểm tra: hồ sơ, KYC, availability, matching, offer, accept
 php tests/shipper_delivery.php     # 44 kiểm tra: giao nhận, bằng chứng, hoàn hàng, GPS
-php tests/shipper_dashboard.php    # 21 kiểm tra: số liệu Tổng quan theo kỳ, ranh giới ngày theo giờ Việt Nam
+php tests/shipper_dashboard.php    # ranh giới ngày và thống kê PostgreSQL bằng TEMP TABLE
+node tests/shipper_dashboard_browser.cjs # tổng quan, hồ sơ, lỗi tải, đổi khoảng ngày và mobile qua HTTP fixtures
 php tests/shipper_accept_race.php  # 40 kiểm tra tranh chấp bằng tiến trình song song
 ```
 
@@ -78,9 +86,11 @@ Hai file đầu dùng TEMP TABLE nên không ghi vào dữ liệu thật. File t
 
 - **Private Storage integration:** upload multipart to `storage.php` with `purpose=KYC` or `EVIDENCE` (evidence also requires `order_id`). Submit the returned `file_id` as `reference_file_id`. KYC documents contain `{document_type,reference_file_id}`. Backend checks ownership, purpose and order inside the business transaction, and derives key/MIME/size/checksum from stored metadata. Arbitrary paths and client metadata are rejected. JPEG/PNG/WebP evidence and JPEG/PNG/WebP/PDF KYC are limited to 5 MiB. Evidence is retained for 90 days after order closure; GPS remains 7 days. Legacy placeholder evidence cannot satisfy delivery completion.
 - **Thu nhập và điểm.** Module này chỉ phát sự kiện; ghi `shipper_earnings` thuộc Người 3. Chưa có luồng Shipper tự hủy đơn trước khi lấy hàng vì chính sách trừ điểm chưa chốt.
-- **Giao diện.** Offer, nhận đơn, đơn đang giao, lịch sử và phương tiện đã nối API. Thông báo, chat, thu nhập và số liệu trang Tổng quan vẫn là demo. Chuỗi mới chưa có bản tiếng Anh trong bảng dịch của `app/Views/shipper/index.php`.
+- **Giao diện.** Offer, nhận đơn, đơn đang giao, lịch sử, phương tiện, hồ sơ cá nhân và Tổng quan đã nối API. Thông báo, chat và thu nhập dùng module `person3.js`. Một số chuỗi mới chưa có bản tiếng Anh trong bảng dịch của `app/Views/shipper/index.php`.
 - **Test trình duyệt cũ.** `tests/ui_e2e.cjs` và `tests/reaudit_browser.cjs` có bước bấm nút chi tiết của offer demo; danh sách offer giờ lấy từ database nên hai bước đó cần fixture offer hoặc cập nhật selector.
 - **File dùng chung đã chạm.** `database/migrate-customer-orders.php` (thêm tên migration) và `app/Views/shipper/index.php` (nạp module JS). Cần Người 1 xem qua khi merge.
+
+Trạng thái nhận đơn được lưu trong database và khôi phục sau khi tải lại trang. Khi bật nhận đơn, giao diện kiểm tra offer mỗi 5 giây, cập nhật GPS mỗi 2 phút và làm mới GPS khi quay lại tab. POST refresh bổ sung phân phối đơn khi worker chưa chạy liên tục; worker vẫn cần cho việc quét toàn hệ thống.
 
 ## Trang Tổng quan (cập nhật 13/11/2026)
 
@@ -95,4 +105,4 @@ API hồ sơ (`shipper/profile.php`) trả thêm khối `account` gồm `code`, 
 
 Giao diện: `shipper-dashboard.js` điền bốn thẻ số liệu và thẻ Đơn đang giao, `shipper-header.js` điền tên và chữ viết tắt trên thanh đầu trang. Thẻ thu nhập vẫn do `person3.js` của Người 3 điền. Thẻ "Thời gian hoạt động" đã bỏ vì hệ thống không ghi nhận thời gian trực tuyến; thay bằng tỷ lệ nhận đơn.
 
-Còn là dữ liệu mẫu ở trang Tài khoản: khu vực hoạt động, địa chỉ liên hệ, dòng xe và màu xe (chưa có cột lưu trong database), và ảnh đại diện (chưa có API lưu).
+Các trường khu vực, địa chỉ, dòng xe và màu xe chưa hỗ trợ lưu được khóa trên trang Tài khoản. Họ tên được cập nhật qua account/profile.php. API Tổng quan cũng trả delivery_seconds (thời gian xử lý phân công trong kỳ), completed_deliveries, timezone, start và end.

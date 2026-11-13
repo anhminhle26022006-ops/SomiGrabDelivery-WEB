@@ -74,6 +74,8 @@
   window.SomiShipper = {
     esc, money, toast, position,
     profile: () => request("profile.php"),
+    accountProfile: () => request("../account/profile.php"),
+    updateName: (fullName) => request("../account/profile.php", "PUT", { full_name: fullName }),
     dashboard: (range) => request("dashboard.php?range=" + encodeURIComponent(range)),
     updateVehicle: (vehicle) => request("profile.php", "PUT", vehicle),
     kyc: () => request("kyc.php"),
@@ -86,6 +88,7 @@
     availability: () => request("availability.php"),
     setAvailability: (body) => request("availability.php", "POST", body),
     offers: () => request("offers.php"),
+    refreshOffers: () => request("offers.php", "POST", { action: "refresh" }),
     rejectOffer: (offerId) => request("offers.php", "POST", { offer_id: String(offerId) }),
     acceptOffer: (offerId) => request("accept-offer.php", "POST", { offer_id: String(offerId) }),
     currentDelivery: () => request("deliveries.php"),

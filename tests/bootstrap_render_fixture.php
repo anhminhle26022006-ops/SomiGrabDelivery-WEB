@@ -9,7 +9,7 @@ if (!function_exists('e')) {
     function e(string $s): string { return htmlspecialchars($s, ENT_QUOTES, 'UTF-8'); }
     function assetUrl(string $path): string { return '/'.$path; }
 }
-$shipperPage = 'dashboard';
+$shipperPage = in_array($_GET['view'] ?? '', ['dashboard', 'account', 'support', 'notifications', 'earnings', 'active'], true) ? $_GET['view'] : 'dashboard';
 ?><!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="stylesheet" href="/public/assets/vendor/bootstrap/bootstrap.min.css">
 <script defer src="/public/assets/vendor/bootstrap/bootstrap.bundle.min.js"></script>
@@ -17,7 +17,7 @@ $shipperPage = 'dashboard';
 <link rel="stylesheet" href="/public/assets/css/bootstrap-workspaces.css">
 <link rel="stylesheet" href="/public/assets/css/modules/shipper.css">
 <script defer src="/public/assets/js/app.js"></script>
-</head><body data-page="shipper" data-shipper-view="dashboard">
+</head><body data-page="shipper" data-shipper-view="<?= e($shipperPage) ?>">
 <?php require $root.'/app/Views/shipper/index.php'; ?>
 <script defer src="/public/assets/js/shipper-navigation.js"></script>
 <script defer src="/public/assets/js/shipper.js"></script>

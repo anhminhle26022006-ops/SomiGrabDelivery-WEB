@@ -47,3 +47,5 @@ body[data-page="admin"] .admin-live .main-content{margin-left:var(--admin-sideba
 .admin-live .admin-table td{font-size:12px}.admin-live .card.admin-panel,.admin-live .card.admin-stat{color:var(--admin-ink)}
 .admin-live .admin-pill.badge{font-weight:700;line-height:1.2}.admin-live .admin-dialog{line-height:1.5}
 .admin-live .admin-form-grid .form-control,.admin-live .admin-form-grid .form-select{font-size:12px}
+
+.admin-nav-count{margin-left:auto;display:inline-flex;align-items:center;justify-content:center;min-width:23px;height:23px;padding:0 6px;border-radius:999px;background:#d92d20;color:white;font-size:12px;font-weight:700;line-height:1;flex-shrink:0}.admin-nav-count[hidden]{display:none!important}.admin-work-label{display:inline-block;margin:0 6px 4px 0;padding:3px 7px;border-radius:6px;background:#fff1e8;color:#9a3412;font-size:11px;font-weight:600}

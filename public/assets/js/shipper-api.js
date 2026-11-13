@@ -74,6 +74,7 @@
   window.SomiShipper = {
     esc, money, toast, position,
     profile: () => request("profile.php"),
+    dashboard: (range) => request("dashboard.php?range=" + encodeURIComponent(range)),
     updateVehicle: (vehicle) => request("profile.php", "PUT", vehicle),
     kyc: () => request("kyc.php"),
     resubmitKyc: (body) => request("kyc.php", "POST", body),

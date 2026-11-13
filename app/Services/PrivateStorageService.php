@@ -28,6 +28,7 @@ final class PrivateStorageService
             if($file['purpose']==='CHAT'&&$file['message_id']===null)throw new DeliveryApiError(404,'FILE_NOT_FOUND','File not found.');
             AccessControl::requirePermission($this->db,$user,'ADMIN','storage.read_support');
             if($file['purpose']==='KYC')AccessControl::requirePermission($this->db,$user,'ADMIN','shipper.verify');
+            elseif($file['purpose']==='EVIDENCE'){AccessControl::requirePermission($this->db,$user,'ADMIN','order.read_all');}
             else {
                 AccessControl::requirePermission($this->db,$user,'ADMIN','support.manage_all');
                 if($file['ticket_id']){$ticket=(int)$file['ticket_id'];}

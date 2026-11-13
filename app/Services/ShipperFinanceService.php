@@ -122,7 +122,7 @@ final class ShipperFinanceService
         $this->db->prepare("UPDATE shipper_payouts SET status='SUCCEEDED',provider_payout_ref=?,evidence_reference=?,failure_reason=NULL,completed_at=now() WHERE payout_id=?")->execute([$ref,$proof,$id]);
         $this->db->prepare("UPDATE shipper_earnings SET payout_status='PAID' WHERE earning_id=?")->execute([$p['earning_id']]);
         AuditService::record($this->db,$admin,'ADMIN','PAYOUT_RECONCILED','SHIPPER_PAYOUT',$id,[],['provider_payout_ref'=>$ref,'evidence_reference'=>$proof]);
-        InteractionService::notify($this->db,(int)$p['shipper_id'],(int)$row['order_id'],'PayoutSucceeded','Đã đối soát chi trả','Payout reconciled','Khoản chi trả đã có chứng từ xác nhận.','The payout has confirmed evidence.','payout:'.$id);
+        InteractionService::notify($this->db,(int)$p['shipper_id'],(int)$row['order_id'],'PayoutSucceeded','Đã đối soát chi trả','Payout reconciled','Khoản chi trả đã có chứng từ xác nhận.','The payout has confirmed evidence.','payout:'.$id,'SHIPPER');
         return ['payout_id'=>$id,'status'=>'SUCCEEDED'];
     }
 }

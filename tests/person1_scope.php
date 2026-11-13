@@ -49,7 +49,7 @@ try {
     check(!isset($files['items'][0]['object_key']),'no private object keys exposed');
     rejects(fn()=>tx($db,fn()=>$media->listing(CUSTOMER,['shipper_id'=>SHIPPER_A])),'PERMISSION_DENIED');
     rejects(fn()=>tx($db,fn()=>$media->listing(ADMIN,['order_id'=>$order])),'RELATED_TICKET_REQUIRED');
-    $db->prepare("INSERT INTO support_tickets(ticket_code,order_id,opened_by,category,subject,description) VALUES('MEDIA-TEST',?,2,'OTHER','Fixture','Fixture')")->execute([$order]);
+    $db->prepare("INSERT INTO support_tickets(ticket_code,order_id,opened_by,opened_role,category,subject,description) VALUES('MEDIA-TEST',?,2,'CUSTOMER','OTHER','Fixture','Fixture')")->execute([$order]);
     $db->prepare("INSERT INTO order_assignments(order_id,shipper_id) VALUES(?,3)")->execute([$order]);
     $db->prepare("INSERT INTO deliveries(order_id,assignment_id) SELECT order_id,assignment_id FROM order_assignments WHERE order_id=?")->execute([$order]);
     $photo=storage_file($db,SHIPPER_A,'EVIDENCE',$order);

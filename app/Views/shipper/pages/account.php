@@ -1,23 +1,25 @@
 <?php // Shipper page: account ?>
 <section id="page-account" class="page<?= $shipperPage === 'account' ? '' : ' hidden' ?>" aria-hidden="<?= $shipperPage === 'account' ? 'false' : 'true' ?>">
-    <div class="pagehead"><div><div class="eyebrow">HỒ SƠ NGƯỜI GIAO</div><h1>Tài khoản & hồ sơ</h1><p>Quản lý thông tin cá nhân và ảnh đại diện của bạn.</p></div></div>
+    <div class="pagehead"><div><div class="eyebrow">HỒ SƠ NGƯỜI GIAO</div><h1>Tài khoản & hồ sơ</h1><p>Quản lý thông tin tài khoản, phương tiện và giấy tờ của bạn.</p></div></div>
     <section class="card" style="max-width:900px">
-      <div class="sectiontitle"><div><h2>Thông tin cá nhân</h2><p>Thông tin minh họa cho bản demo.</p></div></div>
+      <div class="sectiontitle"><div><h2>Thông tin cá nhân</h2><p>Thông tin tài khoản đã đăng ký. Bạn có thể cập nhật họ tên.</p></div></div>
       <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-bottom:22px">
         <span class="avatar" id="accountAvatar" style="width:88px;height:88px;font-size:24px"><span>NA</span></span>
-        <div><strong style="display:block;font-size:16px">Nguyễn Văn A</strong><span class="muted">Shipper · Mã tài khoản SH-00128</span><div style="margin-top:10px"><label for="avatarUpload" class="primary blue" style="display:inline-block;padding:10px 13px;border-radius:10px;cursor:pointer">📷 Tải ảnh đại diện</label><input id="avatarUpload" type="file" accept="image/*" hidden></div></div>
+        <div><strong data-shipper-name style="display:block;font-size:16px">Đang tải…</strong><span class="muted" data-shipper-account-id>Shipper</span></div>
       </div>
       <div class="cards" style="grid-template-columns:repeat(2,minmax(0,1fr))">
-        <div><label class="muted" for="shipperName">Họ và tên</label><input id="shipperName" value="Nguyễn Văn A" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" /></div>
-        <div><label class="muted" for="shipperPhone">Số điện thoại</label><input id="shipperPhone" value="0900 123 456" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" /></div>
-        <div><label class="muted" for="shipperEmail">Email</label><input id="shipperEmail" value="shipper@example.com" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" /></div>
-        <div><label class="muted" for="shipperArea">Khu vực hoạt động</label><input id="shipperArea" value="TP. Hồ Chí Minh" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" /></div>
+        <div><label class="muted" for="shipperName">Họ và tên</label><input id="shipperName" required maxlength="150" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" /></div>
+        <div><label class="muted" for="shipperPhone">Số điện thoại</label><input id="shipperPhone" readonly style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" /></div>
+        <div><label class="muted" for="shipperEmail">Email</label><input id="shipperEmail" readonly style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" /></div>
+        <div><label class="muted" for="shipperArea">Khu vực hoạt động</label><input id="shipperArea" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" disabled placeholder="Chưa hỗ trợ cập nhật" /></div>
       </div>
+      <button id="saveProfileBtn" type="button" class="primary" style="margin-top:16px" disabled>Lưu họ tên</button>
+      <p class="muted">Các trường chưa hỗ trợ cập nhật đang được khóa. Giấy tờ được quản lý qua hồ sơ KYC.</p>
       <div class="sectiontitle" style="margin-top:26px"><div><h2>Địa chỉ liên hệ</h2><p>Địa chỉ cư trú/liên hệ phục vụ hồ sơ người giao.</p></div></div>
       <div class="cards" style="grid-template-columns:repeat(2,minmax(0,1fr))">
-        <div style="grid-column:1/-1"><label class="muted" for="shipperAddress">Địa chỉ cụ thể</label><input id="shipperAddress" placeholder="Số nhà, tên đường..." style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" /></div>
-        <div><label class="muted" for="shipperWard">Phường / xã</label><input id="shipperWard" placeholder="Nhập phường / xã" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" /></div>
-        <div><label class="muted" for="shipperCity">Tỉnh / thành phố</label><input id="shipperCity" value="TP. Hồ Chí Minh" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" /></div>
+        <div style="grid-column:1/-1"><label class="muted" for="shipperAddress">Địa chỉ cụ thể</label><input id="shipperAddress" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" disabled placeholder="Chưa hỗ trợ cập nhật" /></div>
+        <div><label class="muted" for="shipperWard">Phường / xã</label><input id="shipperWard" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" disabled placeholder="Chưa hỗ trợ cập nhật" /></div>
+        <div><label class="muted" for="shipperCity">Tỉnh / thành phố</label><input id="shipperCity" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" disabled placeholder="Chưa hỗ trợ cập nhật" /></div>
       </div>
       <div class="sectiontitle" style="margin-top:26px"><div><h2>Tài khoản nhận thanh toán</h2><p>Đổi tài khoản bằng mật khẩu hiện tại và OTP gửi đến email đã xác minh. Admin chuyển khoản và đối soát chứng từ.</p></div></div>
       <button class="outline" type="button" onclick="window.somiPerson3Open('bank')">Quản lý tài khoản nhận tiền</button>
@@ -31,22 +33,22 @@
       <div class="sectiontitle" style="margin-top:26px"><div><h2>Thông tin phương tiện</h2><p>Thông tin dùng để xác minh phương tiện và ghép đơn phù hợp.</p></div></div>
       <div class="cards" style="grid-template-columns:repeat(2,minmax(0,1fr))">
         <div><label class="muted" for="vehicleType">Loại phương tiện</label><select id="vehicleType" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px"><option>Xe máy</option><option>Xe máy điện</option><option>Ô tô</option><option>Xe tải nhỏ</option></select></div>
-        <div><label class="muted" for="vehicleBrand">Hãng xe / dòng xe</label><input id="vehicleBrand" value="Honda Vision" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" /></div>
-        <div><label class="muted" for="vehiclePlate">Biển số xe</label><input id="vehiclePlate" value="59-X1 123.45" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" /></div>
-        <div><label class="muted" for="vehicleColor">Màu xe</label><input id="vehicleColor" value="Trắng" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" /></div>
-        <div><label class="muted" for="licenseNumber">Số giấy phép lái xe (nếu áp dụng)</label><input id="licenseNumber" placeholder="Nhập số GPLX" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" /></div>
-        <div><label class="muted" for="licenseExpiry">Ngày hết hạn GPLX</label><input id="licenseExpiry" type="date" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" /></div>
-        <div><label class="muted" for="registrationNumber">Số đăng ký xe</label><input id="registrationNumber" placeholder="Nhập số đăng ký xe" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" /></div>
-        <div><label class="muted" for="insuranceExpiry">Ngày hết hạn bảo hiểm</label><input id="insuranceExpiry" type="date" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" /></div>
-        <div><label class="muted" for="serviceArea">Khu vực / bán kính nhận đơn</label><input id="serviceArea" value="TP. Hồ Chí Minh · 10 km" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" /></div>
+        <div><label class="muted" for="vehicleBrand">Hãng xe / dòng xe</label><input id="vehicleBrand" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" disabled placeholder="Chưa hỗ trợ cập nhật" /></div>
+        <div><label class="muted" for="vehiclePlate">Biển số xe</label><input id="vehiclePlate" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" /></div>
+        <div><label class="muted" for="vehicleColor">Màu xe</label><input id="vehicleColor" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" disabled placeholder="Chưa hỗ trợ cập nhật" /></div>
+        <div><label class="muted" for="licenseNumber">Số giấy phép lái xe (nếu áp dụng)</label><input id="licenseNumber" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" disabled placeholder="Chưa hỗ trợ cập nhật" /></div>
+        <div><label class="muted" for="licenseExpiry">Ngày hết hạn GPLX</label><input id="licenseExpiry" type="date" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" disabled placeholder="Chưa hỗ trợ cập nhật" /></div>
+        <div><label class="muted" for="registrationNumber">Số đăng ký xe</label><input id="registrationNumber" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" disabled placeholder="Chưa hỗ trợ cập nhật" /></div>
+        <div><label class="muted" for="insuranceExpiry">Ngày hết hạn bảo hiểm</label><input id="insuranceExpiry" type="date" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" disabled placeholder="Chưa hỗ trợ cập nhật" /></div>
+        <div><label class="muted" for="serviceArea">Khu vực / bán kính nhận đơn</label><input id="serviceArea" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" disabled placeholder="Chưa hỗ trợ cập nhật" /></div>
       </div>
       <div class="sectiontitle" style="margin-top:26px"><div><h2>Người liên hệ khẩn cấp</h2><p>Dùng khi có sự cố trong quá trình giao hàng.</p></div></div>
       <div class="cards" style="grid-template-columns:repeat(2,minmax(0,1fr))">
-        <div><label class="muted" for="emergencyName">Họ tên người liên hệ</label><input id="emergencyName" placeholder="Nhập họ tên" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" /></div>
-        <div><label class="muted" for="emergencyPhone">Số điện thoại người liên hệ</label><input id="emergencyPhone" type="tel" placeholder="Nhập số điện thoại" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" /></div>
+        <div><label class="muted" for="emergencyName">Họ tên người liên hệ</label><input id="emergencyName" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" disabled placeholder="Chưa hỗ trợ cập nhật" /></div>
+        <div><label class="muted" for="emergencyPhone">Số điện thoại người liên hệ</label><input id="emergencyPhone" type="tel" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" disabled placeholder="Chưa hỗ trợ cập nhật" /></div>
       </div>
       <p class="muted" style="font-size:12px;margin-top:18px">Trạng thái xác minh hồ sơ: <strong id="kycStatusLine">Đang tải…</strong></p>
       <p class="muted" id="kycHint" style="font-size:12px"></p>
-      <button class="primary" type="button" id="saveVehicleBtn">Lưu thông tin phương tiện</button>
+      <button class="primary" type="button" id="saveVehicleBtn" disabled>Lưu thông tin phương tiện</button>
     </section>
   </section>

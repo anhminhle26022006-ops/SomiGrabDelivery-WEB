@@ -242,11 +242,13 @@ body[data-page="shipper"] .shipper-policy-dialog>.shipper-dialog-body>.shipper-d
     dateMenu?.querySelectorAll('[data-date-range]').forEach(option => option.setAttribute('aria-pressed', String(option.dataset.dateRange === range)));
     renderDashboardPeriod(range);
   };
+  // Chỉ còn phần chữ mô tả của từng kỳ. Số liệu thật lấy từ API shipper/dashboard.php
+  // và do public/assets/js/shipper-dashboard.js hiển thị khi nhận sự kiện somi:shipper-range.
   const dashboardPeriods = {
-    today:{description:['A quick look at your delivery activity today.','Xem nhanh tình trạng hoạt động hôm nay của bạn.'],period:['today','hôm nay'],comparison:['vs. yesterday','so với hôm qua'],deliveries:5,earnings:320000,hours:'4h 30m',change:[25,12,10],chartTitle:['Hourly earnings','Thu nhập theo giờ'],chartNote:['Hourly earnings summary for today.','Biểu đồ thu nhập theo giờ hôm nay.'],labels:['9h','11h','13h','15h','17h'],bars:[35,55,43,85,62]},
-    yesterday:{description:['Your delivery activity yesterday.','Tình hình hoạt động giao hàng hôm qua của bạn.'],period:['yesterday','hôm qua'],comparison:['vs. the day before','so với hôm kia'],deliveries:4,earnings:256000,hours:'4h 05m',change:[18,9,7],chartTitle:['Hourly earnings','Thu nhập theo giờ'],chartNote:['Hourly earnings summary for yesterday.','Biểu đồ thu nhập theo giờ hôm qua.'],labels:['9h','11h','13h','15h','17h'],bars:[28,48,65,54,78]},
-    week:{description:['Your delivery activity this week.','Tình hình hoạt động giao hàng tuần này của bạn.'],period:['this week','tuần này'],comparison:['vs. last week','so với tuần trước'],deliveries:32,earnings:2180000,hours:'28h 40m',change:[18,14,8],chartTitle:['Earnings by day','Thu nhập theo ngày'],chartNote:['Daily earnings summary for this week.','Biểu đồ thu nhập theo từng ngày trong tuần.'],labels:['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],labelsVi:['T2','T3','T4','T5','T6','T7','CN'],bars:[46,72,58,84,65,96,40]},
-    month:{description:['Your delivery activity this month.','Tình hình hoạt động giao hàng tháng này của bạn.'],period:['this month','tháng này'],comparison:['vs. last month','so với tháng trước'],deliveries:126,earnings:8420000,hours:'112h 15m',change:[11,9,6],chartTitle:['Earnings by week','Thu nhập theo tuần'],chartNote:['Weekly earnings summary for this month.','Biểu đồ thu nhập theo từng tuần trong tháng.'],labels:['Week 1','Week 2','Week 3','Week 4','Week 5'],labelsVi:['Tuần 1','Tuần 2','Tuần 3','Tuần 4','Tuần 5'],bars:[55,72,63,91,48]}
+    today:{description:['A quick look at your delivery activity today.','Xem nhanh tình trạng hoạt động hôm nay của bạn.'],period:['today','hôm nay']},
+    yesterday:{description:['Your delivery activity yesterday.','Tình hình hoạt động giao hàng hôm qua của bạn.'],period:['yesterday','hôm qua']},
+    week:{description:['Your delivery activity this week.','Tình hình hoạt động giao hàng tuần này của bạn.'],period:['this week','tuần này']},
+    month:{description:['Your delivery activity this month.','Tình hình hoạt động giao hàng tháng này của bạn.'],period:['this month','tháng này']}
   };
   function renderDashboardPeriod(range) {
     const data = dashboardPeriods[range];
@@ -254,27 +256,11 @@ body[data-page="shipper"] .shipper-policy-dialog>.shipper-dialog-body>.shipper-d
     const text = pair => pair[locale === 'vi' ? 1 : 0];
     document.querySelectorAll('[data-dashboard-description]').forEach(el => { el.textContent = text(data.description); });
     document.querySelectorAll('[data-period-stat]').forEach(el => {
-      const kind = el.dataset.periodStat;
-      el.textContent = kind === 'deliveries' ? (locale === 'vi' ? `Đơn hoàn thành ${data.period[1]}` : `Deliveries completed ${data.period[0]}`)
-        : kind === 'earnings' ? (locale === 'vi' ? `Thu nhập ${data.period[1]}` : `Earnings ${data.period[0]}`)
-        : (locale === 'vi' ? `Thời gian hoạt động ${data.period[1]}` : `Active time ${data.period[0]}`);
+      el.textContent = el.dataset.periodStat === 'deliveries'
+        ? (locale === 'vi' ? `Đơn hoàn thành ${data.period[1]}` : `Deliveries completed ${data.period[0]}`)
+        : (locale === 'vi' ? `Tỷ lệ nhận đơn ${data.period[1]}` : `Acceptance rate ${data.period[0]}`);
     });
-    document.querySelectorAll('[data-period-value]').forEach(el => {
-      const kind = el.dataset.periodValue;
-      el.textContent = kind === 'earnings' ? formatShipperMoney(data.earnings) : kind === 'deliveries' ? String(data.deliveries) : data.hours;
-    });
-    document.querySelectorAll('[data-period-trend]').forEach(el => {
-      const kind = el.dataset.periodTrend;
-      const index = kind === 'deliveries' ? 0 : kind === 'earnings' ? 1 : 2;
-      el.innerHTML = `↑ ${data.change[index]}% <span class="muted">${text(data.comparison)}</span>`;
-    });
-    document.querySelectorAll('[data-period-earnings-title]').forEach(el => { el.textContent = locale === 'vi' ? `Thu nhập ${data.period[1]}` : `Earnings ${data.period[0]}`; });
-    document.querySelectorAll('[data-period-chart-title]').forEach(el => { el.textContent = text(data.chartTitle); });
-    document.querySelectorAll('[data-period-chart-note]').forEach(el => { el.textContent = text(data.chartNote); });
-    document.querySelectorAll('[data-period-chart]').forEach(chart => {
-      const labels = locale === 'vi' && data.labelsVi ? data.labelsVi : data.labels;
-      chart.innerHTML = data.bars.map((height, index) => `<div class="barwrap"><div class="bar" style="height:${height}%"></div><span class="barlabel">${labels[index]}</span></div>`).join('');
-    });
+    document.dispatchEvent(new CustomEvent('somi:shipper-range', { detail: { range } }));
   }
   if (dateTrigger && dateMenu) {
     document.addEventListener('somi:language-change', () => renderDateRange(localStorage.getItem('somi-shipper-date-range') || 'today'));
@@ -321,6 +307,6 @@ body[data-page="shipper"] .shipper-policy-dialog>.shipper-dialog-body>.shipper-d
 })();
 </script>
 <?php // Module giao diện nối API Shipper (Người 2). Chỉ nạp những file đã có trong mã nguồn. ?>
-<?php foreach (['shipper-api', 'shipper-offers', 'shipper-active', 'shipper-account'] as $shipperModule): ?>
+<?php foreach (['shipper-api', 'shipper-header', 'shipper-dashboard', 'shipper-offers', 'shipper-active', 'shipper-account'] as $shipperModule): ?>
 <?php if (is_file(__DIR__ . '/../../../public/assets/js/' . $shipperModule . '.js')): ?><script defer src="<?= e(assetUrl('public/assets/js/' . $shipperModule . '.js')) ?>"></script><?php endif; ?>
 <?php endforeach; ?>

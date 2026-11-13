@@ -2,15 +2,15 @@
 <section id="page-account" class="page<?= $shipperPage === 'account' ? '' : ' hidden' ?>" aria-hidden="<?= $shipperPage === 'account' ? 'false' : 'true' ?>">
     <div class="pagehead"><div><div class="eyebrow">HỒ SƠ NGƯỜI GIAO</div><h1>Tài khoản & hồ sơ</h1><p>Quản lý thông tin cá nhân và ảnh đại diện của bạn.</p></div></div>
     <section class="card" style="max-width:900px">
-      <div class="sectiontitle"><div><h2>Thông tin cá nhân</h2><p>Thông tin minh họa cho bản demo.</p></div></div>
+      <div class="sectiontitle"><div><h2>Thông tin cá nhân</h2><p>Thông tin tài khoản của bạn trên SOMI.</p></div></div>
       <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap;margin-bottom:22px">
         <span class="avatar" id="accountAvatar" style="width:88px;height:88px;font-size:24px"><span>NA</span></span>
-        <div><strong style="display:block;font-size:16px">Nguyễn Văn A</strong><span class="muted">Shipper · Mã tài khoản SH-00128</span><div style="margin-top:10px"><label for="avatarUpload" class="primary blue" style="display:inline-block;padding:10px 13px;border-radius:10px;cursor:pointer">📷 Tải ảnh đại diện</label><input id="avatarUpload" type="file" accept="image/*" hidden></div></div>
+        <div><strong style="display:block;font-size:16px" id="accountName">Đang tải…</strong><span class="muted">Shipper, mã tài khoản <span id="accountCode">…</span></span><div style="margin-top:10px"><label for="avatarUpload" class="primary blue" style="display:inline-block;padding:10px 13px;border-radius:10px;cursor:pointer">📷 Tải ảnh đại diện</label><input id="avatarUpload" type="file" accept="image/*" hidden></div></div>
       </div>
       <div class="cards" style="grid-template-columns:repeat(2,minmax(0,1fr))">
-        <div><label class="muted" for="shipperName">Họ và tên</label><input id="shipperName" value="Nguyễn Văn A" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" /></div>
-        <div><label class="muted" for="shipperPhone">Số điện thoại</label><input id="shipperPhone" value="0900 123 456" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" /></div>
-        <div><label class="muted" for="shipperEmail">Email</label><input id="shipperEmail" value="shipper@example.com" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" /></div>
+        <div><label class="muted" for="shipperName">Họ và tên</label><input id="shipperName" value="" readonly style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" /></div>
+        <div><label class="muted" for="shipperPhone">Số điện thoại</label><input id="shipperPhone" value="" readonly style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" /></div>
+        <div><label class="muted" for="shipperEmail">Email</label><input id="shipperEmail" value="" readonly style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" /></div>
         <div><label class="muted" for="shipperArea">Khu vực hoạt động</label><input id="shipperArea" value="TP. Hồ Chí Minh" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" /></div>
       </div>
       <div class="sectiontitle" style="margin-top:26px"><div><h2>Địa chỉ liên hệ</h2><p>Địa chỉ cư trú/liên hệ phục vụ hồ sơ người giao.</p></div></div>

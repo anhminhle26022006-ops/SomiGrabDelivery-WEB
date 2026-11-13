@@ -2,7 +2,7 @@
 declare(strict_types=1);
 // Dữ liệu dùng chung cho các bài kiểm thử của Người 2. Mọi bảng là TEMP TABLE của phiên kết nối
 // (search_path = pg_temp), nên chạy trên database nào cũng không ghi vào dữ liệu thật.
-if (PHP_SAPI !== 'cli') exit(1);
+if (PHP_SAPI !== 'cli' && !(PHP_SAPI==='cli-server' && getenv('SOMI_TEST_ADMIN_FINANCE')==='1' && ($_SERVER['REMOTE_ADDR']??'')==='127.0.0.1')) exit(1);
 require_once __DIR__ . '/../app/Config/database.php';
 require_once __DIR__ . '/../app/Services/DeliveryApiError.php';
 

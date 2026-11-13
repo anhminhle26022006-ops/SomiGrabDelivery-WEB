@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require_once __DIR__.'/AdminService.php';
 require_once __DIR__.'/CustomerOrderService.php';
+require_once __DIR__.'/EncryptedPayload.php';
 
 /** Live Admin queries and audited mutations; never returns password hashes or encrypted payloads. */
 final class AdminConsoleService
@@ -48,6 +49,14 @@ final class AdminConsoleService
         $row=$this->rows('SELECT user_id,full_name,email,phone,nationality_code,date_of_birth,gender,account_status,email_verified_at,phone_verified_at,created_at FROM users WHERE user_id=?',[$id])[0]??null;
         if(!$row)throw new DeliveryApiError(404,'ACCOUNT_NOT_FOUND','Account not found.');
         $row['shipper']=$this->rows('SELECT user_id,vehicle_type,vehicle_registration,verification_status,reliability_score,customer_rating_average,customer_rating_count,availability FROM shipper_profiles WHERE user_id=?',[$id])[0]??null;
+        $row['bank_accounts']=[];
+        $customerBank=$this->rows('SELECT bank_account_id,bank_name,account_holder,review_status,review_note,encrypted_payload,created_at FROM customer_bank_accounts WHERE customer_id=? ORDER BY bank_account_id DESC LIMIT 1',[$id])[0]??null;
+        $shipperBank=$this->rows("SELECT bank_account_id,bank_code,bank_name,account_holder,review_status,review_note,verified_at,convert_from(account_number_enc,'UTF8') AS encrypted_payload FROM shipper_bank_accounts WHERE shipper_id=? AND replaced_at IS NULL",[$id])[0]??null;
+        foreach(['CUSTOMER'=>$customerBank,'SHIPPER'=>$shipperBank] as $role=>$bank){
+            if(!$bank)continue;
+            try{$bank['account_number']=EncryptedPayload::open($bank['encrypted_payload'])['account_number'];}catch(Throwable $e){$bank['account_number']=null;$bank['needs_reentry']=true;}unset($bank['encrypted_payload']);$bank['role']=$role;$row['bank_accounts'][]=$bank;
+        }
+        if($row['bank_accounts'])AuditService::record($this->db,$admin,'ADMIN','ACCOUNT_BANK_READ','USER',$id);
         $row['identity']=$this->rows('SELECT document_type,document_country_code,review_status,rejection_reason,reviewed_at FROM user_identity_documents WHERE user_id=?',[$id])[0]??null;
         $row['history']=$this->rows('SELECT old_status,new_status,reason,changed_by,created_at FROM account_status_history WHERE user_id=? ORDER BY history_id DESC LIMIT 50',[$id]);
         AuditService::record($this->db,$admin,'ADMIN','ACCOUNT_READ','USER',$id);return ['account'=>$row];

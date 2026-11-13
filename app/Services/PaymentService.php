@@ -152,6 +152,7 @@ final class PaymentService
         OrderLifecycleService::lock($this->db,(int)$r['order_id']);
         $q=$this->db->prepare('SELECT b.* FROM customer_bank_accounts b JOIN orders o ON o.customer_id=b.customer_id WHERE o.order_id=? AND b.bank_account_id=? FOR SHARE OF b');
         $q->execute([$r['order_id'],DeliveryInput::id($in['bank_account_id']??null,'bank_account_id')]);$bank=$q->fetch();
+        if($bank&&($bank['review_status']??'APPROVED')!=='APPROVED')throw new DeliveryApiError(409,'BANK_REVIEW_REQUIRED','Approve the customer bank account before refund.');
         if(!$bank)throw new DeliveryApiError(409,'BANK_ACCOUNT_REQUIRED','Select the customer refund bank account.');
         $q=$this->db->prepare('SELECT refund_bank_account_id FROM refunds WHERE refund_id=? FOR UPDATE');$q->execute([$refundId]);$frozen=$q->fetchColumn();
         if($frozen!==null&&$frozen!==false&&(string)$frozen!==(string)$bank['bank_account_id'])throw new DeliveryApiError(409,'BANK_ACCOUNT_CONFLICT','Refund destination is already frozen.');

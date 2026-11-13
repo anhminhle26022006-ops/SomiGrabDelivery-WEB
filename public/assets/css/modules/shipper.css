@@ -269,3 +269,14 @@ body[data-page="shipper"] .delivery-actions>[data-delivery-action="SHOW_CANCEL"]
  body[data-page="shipper"] .delivery-actions>.outline,body[data-page="shipper"] .delivery-actions>.primary{flex:1 1 calc(50% - 5px);justify-content:center}
  body[data-page="shipper"] .delivery-actions>.primary{flex-basis:100%;margin-left:0}
 }
+/* === Trạng thái rỗng ===
+ * Dùng chung cho Tổng quan, Đơn giao phù hợp, Đơn đang giao và Lịch sử. */
+body[data-page="shipper"] .empty{display:flex;flex-direction:column;align-items:center;gap:7px;padding:44px 24px;border:1px dashed #dde5f0;border-radius:16px;background:#fbfcfe;color:var(--muted);font-size:12.5px;line-height:1.65}
+body[data-page="shipper"] .empty::before{content:"";width:46px;height:46px;margin-bottom:5px;border-radius:14px;background:#eef3fa center/22px 22px no-repeat;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237d8ea6' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 8l-9-5-9 5 9 5 9-5z'/%3E%3Cpath d='M3 8v8l9 5 9-5V8'/%3E%3Cpath d='M12 13v8'/%3E%3C/svg%3E")}
+body[data-page="shipper"] .empty strong{margin-bottom:0;color:var(--navy);font-size:15px;line-height:1.4}
+body[data-page="shipper"] .empty>strong:only-child{margin-bottom:0}
+
+/* === Đơn giao phù hợp: ô sắp xếp ===
+ * Thay mũi tên mặc định của trình duyệt bằng mũi tên cùng tông với nút. */
+body[data-page="shipper"] #offerSort{appearance:none;-webkit-appearance:none;min-height:42px;padding:10px 38px 10px 17px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23526580' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") right 14px center/14px 14px no-repeat;cursor:pointer}
+body[data-page="shipper"] #offerSort:hover{border-color:#c3d3e8}

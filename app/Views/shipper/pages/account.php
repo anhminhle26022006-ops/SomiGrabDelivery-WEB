@@ -8,6 +8,7 @@
           <span class="avatar account-avatar" id="accountAvatar"><span>NA</span></span>
           <div><strong data-shipper-name>Đang tải…</strong><span class="muted" data-shipper-account-id>Shipper</span></div>
         </div>
+        <?php require __DIR__.'/../../shared/avatar-editor.php'; ?>
         <div class="form-grid">
           <p class="form-field"><label for="shipperName">Họ và tên</label><input class="form-input" id="shipperName" required maxlength="150"></p>
           <p class="form-field"><label for="shipperPhone">Số điện thoại</label><input class="form-input" id="shipperPhone" readonly></p>

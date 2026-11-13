@@ -298,3 +298,4 @@ body[data-page="shipper"] .shipper-policy-dialog>.shipper-dialog-body>.shipper-d
 <?php foreach (['shipper-api', 'shipper-header', 'shipper-notifications', 'shipper-offers', 'shipper-tracking', 'shipper-active', 'shipper-account', 'shipper-dashboard'] as $shipperModule): ?>
 <?php if (is_file(__DIR__ . '/../../../public/assets/js/' . $shipperModule . '.js')): ?><script defer src="<?= e(assetUrl('public/assets/js/' . $shipperModule . '.js')) ?>"></script><?php endif; ?>
 <?php endforeach; ?>
+<?php require __DIR__.'/../shared/workspace-enhancements.php'; ?>

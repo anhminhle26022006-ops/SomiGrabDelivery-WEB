@@ -13,23 +13,33 @@
     <div class="dashboardgrid">
       <div class="stack">
         <section class="card">
+          <div class="sectiontitle"><div><h2>Đơn đang giao</h2><p>Tóm tắt tiến độ đơn bạn đã nhận.</p></div><button class="textlink" data-goto="active">Chi tiết →</button></div>
+          <div id="overviewActive" aria-live="polite"><div class="empty"><strong>Đang tải đơn đang giao…</strong></div></div>
+        </section>
+        <section class="card">
           <div class="sectiontitle"><div><h2>Đơn giao phù hợp</h2><p>Đơn mới phù hợp với khu vực và phương tiện của bạn.</p></div><button class="textlink" data-goto="offers">Xem tất cả →</button></div>
           <div id="overviewOrders"></div>
         </section>
         <section class="card">
-          <div class="sectiontitle"><div><h2>Đơn đang giao</h2><p>Tóm tắt tiến độ đơn bạn đã nhận.</p></div><button class="textlink" data-goto="active">Chi tiết →</button></div>
-          <div id="overviewActive" aria-live="polite"><div class="empty"><strong>Đang tải đơn đang giao…</strong></div></div>
+          <div class="sectiontitle"><div><h2>Thu nhập và chi trả</h2><p>Tổng hợp các khoản đã ghi nhận.</p></div><button class="textlink" data-goto="earnings">Chi tiết →</button></div>
+          <div data-p3-summary>Đang tải…</div>
         </section>
-      </div>
-      <div class="stack">
         <section class="card">
           <div class="sectiontitle"><div><h2>Thông báo mới</h2><p>Các cập nhật gần đây cần bạn chú ý.</p></div><button class="textlink" data-goto="notifications">Xem tất cả →</button></div>
           <div id="overviewNotices"></div>
         </section>
-        <section class="card">
-          <div class="sectiontitle"><div><h2>Thu nhập và chi trả</h2><p>Tổng hợp các khoản đã ghi nhận.</p></div><button class="textlink" data-goto="earnings">Chi tiết →</button></div>
-          <div class="summarymoney" data-p3-summary>Đang tải…</div>
+      </div>
+      <div class="stack">
+        <?php require __DIR__.'/../../shared/workspace-weather.php'; ?>
+        <section class="workspace-guide" data-shift-checklist>
+          <div class="sectiontitle"><h2 data-w-vi="Sẵn sàng lên đường" data-w-en="Ready for the road">Sẵn sàng lên đường</h2><small data-shift-ready>0 / 3</small></div>
+          <div class="workspace-checklist">
+            <label><input type="checkbox"><span><span data-w-vi="Mũ bảo hiểm, giấy tờ và xe" data-w-en="Helmet, documents and vehicle">Mũ bảo hiểm, giấy tờ và xe</span><small data-w-vi="Kiểm tra trước khi bắt đầu ca." data-w-en="Check before starting your shift.">Kiểm tra trước khi bắt đầu ca.</small></span></label>
+            <label><input type="checkbox"><span><span data-w-vi="Áo mưa và túi chống nước" data-w-en="Rainwear and waterproof bags">Áo mưa và túi chống nước</span><small data-w-vi="Giữ hàng khô khi thời tiết thay đổi." data-w-en="Keep parcels dry when weather changes.">Giữ hàng khô khi thời tiết thay đổi.</small></span></label>
+            <label><input type="checkbox"><span><span data-w-vi="Pin điện thoại và nước uống" data-w-en="Phone battery and drinking water">Pin điện thoại và nước uống</span><small data-w-vi="Sẵn sàng liên lạc trong suốt chuyến giao." data-w-en="Stay reachable throughout your delivery.">Sẵn sàng liên lạc trong suốt chuyến giao.</small></span></label>
+          </div>
         </section>
+        <section class="workspace-safety"><strong data-w-vi="An toàn trước, đơn hàng sau." data-w-en="Safety comes before the delivery.">An toàn trước, đơn hàng sau.</strong><span data-w-vi="Dừng xe ở nơi an toàn trước khi xem thông báo, gọi điện hoặc cập nhật đơn." data-w-en="Stop somewhere safe before checking notifications, calling or updating a delivery.">Dừng xe ở nơi an toàn trước khi xem thông báo, gọi điện hoặc cập nhật đơn.</span></section>
       </div>
     </div>
   </section>

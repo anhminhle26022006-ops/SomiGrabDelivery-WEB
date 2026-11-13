@@ -858,5 +858,13 @@ window.SomiLangEN = {
   "Đã thêm địa chỉ.": "Address added.",
   "Địa chỉ mặc định được điền sẵn làm điểm lấy hàng khi bạn tạo đơn.": "Your default address is filled in as the pickup when you create an order.",
   "45 Phan Đăng Lưu, Phường 3": "45 Phan Dang Luu, Ward 3",
-  "12 Nguyễn Văn Trỗi, Phường 11": "12 Nguyen Van Troi, Ward 11"
+  "12 Nguyễn Văn Trỗi, Phường 11": "12 Nguyen Van Troi, Ward 11",
+  "ĐIỂM ĐẾN QUEN THUỘC": "YOUR GO-TO PLACES",
+  "Lưu một lần, gửi hàng nhanh hơn mỗi ngày.": "Save once. Send faster, every day.",
+  "Địa chỉ của bạn": "Your places",
+  "Sẵn sàng cho lần gửi tiếp theo": "Ready for your next delivery",
+  "Dễ tìm, dễ giao": "Easy to find, easy to deliver",
+  "Thêm số nhà, tên đường và hướng dẫn đến điểm lấy hàng.": "Add the house number, street and directions to your pickup spot.",
+  "Tạo đơn gửi hàng": "Create a delivery",
+  "MỖI CHUYẾN GỬI, MỘT NIỀM TIN": "A LITTLE CARE. EVERY DELIVERY."
 };

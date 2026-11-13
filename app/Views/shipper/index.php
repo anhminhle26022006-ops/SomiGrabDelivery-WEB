@@ -299,3 +299,5 @@ body[data-page="shipper"] .shipper-policy-dialog>.shipper-dialog-body>.shipper-d
 <?php if (is_file(__DIR__ . '/../../../public/assets/js/' . $shipperModule . '.js')): ?><script defer src="<?= e(assetUrl('public/assets/js/' . $shipperModule . '.js')) ?>"></script><?php endif; ?>
 <?php endforeach; ?>
 <?php require __DIR__.'/../shared/workspace-enhancements.php'; ?>
+
+<link rel="stylesheet" href="<?= e(assetUrl('public/assets/css/modules/shipper-refresh.css')) ?>">

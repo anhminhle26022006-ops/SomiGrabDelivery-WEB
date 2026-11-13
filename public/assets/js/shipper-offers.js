@@ -37,6 +37,7 @@
     for (const id of ["availabilityPill", "offerAvailability"]) {
       const pill = document.getElementById(id);
       if (!pill) continue;
+      pill.dataset.online=String(on);
       pill.textContent = on ? "ĐANG NHẬN ĐƠN" : "ĐÃ TẮT NHẬN ĐƠN";
       pill.style.background = on ? "#e6f8ee" : "#eef1f5";
       pill.style.color = on ? "#07864b" : "#64748b";

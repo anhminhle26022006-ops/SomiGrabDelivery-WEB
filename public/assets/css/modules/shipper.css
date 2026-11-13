@@ -172,3 +172,132 @@ body[data-page="shipper"] [data-order-chat-content] .support-messages .support-e
 body[data-page="shipper"] [data-order-chat-content] .support-message{max-width:85%;flex-shrink:0}
 body[data-page="shipper"] [data-order-chat-content] .support-message p{font-size:13px}
 body[data-page="shipper"] [data-order-chat-content] .support-message.is-mine{background:#eaf1ff;align-self:flex-end}
+/* === Thẻ số liệu Tổng quan ===
+ * Bootstrap .card là flex column nên nút và nhãn bên trong bị kéo rộng hết thẻ.
+ * Thẻ xếp dọc: icon, nhãn, số liệu; nhờ vậy năm thẻ hẹp vẫn đủ chỗ cho chữ. */
+body[data-page="shipper"] .cards.row{align-items:stretch}
+body[data-page="shipper"] .card.metric{display:flex;flex-direction:column;align-items:flex-start;gap:0;padding:18px}
+body[data-page="shipper"] .metricicon{flex:none;width:38px;height:38px;margin-bottom:14px;border-radius:12px;font-size:18px}
+body[data-page="shipper"] .metricicon-violet{background:#f1eaff;color:#8657e8}
+body[data-page="shipper"] .metricicon-teal{background:#e3f6f1;color:#0f8f78}
+body[data-page="shipper"] .metricicon-amber{background:#fff2dd;color:#d9830f}
+body[data-page="shipper"] .metricbody{display:flex;flex-direction:column;align-items:flex-start;gap:5px;width:100%;min-width:0;flex:1}
+body[data-page="shipper"] .metriclabel{font-size:12px;line-height:1.45;color:var(--muted)}
+body[data-page="shipper"] .metricvalue{margin:0;font-size:25px;line-height:1.2;letter-spacing:-.02em;overflow-wrap:anywhere}
+body[data-page="shipper"] .metricnote,body[data-page="shipper"] .trend{margin:0;font-size:11px;line-height:1.5}
+/* Thu nhập do person3.js dựng thành từng dòng <p>; xếp nhãn trên, số tiền dưới. */
+body[data-page="shipper"] .metricmoney{display:grid;gap:9px;width:100%;margin:3px 0 0}
+body[data-page="shipper"] .metricmoney p{margin:0;font-size:11px;line-height:1.4;color:var(--muted)}
+body[data-page="shipper"] .metricmoney strong{display:block;margin-top:2px;color:var(--navy);font-size:17px;line-height:1.25;letter-spacing:-.02em}
+body[data-page="shipper"] .metric .textlink{margin-top:auto;padding:10px 0 0;font-size:12px;text-align:left}
+/* === Trang Tài khoản & hồ sơ ===
+ * Mỗi nhóm thông tin là một thẻ riêng; form dùng class chung thay style inline. */
+body[data-page="shipper"] .account-layout{display:grid;gap:16px;max-width:900px}
+body[data-page="shipper"] .account-card{padding:24px}
+body[data-page="shipper"] .account-card .sectiontitle{margin-bottom:18px}
+body[data-page="shipper"] .account-card h2{font-size:17px}
+body[data-page="shipper"] .account-identity{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #eef2f7}
+body[data-page="shipper"] .account-avatar{width:64px;height:64px;font-size:19px}
+body[data-page="shipper"] .account-identity strong{display:block;font-size:15px;color:var(--navy)}
+body[data-page="shipper"] .account-identity span{font-size:12px}
+body[data-page="shipper"] .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 16px}
+body[data-page="shipper"] .form-field{display:grid;gap:6px;align-content:start;margin:0;min-width:0}
+body[data-page="shipper"] .form-field-wide{grid-column:1/-1}
+body[data-page="shipper"] .form-field label{font-size:12px;font-weight:650;color:#45566e}
+body[data-page="shipper"] .form-input{width:100%;min-height:42px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);font:inherit;font-size:13px}
+body[data-page="shipper"] .form-input:focus{border-color:#7ca7ed;outline:none;box-shadow:0 0 0 3px #2877e31a}
+body[data-page="shipper"] .form-input:disabled,body[data-page="shipper"] .form-input[readonly]{background:#f6f8fb;color:#6a7a90;cursor:default}
+body[data-page="shipper"] .form-input::placeholder{color:#9aa6b6}
+body[data-page="shipper"] .form-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:18px}
+body[data-page="shipper"] .form-actions .primary{flex:none;align-self:flex-start}
+body[data-page="shipper"] .form-hint{flex:1 1 240px;margin:0;font-size:11px;line-height:1.6}
+body[data-page="shipper"] .account-status{display:grid;gap:3px;margin-top:18px;padding:13px 15px;border-radius:12px;background:#f5f8fc}
+body[data-page="shipper"] .account-status span{font-size:11px}
+body[data-page="shipper"] .account-status strong{color:var(--navy);font-size:13px}
+/* Danh sách tài liệu do shipper-account.js dựng thành từng dòng <p>. */
+body[data-page="shipper"] .account-documents{display:grid;gap:9px;font-size:12px}
+body[data-page="shipper"] .account-documents p{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin:0;padding:12px 14px;border:1px solid var(--line);border-radius:11px;background:#fbfcfe;color:#4a5b73;overflow-wrap:anywhere}
+body[data-page="shipper"] .account-documents p::before{content:"🗎";flex:none;font-size:14px;line-height:1}
+body[data-page="shipper"] .account-documents a{color:var(--blue);font-weight:650}
+body[data-page="shipper"] .account-resubmit{margin-top:18px;padding:18px;border:1px dashed #cfdcee;border-radius:14px;background:#fafcff}
+body[data-page="shipper"] .account-resubmit h3{margin:0 0 14px;color:var(--navy);font-size:14px}
+body[data-page="shipper"] .account-resubmit .form-field{margin-bottom:12px}
+body[data-page="shipper"] .account-bank{margin:0;border-color:var(--line);border-radius:14px;background:#fbfcfe;color:var(--ink)}
+body[data-page="shipper"] .account-bank h3{margin:0 0 10px;color:var(--navy);font-size:14px}
+body[data-page="shipper"] .account-bank p{margin:0 0 7px;font-size:12px;line-height:1.6;color:#4a5b73}
+/* Nút và ô nhập của person3.css dùng tông xanh lá; đưa về bảng màu Shipper. */
+body[data-page="shipper"] .account-bank button{min-height:40px;padding:10px 18px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--ink);font-size:13px;font-weight:700}
+body[data-page="shipper"] .account-bank button[type=submit]{border-color:var(--navy);background:var(--navy);color:#fff}
+body[data-page="shipper"] .account-bank input,body[data-page="shipper"] .account-bank select{min-height:42px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);font-size:13px}
+body[data-page="shipper"] .account-bank label{gap:6px;font-size:12px;font-weight:650;color:#45566e}
+body[data-page="shipper"] .account-bank form{gap:13px;margin:14px 0 0}
+@media(max-width:700px){
+ body[data-page="shipper"] .account-card{padding:18px 16px}
+ body[data-page="shipper"] .form-grid{grid-template-columns:1fr}
+ body[data-page="shipper"] .form-actions .primary{width:100%}
+}
+/* === Trang Thu nhập ===
+ * person3.js dựng sẵn h2, dòng tổng, bảng và nút "Xem thêm" trong .p3-panel.
+ * Chỉ tạo khung hiển thị, không đổi dữ liệu hay thứ tự các khối. */
+body[data-page="shipper"] .earnings-hub{padding:0;overflow:hidden}
+body[data-page="shipper"] .earnings-hub .p3-panel{margin:0;padding:24px;border:0;border-radius:0;background:transparent;color:var(--ink)}
+body[data-page="shipper"] .earnings-hub .p3-panel>h2{display:none}
+body[data-page="shipper"] .earnings-hub .p3-panel>p{margin:0 0 18px;padding:11px 14px;border-radius:11px;background:#f5f8fc;color:#50617a;font-size:12px;line-height:1.6}
+/* Khối tổng tiền: mỗi loại tiền và trạng thái là một ô riêng. */
+body[data-page="shipper"] .earnings-hub .p3-panel>div:not(.p3-scroll){display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-bottom:20px}
+body[data-page="shipper"] .earnings-hub .p3-panel>div:not(.p3-scroll)>p{display:flex;flex-direction:column;gap:5px;margin:0;padding:16px;border:1px solid var(--line);border-radius:14px;background:#fbfcfe;color:var(--muted);font-size:11px;line-height:1.4;white-space:normal}
+body[data-page="shipper"] .earnings-hub .p3-panel>div:not(.p3-scroll)>p strong{color:var(--navy);font-size:21px;line-height:1.2;letter-spacing:-.02em}
+body[data-page="shipper"] .earnings-hub .p3-scroll{border:1px solid var(--line);border-radius:14px;overflow:auto}
+body[data-page="shipper"] .earnings-hub table{min-width:420px;font-size:12px}
+body[data-page="shipper"] .earnings-hub th{padding:12px 16px;border-bottom:1px solid var(--line);background:#f8fafd;color:var(--muted);font-size:10px;font-weight:800;letter-spacing:.07em;text-transform:uppercase}
+body[data-page="shipper"] .earnings-hub td{padding:14px 16px;border-bottom:1px solid #eef2f7;color:var(--ink)}
+body[data-page="shipper"] .earnings-hub tbody tr:last-child td{border-bottom:0}
+body[data-page="shipper"] .earnings-hub tbody td:first-child{font-weight:700;letter-spacing:.04em;color:var(--navy)}
+body[data-page="shipper"] .earnings-hub tbody td:nth-child(2){white-space:nowrap}
+body[data-page="shipper"] .earnings-hub>.p3-panel>button{margin-top:16px;min-height:40px;padding:10px 18px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--ink);font-size:13px;font-weight:700}
+@media(max-width:640px){body[data-page="shipper"] .earnings-hub .p3-panel{padding:16px}}
+/* === Đơn đang giao: hàng thao tác ===
+ * Bỏ emoji màu trong nhãn nút, nút chính tách khỏi nhóm nút phụ. */
+body[data-page="shipper"] .delivery-actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:18px;padding-top:16px;border-top:1px solid #eef2f7}
+body[data-page="shipper"] .delivery-actions>.outline,body[data-page="shipper"] .delivery-actions>.primary{display:inline-flex;align-items:center;gap:7px;min-height:42px;padding:10px 17px;font-size:12.5px;text-decoration:none}
+body[data-page="shipper"] .delivery-actions .outline:hover{border-color:#c3d3e8;background:#f7faff}
+/* Nút chính của mốc giao hàng đứng cuối hàng và nổi hơn nhóm nút phụ. */
+body[data-page="shipper"] .delivery-actions>.primary{order:2;margin-left:auto;box-shadow:0 6px 18px rgba(36,120,245,.22)}
+body[data-page="shipper"] .delivery-actions>[data-delivery-action="SHOW_CANCEL"]{order:3;border-color:#f0d8d5;color:#a4443a}
+body[data-page="shipper"] .delivery-actions>[data-delivery-action="SHOW_CANCEL"]:hover{background:#fff7f6}
+@media(max-width:620px){
+ body[data-page="shipper"] .delivery-actions>.outline,body[data-page="shipper"] .delivery-actions>.primary{flex:1 1 calc(50% - 5px);justify-content:center}
+ body[data-page="shipper"] .delivery-actions>.primary{flex-basis:100%;margin-left:0}
+}
+/* === Trạng thái rỗng ===
+ * Dùng chung cho Tổng quan, Đơn giao phù hợp, Đơn đang giao và Lịch sử. */
+body[data-page="shipper"] .empty{display:flex;flex-direction:column;align-items:center;gap:7px;padding:44px 24px;border:1px dashed #dde5f0;border-radius:16px;background:#fbfcfe;color:var(--muted);font-size:12.5px;line-height:1.65}
+body[data-page="shipper"] .empty::before{content:"";width:46px;height:46px;margin-bottom:5px;border-radius:14px;background:#eef3fa center/22px 22px no-repeat;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237d8ea6' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M21 8l-9-5-9 5 9 5 9-5z'/%3E%3Cpath d='M3 8v8l9 5 9-5V8'/%3E%3Cpath d='M12 13v8'/%3E%3C/svg%3E")}
+body[data-page="shipper"] .empty strong{margin-bottom:0;color:var(--navy);font-size:15px;line-height:1.4}
+body[data-page="shipper"] .empty>strong:only-child{margin-bottom:0}
+
+/* === Đơn giao phù hợp: ô sắp xếp ===
+ * Thay mũi tên mặc định của trình duyệt bằng mũi tên cùng tông với nút. */
+body[data-page="shipper"] #offerSort{appearance:none;-webkit-appearance:none;min-height:42px;padding:10px 38px 10px 17px;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23526580' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") right 14px center/14px 14px no-repeat;cursor:pointer}
+body[data-page="shipper"] #offerSort:hover{border-color:#c3d3e8}
+/* === Thẻ Thu nhập ở cột phải Tổng quan === */
+body[data-page="shipper"] .summarymoney{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:11px}
+body[data-page="shipper"] .summarymoney p{display:flex;flex-direction:column;gap:4px;margin:0;padding:14px;border:1px solid var(--line);border-radius:13px;background:#fbfcfe;color:var(--muted);font-size:11px;line-height:1.4}
+body[data-page="shipper"] .summarymoney strong{color:var(--navy);font-size:17px;line-height:1.25;letter-spacing:-.02em}
+
+/* === Điện thoại ===
+ * Hai thẻ số liệu mỗi hàng, chừa chỗ cho chữ dài, nội dung không tràn. */
+@media(max-width:760px){
+ body[data-page="shipper"] .card.metric{padding:15px 14px}
+ body[data-page="shipper"] .metricicon{width:34px;height:34px;margin-bottom:11px;font-size:16px}
+ body[data-page="shipper"] .metricvalue{font-size:21px}
+ body[data-page="shipper"] .metriclabel{font-size:11.5px}
+ body[data-page="shipper"] .metricmoney strong{font-size:15px}
+ body[data-page="shipper"] .empty{padding:32px 18px}
+ body[data-page="shipper"] .account-identity{gap:13px;margin-bottom:16px;padding-bottom:16px}
+ body[data-page="shipper"] .account-avatar{width:54px;height:54px;font-size:17px}
+}
+@media(max-width:420px){
+ body[data-page="shipper"] .cards.row>[class*="col-"]{flex:0 0 50%;max-width:50%}
+ body[data-page="shipper"] .metricvalue{font-size:19px}
+}

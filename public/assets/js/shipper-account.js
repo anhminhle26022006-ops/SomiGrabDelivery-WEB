@@ -10,8 +10,10 @@
   function fill(data, kyc) {
     document.getElementById('kycResubmitForm').hidden=!kyc.can_resubmit;
     const profile = data.profile;
+    api.paintProfile?.(data);
     const name = document.getElementById("shipperName");
-    if (name) { name.value = profile.full_name; name.readOnly = true; } // đổi họ tên đi qua account/profile.php của nền tảng
+    if (name) name.value = profile.full_name;
+    document.querySelectorAll('[data-shipper-name]').forEach(el => { el.textContent = profile.full_name; });
     const plate = document.getElementById("vehiclePlate");
     if (plate) plate.value = profile.vehicle_registration;
     const type = document.getElementById("vehicleType");
@@ -32,8 +34,13 @@
 
   async function load() {
     try {
-      const [data, kyc] = await Promise.all([api.profile(), api.kyc()]);
+      const [data, kyc, account] = await Promise.all([api.profile(), api.kyc(), api.accountProfile()]);
       fill(data, kyc);
+      document.getElementById('shipperPhone').value = account.profile.phone || '';
+      document.getElementById('shipperEmail').value = account.profile.email || '';
+      document.querySelector('[data-shipper-account-id]').textContent = 'Shipper · #' + account.profile.user_id;
+      document.getElementById('saveProfileBtn').disabled = false;
+      document.getElementById('saveVehicleBtn').disabled = false;
     } catch (error) {
       api.toast(error.message);
     }
@@ -59,6 +66,18 @@
   document.addEventListener("DOMContentLoaded", () => {
     if (!document.getElementById("page-account")) return;
     document.getElementById("saveVehicleBtn")?.addEventListener("click", saveVehicle);
+    document.getElementById('saveProfileBtn')?.addEventListener('click', async event => {
+      const button = event.currentTarget;
+      const name = document.getElementById('shipperName');
+      if (!name.reportValidity()) return;
+      button.disabled = true;
+      try {
+        await api.updateName(name.value.trim());
+        await load();
+        api.toast('Đã lưu họ tên.');
+      } catch (error) { api.toast(error.message); }
+      finally { button.disabled = false; }
+    });
     document.getElementById('kycResubmitForm')?.addEventListener('submit',async event=>{
       event.preventDefault();const form=event.currentTarget,button=form.querySelector('button'),status=document.getElementById('kycUploadStatus');button.disabled=true;
       try{const file=form.elements.document_file.files[0];if(!file||file.size>5*1024*1024)throw new Error('Chọn file tối đa 5 MiB.');

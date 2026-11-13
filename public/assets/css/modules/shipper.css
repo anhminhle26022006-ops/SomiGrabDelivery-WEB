@@ -301,3 +301,12 @@ body[data-page="shipper"] .summarymoney strong{color:var(--navy);font-size:17px;
  body[data-page="shipper"] .cards.row>[class*="col-"]{flex:0 0 50%;max-width:50%}
  body[data-page="shipper"] .metricvalue{font-size:19px}
 }
+/* === Bảng Lịch sử giao hàng ===
+ * app.css đặt table{white-space:nowrap} còn .tablewrap chỉ cuộn ngang ở màn hình
+ * nhỏ, nên trên desktop địa chỉ dài tràn hẳn ra ngoài viền thẻ. */
+body[data-page="shipper"] .tablewrap{overflow-x:auto;max-width:100%}
+body[data-page="shipper"] .historytable{white-space:normal;table-layout:auto}
+body[data-page="shipper"] .historytable th,body[data-page="shipper"] .historytable td{vertical-align:top}
+body[data-page="shipper"] .historytable td:nth-child(1),body[data-page="shipper"] .historytable td:nth-child(2),body[data-page="shipper"] .historytable td:nth-child(4){white-space:nowrap}
+body[data-page="shipper"] .historytable td:nth-child(3){min-width:240px;line-height:1.6;overflow-wrap:anywhere}
+body[data-page="shipper"] .historytable td:nth-child(5),body[data-page="shipper"] .historytable th:nth-child(5){white-space:nowrap;text-align:right}

@@ -29,7 +29,7 @@ const php = spawn(process.env.SOMI_TEST_PHP || 'C:/xampp/php/php.exe', ['-S', '1
         if (fail) return route.fulfill({status:503, json:{error:'Fixture unavailable'}});
         const range = url.searchParams.get('range');
         if (range === 'week') await new Promise(r => setTimeout(r, 250));
-        return route.fulfill({json:{range, timezone:'Asia/Ho_Chi_Minh', start:'2026-11-13T00:00:00+07:00', end:'2026-11-14T00:00:00+07:00', completed_deliveries:range === 'month' ? 90 : 12, delivery_seconds:5400}});
+        return route.fulfill({json:{range, timezone:'Asia/Ho_Chi_Minh', start:'2026-11-13T00:00:00+07:00', end:'2026-11-14T00:00:00+07:00', completed_deliveries:range === 'month' ? 90 : 12, delivery_seconds:5400, current:{deliveries:range === 'month' ? 90 : 12, acceptance_rate_percent:60, offers_accepted:3, offers_decided:5}, previous:{deliveries:0}, deliveries_change_percent:null, rating:{average:'4.3',count:8}}});
       }
       if (url.pathname.endsWith('/shipper/profile.php')) return route.fulfill({json:{profile}});
       if (url.pathname.endsWith('/account/profile.php')) {
@@ -53,9 +53,9 @@ const php = spawn(process.env.SOMI_TEST_PHP || 'C:/xampp/php/php.exe', ['-S', '1
     await page.waitForFunction(() => document.querySelector('[data-p3-summary]').textContent.includes('Chưa có thu nhập'));
     assert.equal(await page.locator('#overviewNotices').textContent(), 'Chưa có thông báo.');
     assert.equal(await page.locator('[data-period-value="hours"]').textContent(), '1 giờ 30 phút');
-    assert.equal(await page.locator('[data-shipper-rating]').textContent(), '4.3 / 5');
-    assert.ok((await page.locator('#overviewDelivery').textContent()).includes('API-77'));
-    assert.equal(await page.locator('#overviewDelivery img').count(), 0, 'API address is escaped');
+    assert.match(await page.locator('[data-shipper-rating]').textContent(), /4\.3\s*\/ 5/);
+    assert.ok((await page.locator('#overviewActive').textContent()).includes('API-77'));
+    assert.equal(await page.locator('#overviewActive img').count(), 0, 'API address is escaped');
     assert.equal(await page.locator('#availabilityToggle').getAttribute('aria-pressed'), 'false');
     assert.equal(await page.locator('#shipperNav').isVisible(),false,'mobile navigation starts collapsed');
     await page.locator('.shipper-menu-toggle').click();
@@ -85,7 +85,7 @@ const php = spawn(process.env.SOMI_TEST_PHP || 'C:/xampp/php/php.exe', ['-S', '1
     assert.equal(await page.locator('[data-period-value="deliveries"]').textContent(), '—');
     fail = false; active = false;
     await page.reload();
-    await page.waitForFunction(() => document.getElementById('overviewDelivery').textContent.includes('chưa có đơn'));
+    await page.waitForFunction(() => document.getElementById('overviewActive').textContent.includes('chưa có đơn'));
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'mobile dashboard fits');
     await page.goto(base + '/__shipper-test?view=account');
     await page.waitForFunction(() => document.getElementById('shipperPhone').value === '0900000077');

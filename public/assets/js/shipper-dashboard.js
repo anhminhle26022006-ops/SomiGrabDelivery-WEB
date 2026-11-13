@@ -1,68 +1,154 @@
 "use strict";
+// Trang Tổng quan của Shipper: số liệu theo kỳ và thẻ "Đơn đang giao", lấy từ API thật.
+// Thay cho các con số minh họa trước đây (5 đơn, 4h 30m, 4.9 sao, đơn SOMI-240126).
 (() => {
   const api = window.SomiShipper;
-  const ranges = ['today', 'yesterday', 'week', 'month'];
-  const text = (vi, en) => document.body.dataset.shipperLang === 'en' ? en : vi;
-  let version = 0;
-  let profileData;
-  let deliveryMinutes;
-  function paintDuration() {
-    if (deliveryMinutes === undefined) return;
-    const value = text(`${Math.floor(deliveryMinutes / 60)} giờ ${deliveryMinutes % 60} phút`, `${Math.floor(deliveryMinutes / 60)}h ${deliveryMinutes % 60}m`);
-    document.querySelectorAll('[data-period-value="hours"]').forEach(el => { el.textContent = value; });
+  if (!api || !document.getElementById("page-dashboard")) return;
+  const { esc } = api;
+  const RANGE_KEY = "somi-shipper-date-range";
+  const REFRESH_MS = 60000;
+
+  // Câu so sánh của từng kỳ: [tiếng Anh, tiếng Việt].
+  const COMPARISON = {
+    today: ["vs. yesterday", "so với hôm qua"], yesterday: ["vs. the day before", "so với hôm kia"],
+    week: ["vs. last week", "so với tuần trước"], month: ["vs. last month", "so với tháng trước"],
+  };
+  const STATUS = {
+    SHIPPER_ASSIGNED: ["ASSIGNED", "ĐÃ NHẬN ĐƠN"], PICKED_UP: ["PICKED UP", "ĐÃ LẤY HÀNG"],
+    IN_DELIVERY: ["IN DELIVERY", "ĐANG GIAO"], RETURNING: ["RETURNING", "ĐANG HOÀN HÀNG"],
+  };
+  const STEPS = ["SHIPPER_ASSIGNED", "PICKED_UP", "IN_DELIVERY"];
+  const STEP_LABELS = [["Accepted", "Đã nhận"], ["Picked up", "Đã lấy hàng"], ["In delivery", "Đang giao"], ["Result", "Kết quả"]];
+
+  let range = "today";
+  let summary = null;
+  let delivery;          // undefined: chưa tải xong, null: không có đơn
+  let requestId = 0;
+
+  const vi = () => document.body.dataset.shipperLang !== "en";
+  const t = (pair) => pair[vi() ? 1 : 0];
+  const set = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+
+  function savedRange() {
+    try { return localStorage.getItem(RANGE_KEY) || "today"; } catch (error) { return "today"; }
   }
 
-  api.paintProfile = ({ profile }) => {
-    profileData = { profile };
-    document.querySelectorAll('[data-shipper-name]').forEach(el => { el.textContent = profile.full_name; });
-    const initials = profile.full_name.trim().split(/\s+/).slice(-2).map(part => part[0]).join('').toUpperCase();
-    document.querySelectorAll('#avatar > span,#accountAvatar > span').forEach(el => { el.textContent = initials; });
-    document.querySelectorAll('[data-shipper-rating]').forEach(el => {
-      el.textContent = profile.customer_rating_count ? `${Number(profile.customer_rating_average).toFixed(1)} / 5` : '—';
-    });
-    document.querySelectorAll('[data-shipper-rating-count]').forEach(el => {
-      el.textContent = `${profile.customer_rating_count} ${text('đánh giá', 'reviews')}`;
-    });
-  };
-
-  async function load(range) {
-    if (!document.getElementById('page-dashboard')) return;
-    range = ranges.includes(range) ? range : 'today';
-    const token = ++version;
-    const periods = {today: ['hôm nay', 'today'], yesterday: ['hôm qua', 'yesterday'], week: ['tuần này', 'this week'], month: ['tháng này', 'this month']};
-    document.querySelectorAll('[data-period-stat]').forEach(el => {
-      el.textContent = (el.dataset.periodStat === 'deliveries' ? text('Đơn hoàn thành ', 'Deliveries completed ') : text('Thời gian xử lý đơn ', 'Delivery time ')) + text(...periods[range]);
-    });
+  // ---------- Bốn thẻ số liệu ----------
+  function renderSummary() {
+    if (!summary) return;
+    const now = summary.current;
+    const minutes = Math.floor((summary.delivery_seconds || 0) / 60);
+    const hours = document.querySelector('[data-period-value="hours"]');
+    if (hours) hours.textContent = vi() ? `${Math.floor(minutes / 60)} giờ ${minutes % 60} phút` : `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
     const status = document.querySelector('[data-dashboard-status]');
-    const set = (kind, value) => document.querySelectorAll(`[data-period-value="${kind}"]`).forEach(el => { el.textContent = value; });
-    set('deliveries', '…'); set('hours', '…');
-    if (status) { status.hidden = false; status.textContent = text('Đang tải thống kê…', 'Loading statistics…'); }
+    if (status) { status.hidden = true; status.textContent = ''; }
+    set("dashDeliveries", esc(now.deliveries));
+
+    // Mũi tên và màu chỉ xuất hiện khi kỳ trước có đơn để so sánh.
+    const change = summary.deliveries_change_percent;
+    const comparison = `<span class="muted">${esc(t(COMPARISON[summary.range]))}</span>`;
+    if (change === null) {
+      set("dashDeliveriesTrend", `<span class="muted">${esc(t(["No deliveries in the previous period", "Kỳ trước chưa có đơn"]))}</span>`);
+    } else {
+      const arrow = change > 0 ? "↑" : change < 0 ? "↓" : "→";
+      const color = change < 0 ? "#b42318" : "";
+      set("dashDeliveriesTrend", `<span style="color:${color}">${arrow} ${Math.abs(change)}%</span> ${comparison}`);
+    }
+
+    if (now.acceptance_rate_percent === null) {
+      set("dashAcceptance", "—");
+      set("dashAcceptanceNote", esc(t(["No offers yet in this period", "Chưa có đơn nào được gửi trong kỳ này"])));
+    } else {
+      set("dashAcceptance", `${esc(now.acceptance_rate_percent)}%`);
+      set("dashAcceptanceNote", esc(vi()
+        ? `Nhận ${now.offers_accepted} trên ${now.offers_decided} đơn được gửi`
+        : `Accepted ${now.offers_accepted} of ${now.offers_decided} offers`));
+    }
+
+    const rating = summary.rating;
+    if (rating.average === null) {
+      set("dashRating", "—");
+      set("dashRatingNote", esc(t(["No ratings yet", "Chưa có đánh giá"])));
+    } else {
+      set("dashRating", `${esc(rating.average)} <span style="font-size:12px;font-weight:600">/ 5</span>`);
+      set("dashRatingNote", esc(vi() ? `${rating.count} đánh giá` : `${rating.count} ratings`));
+    }
+  }
+
+  async function loadSummary() {
+    // Người dùng có thể đổi kỳ liên tục: chỉ hiển thị kết quả của lần gọi mới nhất.
+    const id = ++requestId;
     try {
-      const data = await api.dashboard(range);
-      if (token !== version) return;
-      const dateValue = document.querySelector('[data-date-value]');
-      if (dateValue) {
-        const format = new Intl.DateTimeFormat(document.body.dataset.shipperLang === 'en' ? 'en-GB' : 'vi-VN', {timeZone: data.timezone, day:'2-digit', month:'2-digit', year:'numeric'});
-        const start = format.format(new Date(data.start));
-        const end = format.format(new Date(new Date(data.end).getTime() - 1));
-        dateValue.textContent = start === end ? `(${start})` : `(${start} – ${end})`;
-      }
-      set('deliveries', String(data.completed_deliveries));
-      const minutes = Math.floor(data.delivery_seconds / 60);
-      deliveryMinutes = minutes;
-      paintDuration();
-      if (status) { status.hidden = false; status.textContent = text('Thời gian tính từ lúc nhận đến lúc kết thúc phân công, theo giờ Việt Nam.', 'Time from assignment to closure, in Vietnam time.'); }
+      const result = await api.dashboard(range);
+      if (id !== requestId) return;
+      summary = result;
+      renderSummary();
     } catch (error) {
-      if (token !== version) return;
-      set('deliveries', '—'); set('hours', '—');
+      if (id !== requestId) return;
+      ["dashDeliveries", "dashAcceptance", "dashRating"].forEach((target) => set(target, "—"));
+      set("dashDeliveriesTrend", `<span class="muted">${esc(error.message)}</span>`);
+      const status = document.querySelector('[data-dashboard-status]');
       if (status) { status.hidden = false; status.textContent = error.message; }
     }
   }
 
-  window.addEventListener('somi:shipper-period', event => load(event.detail.range));
-  document.addEventListener('somi:language-change', () => { if (profileData) api.paintProfile(profileData); paintDuration(); });
-  document.addEventListener('DOMContentLoaded', () => {
-    load(localStorage.getItem('somi-shipper-date-range') || 'today');
-    if (!document.getElementById('page-account')) api.profile().then(api.paintProfile).catch(error => api.toast(error.message));
+  // ---------- Thẻ "Đơn đang giao" ----------
+  function progress(status) {
+    const returning = status === "RETURNING";
+    const reached = returning ? 3 : STEPS.indexOf(status);
+    return `<div class="progress">${STEP_LABELS.map((label, i) => {
+      const state = i < reached ? "done" : i === reached ? "current" : "";
+      const text = i === 3 && returning ? t(["Returning", "Hoàn hàng"]) : t(label);
+      return `<div class="step ${state}"><div class="stepnum">${i < reached ? "✓" : i + 1}</div><strong>${esc(text)}</strong></div>`;
+    }).join("")}</div>`;
+  }
+
+  function renderDelivery() {
+    if (delivery === undefined) return;
+    if (delivery === null) {
+      set("overviewActive", `<div class="empty"><strong>${esc(t(["No active delivery", "Bạn chưa có đơn đang giao"]))}</strong>${esc(t(["Accept an offer to get started.", "Nhận một đơn phù hợp để bắt đầu."]))}</div>`);
+      return;
+    }
+    const d = delivery;
+    set("overviewActive", `
+      <div class="orderid">${esc(d.order_code)} <span class="tag">${esc(t(STATUS[d.status] || [d.status, d.status]))}</span></div>
+      <div class="route" style="margin-top:12px"><div class="routepoints"><span class="dot"></span><span class="routebar"></span><span class="dot red"></span></div>
+        <div class="address"><strong>${esc(t(["Pickup", "Điểm lấy hàng"]))}</strong><small>${esc(d.pickup_address)}</small><div style="height:14px"></div>
+          <strong>${esc(t(["Drop-off", "Điểm giao hàng"]))}</strong><small>${esc(d.delivery_address)}</small></div>
+        <div class="pay"><small>${esc(t(["Distance", "Quãng đường"]))}</small><strong>${esc(Number(d.distance_km).toLocaleString(vi() ? "vi-VN" : "en-US", { maximumFractionDigits: 1 }))} km</strong></div></div>
+      ${progress(d.status)}
+      <div style="display:flex;justify-content:flex-end;margin-top:12px"><button class="primary" data-goto="active">${esc(t(["Open active delivery", "Mở đơn đang giao"]))} →</button></div>`);
+  }
+
+  async function loadDelivery() {
+    try {
+      delivery = (await api.currentDelivery()).delivery;
+      renderDelivery();
+    } catch (error) {
+      set("overviewActive", `<div class="empty"><strong>${esc(error.message)}</strong></div>`);
+    }
+  }
+
+  // ---------- Khởi động ----------
+  // Trang phát somi:shipper-range mỗi khi đổi kỳ hoặc đổi ngôn ngữ (xem app/Views/shipper/index.php).
+  document.addEventListener("somi:shipper-range", (event) => {
+    const next = event.detail?.range;
+    if (!COMPARISON[next]) return;
+    if (next === range && summary) { renderSummary(); renderDelivery(); return; } // chỉ đổi ngôn ngữ
+    range = next;
+    loadSummary();
   });
+
+  window.addEventListener('somi:shipper-period', event => {
+    if (!COMPARISON[event.detail?.range]) return;
+    range = event.detail.range;
+    loadSummary();
+  });
+  document.addEventListener('somi:language-change', () => { renderSummary(); renderDelivery(); });
+  document.addEventListener('somi:delivery-update', event => { delivery = event.detail; renderDelivery(); });
+  range = COMPARISON[savedRange()] ? savedRange() : "today";
+  loadSummary();
+  loadDelivery();
+  // Tự làm mới khi tab đang mở, để số đơn và đơn đang giao không bị cũ sau khi vừa giao xong.
+  setInterval(() => { if (!document.hidden) { loadSummary(); loadDelivery(); } }, REFRESH_MS);
 })();

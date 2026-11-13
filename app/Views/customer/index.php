@@ -57,7 +57,7 @@ function customerIcon(string $paths, int $size = 20): string {
 <link rel="stylesheet" href="<?= e(assetUrl('public/assets/vendor/bootstrap/bootstrap.min.css')) ?>">
 <link rel="stylesheet" href="<?= e(assetUrl('public/assets/css/modules/customer.css')) ?>">
 <?php if ($customerNeedsMap): ?><link rel="stylesheet" href="<?= e(assetUrl('public/assets/vendor/leaflet/leaflet.css')) ?>"><?php endif; ?>
-<div class="c-app" data-customer-app>
+<div class="c-app" data-customer-app data-preferred-currency="<?= ($sessionUser['app_language'] ?? 'vi') === 'en' ? 'USD' : 'VND' ?>">
   <header class="navbar c-top">
     <a class="navbar-brand c-brand" href="?page=customer&amp;view=dashboard" aria-label="SOMI, về trang tổng quan"><strong>SOMI</strong><span>DELIVERY</span></a>
     <nav class="nav nav-pills c-nav" aria-label="Điều hướng khách hàng">
@@ -163,7 +163,9 @@ function customerIcon(string $paths, int $size = 20): string {
 <script type="application/json" id="customer-profile-data"><?= json_encode(['profile'=>array_intersect_key($sessionUser,array_flip(['user_id','full_name','email','phone','nationality_code','app_language','account_status','email_verified_at','phone_verified_at']))],JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_UNESCAPED_UNICODE) ?></script>
 <?php endif; ?>
 <script defer src="<?= e(assetUrl($asset . 'server.js')) ?>"></script>
-<?php elseif (!$person3View): ?>
+<?php elseif ($person3View): ?>
+<script defer src="<?= e(assetUrl($asset . 'locale-menu.js')) ?>"></script>
+<?php else: ?>
 <script defer src="<?= e(assetUrl($asset . 'store.js')) ?>"></script>
 <script defer src="<?= e(assetUrl($asset . 'ui.js')) ?>"></script>
 <?php if ($customerView !== 'backend'): ?><script defer src="<?= e(assetUrl($asset . 'pages/' . $customerView . '.js')) ?>"></script><?php endif; ?>

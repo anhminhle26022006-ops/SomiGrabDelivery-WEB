@@ -324,7 +324,7 @@
   }
   function header(){
     if(profile.email?.endsWith('@demo.somi.invalid')&&!$('[data-demo-banner]')){const banner=document.createElement('p');banner.dataset.demoBanner='';banner.className='alert alert-info';banner.textContent=t('Tài khoản DEMO: thanh toán giả lập, không thu hoặc chuyển tiền thật.','DEMO account: simulated payments, no real charges or transfers.');root.prepend(banner);}
-    document.querySelectorAll('[data-set-lang]').forEach(el=>el.classList.toggle('active',el.dataset.setLang===(vi?'vi':'en')));
+    document.querySelectorAll('[data-set-lang]').forEach(el=>{el.classList.toggle('active',el.dataset.setLang===(vi?'vi':'en'));el.setAttribute('aria-pressed',String(el.dataset.setLang===(vi?'vi':'en')));});
     document.querySelectorAll('[data-set-currency]').forEach(el=>el.classList.toggle('active',el.dataset.setCurrency===currency));
     document.querySelectorAll('[data-account-name]').forEach(el=>el.textContent=profile.full_name);
     document.querySelectorAll('[data-account-initials]').forEach(el=>el.textContent=profile.full_name.trim().split(/\s+/).slice(-2).map(n=>n[0]).join('').toUpperCase());
@@ -334,7 +334,7 @@
   }
   async function run(fn){root.setAttribute('aria-busy','true');try{await fn();}catch(err){report(err);}finally{root.setAttribute('aria-busy','false');root.dataset.loaded='true';}}
   $$('form').forEach(form=>form.addEventListener('submit',e=>e.preventDefault()));
-  document.querySelectorAll('[data-set-lang]').forEach(button=>button.addEventListener('click',()=>{document.dispatchEvent(new Event('somi:before-preference-change'));try{localStorage.setItem('somi-language',button.dataset.setLang);}catch{}location.reload();}));
+  document.querySelectorAll('[data-set-lang]').forEach(button=>button.addEventListener('click',()=>{if(button.dataset.setLang===(vi?'vi':'en'))return;if(window.SomiI18n?.setLanguage){window.SomiI18n.setLanguage(button.dataset.setLang);return;}document.dispatchEvent(new Event('somi:before-preference-change'));try{localStorage.setItem('somi-language',button.dataset.setLang);}catch{}location.reload();}));
   document.querySelectorAll('[data-set-currency]').forEach(button=>button.addEventListener('click',()=>{
     const next=button.dataset.setCurrency;if(!profile||button.disabled||!['VND','USD'].includes(next)||next===currency)return;
     currency=next;try{localStorage.setItem('somi-currency',currency);}catch{}
@@ -344,7 +344,7 @@
   if(!window.bootstrap?.Dropdown)document.querySelectorAll('[data-bs-toggle=dropdown]').forEach(button=>button.addEventListener('click',()=>{const menu=button.parentElement.querySelector('.dropdown-menu');if(menu){const open=menu.classList.toggle('show');button.setAttribute('aria-expanded',String(open));}}));
   document.querySelectorAll('[data-copy-vi][data-copy-en]').forEach(el=>el.textContent=vi?el.dataset.copyVi:el.dataset.copyEn);
   const flag=document.querySelector('[data-locale-flag]'),selectedFlag=document.querySelector(`[data-set-lang="${vi?'vi':'en'}"] .language-flag-svg`);if(flag&&selectedFlag)flag.replaceChildren(selectedFlag.cloneNode(true));
-  run(async()=>{profile=embeddedProfile()||(await api('account/profile.php')).profile;currency=savedCurrency();header();if(view==='dashboard'){
+  run(async()=>{profile=embeddedProfile()||(await api('account/profile.php')).profile;currency=savedCurrency();if(window.SomiI18n)window.SomiI18n.currency=currency;header();if(view==='dashboard'){
       await dashboard();
       let active=true,timer=null;
       stopTracking=()=>{active=false;clearTimeout(timer);};

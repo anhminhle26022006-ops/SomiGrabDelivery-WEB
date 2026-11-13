@@ -37,7 +37,8 @@
   const savedLang = read(LANG_KEY);
   const lang = LANGUAGES[savedLang] ? savedLang : "en";
   const savedCurrency = read(CURRENCY_KEY);
-  const currency = CURRENCIES[savedCurrency] ? savedCurrency : "VND";
+  const preferredCurrency = document.querySelector("[data-customer-app]")?.dataset.preferredCurrency;
+  let currency = CURRENCIES[savedCurrency] ? savedCurrency : CURRENCIES[preferredCurrency] ? preferredCurrency : "VND";
   const locale = LANGUAGES[lang].locale;
   const dict = lang === "en" ? window.SomiLangEN || {} : {};
 
@@ -155,12 +156,16 @@
   function setCurrency(next) {
     if (!CURRENCIES[next]) return;
     document.dispatchEvent(new Event('somi:before-preference-change'));
+    currency = next;
     write(CURRENCY_KEY, next);
     window.location.reload();
   }
 
   window.SomiI18n = {
-    lang, currency, locale, LANGUAGES, CURRENCIES,
+    lang,
+    get currency() { return currency; },
+    set currency(next) { if (CURRENCIES[next]) currency = next; },
+    locale, LANGUAGES, CURRENCIES,
     t, msg, tx, money, dateTime, dateOnly, timeOnly, number,
     translateTree, setLanguage, setCurrency
   };

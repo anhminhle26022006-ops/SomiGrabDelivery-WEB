@@ -31,6 +31,25 @@ final class ShipperProfileService
             ],
             'eligibility' => ['can_work' => !$blockers, 'blockers' => $blockers],
             'has_active_delivery' => (bool) $q->fetchColumn(),
+            'account' => $this->account($shipperId),
+        ];
+    }
+
+    /**
+     * Thông tin liên hệ của chính Shipper để hiển thị ở trang Tài khoản.
+     * Chỉ đọc: đổi email hoặc số điện thoại phải qua luồng xác minh của account/profile.php.
+     */
+    private function account(int $shipperId): array
+    {
+        $q = $this->db->prepare('SELECT email, phone, created_at FROM users WHERE user_id = ?');
+        $q->execute([$shipperId]);
+        $user = $q->fetch();
+        return [
+            // Mã hiển thị cho Shipper, dựng từ user_id để hỗ trợ tra cứu khi liên hệ Admin.
+            'code' => 'SH-' . str_pad((string) $shipperId, 5, '0', STR_PAD_LEFT),
+            'email' => $user['email'],
+            'phone' => $user['phone'],
+            'joined_at' => $user['created_at'],
         ];
     }
 

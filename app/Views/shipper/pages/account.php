@@ -22,7 +22,7 @@
         <div><label class="muted" for="shipperCity">Tỉnh / thành phố</label><input id="shipperCity" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" disabled placeholder="Chưa hỗ trợ cập nhật" /></div>
       </div>
       <div class="sectiontitle" style="margin-top:26px"><div><h2>Tài khoản nhận thanh toán</h2><p>Đổi tài khoản bằng mật khẩu hiện tại và OTP gửi đến email đã xác minh. Admin chuyển khoản và đối soát chứng từ.</p></div></div>
-      <button class="outline" type="button" onclick="window.somiPerson3Open('bank')">Quản lý tài khoản nhận tiền</button>
+      <div class="p3-panel" data-shipper-bank-editor aria-live="polite"><p>Đang tải thông tin ngân hàng…</p></div>
       <form id="kycResubmitForm" hidden style="margin-top:24px">
         <h3>Bổ sung giấy tờ KYC</h3>
         <label>Loại giấy tờ <select name="document_type"><option value="IDENTITY_FRONT">Mặt trước giấy tờ định danh</option><option value="IDENTITY_BACK">Mặt sau giấy tờ định danh</option><option value="DRIVER_LICENSE">Giấy phép lái xe</option><option value="VEHICLE_REGISTRATION">Đăng ký xe</option><option value="PORTRAIT">Ảnh chân dung</option></select></label>

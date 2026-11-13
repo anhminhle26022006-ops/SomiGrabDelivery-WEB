@@ -23,7 +23,6 @@ document.getElementById('supportForm')?.addEventListener('submit',e=>{e.preventD
 
 document.getElementById('profileBtn')?.addEventListener('click',e=>{e.stopPropagation();let d=document.getElementById('profileDropdown');d.classList.toggle('open');e.currentTarget.setAttribute('aria-expanded',d.classList.contains('open')?'true':'false')});
 document.addEventListener('click',e=>{if(!e.target.closest('.profile')){document.getElementById('profileDropdown')?.classList.remove('open');document.getElementById('profileBtn')?.setAttribute('aria-expanded','false')}});
-document.getElementById('avatarUpload')?.addEventListener('change',e=>{let f=e.target.files[0];if(!f)return;if(!f.type.startsWith('image/')){toast('Vui lòng chọn file hình ảnh.');return}let reader=new FileReader();reader.onload=ev=>{document.getElementById('avatar').innerHTML=`<img src="${ev.target.result}" alt="Ảnh đại diện">`;document.getElementById('accountAvatar').innerHTML=`<img src="${ev.target.result}" alt="Ảnh đại diện">`;toast('Đã cập nhật ảnh đại diện trong bản demo. Ảnh chưa được lưu lên máy chủ.');};reader.readAsDataURL(f)});
 // Hỗ trợ, chính sách và đăng xuất được xử lý trong app/Views/shipper/index.php và app.js; ở đây chỉ còn mục Tài khoản.
 document.querySelectorAll('[data-profile-action="account"]').forEach(b=>b.addEventListener('click',()=>{document.getElementById('profileDropdown').classList.remove('open');go('account')}));
 document.querySelectorAll('[data-notice-filter]').forEach(b=>b.addEventListener('click',()=>filterNotices(b.dataset.noticeFilter)));

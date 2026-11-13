@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+header('Cache-Control: no-store');
 require_once __DIR__.'/../_kernel.php';
 require_once __DIR__.'/../../../app/Services/EncryptedPayload.php';
 require_once __DIR__.'/../../../app/Services/AuditService.php';
@@ -14,10 +15,10 @@ somi_run_api(['GET','POST'],['CUSTOMER'],'order.read_own',true,static function(P
         $q=$db->prepare("INSERT INTO auth_rate_limits(bucket_hash,attempts) VALUES(?,1) ON CONFLICT(bucket_hash) DO UPDATE SET attempts=CASE WHEN auth_rate_limits.window_started_at<now()-interval '15 minutes' THEN 1 ELSE auth_rate_limits.attempts+1 END,window_started_at=CASE WHEN auth_rate_limits.window_started_at<now()-interval '15 minutes' THEN now() ELSE auth_rate_limits.window_started_at END RETURNING attempts");$q->execute([hash('sha256','customer-bank:'.$id)]);
         if((int)$q->fetchColumn()>10)return [429,['error'=>'Too many attempts.']];
         if(!is_string($in['current_password']??null)||!password_verify($in['current_password'],$u['password_hash']))return [422,['error'=>'Current password is incorrect.']];
-        $q=$db->prepare('INSERT INTO customer_bank_accounts(customer_id,bank_name,account_holder,encrypted_payload) VALUES(?,?,?,?) RETURNING bank_account_id');$q->execute([$id,$bank['bank_name'],$bank['account_holder'],EncryptedPayload::seal($bank)]);
+        $q=$db->prepare("INSERT INTO customer_bank_accounts(customer_id,bank_name,account_holder,encrypted_payload,review_status) VALUES(?,?,?,?,'PENDING') RETURNING bank_account_id");$q->execute([$id,$bank['bank_name'],$bank['account_holder'],EncryptedPayload::seal($bank)]);
         AuditService::record($db,$id,'CUSTOMER','REFUND_BANK_SAVED','CUSTOMER_BANK_ACCOUNT',(int)$q->fetchColumn());
     }
     $q=$db->prepare('SELECT * FROM customer_bank_accounts WHERE customer_id=? ORDER BY bank_account_id DESC LIMIT 1');$q->execute([$id]);$b=$q->fetch();
-    if($b){$payload=EncryptedPayload::open($b['encrypted_payload']);unset($b['encrypted_payload']);$b['account_number_masked']='••••'.substr($payload['account_number'],-4);}
+    if($b){try{$payload=EncryptedPayload::open($b['encrypted_payload']);}catch(Throwable $e){$payload=['account_number'=>''];$b['needs_reentry']=true;}unset($b['encrypted_payload']);$b['account_number']=$payload['account_number'];$b['account_number_masked']='â€¢â€¢â€¢â€¢'.substr($payload['account_number'],-4);}
     return [200,['bank_account'=>$b?:null]];
 });

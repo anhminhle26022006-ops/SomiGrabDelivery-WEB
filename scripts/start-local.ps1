@@ -13,6 +13,10 @@ if($extensions -notcontains 'mbstring'){$phpArgs+=@('-d','extension=mbstring')}
 $phpArgs+=@('-S',$serverAddress,'-t',('"'+$projectRoot+'"'),('"'+(Join-Path $projectRoot 'index.php')+'"'))
 $process=Start-Process -FilePath $Php -ArgumentList $phpArgs -WorkingDirectory $projectRoot -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $runtimeDir "server-$Port.out.log") -RedirectStandardError (Join-Path $runtimeDir "server-$Port.err.log")
 Set-Content -LiteralPath (Join-Path $runtimeDir "server-$Port.pid") -Value $process.Id
+$workerScript=Join-Path $PSScriptRoot 'run-local-matching.ps1'
+$workerArgs=@('-NoProfile','-ExecutionPolicy','Bypass','-File',('"'+$workerScript+'"'),'-ServerPid',$process.Id,'-Php',('"'+$Php+'"'))
+$worker=Start-Process -FilePath (Get-Process -Id $PID).Path -ArgumentList $workerArgs -WorkingDirectory $projectRoot -WindowStyle Hidden -PassThru -RedirectStandardOutput (Join-Path $runtimeDir "matching-$Port.out.log") -RedirectStandardError (Join-Path $runtimeDir "matching-$Port.err.log")
+Set-Content -LiteralPath (Join-Path $runtimeDir "matching-$Port.pid") -Value $worker.Id
 for($attempt=0;$attempt -lt 30;$attempt++){
     Start-Sleep -Milliseconds 150
     try {$response=Invoke-WebRequest "http://$serverAddress/" -TimeoutSec 2 -UseBasicParsing;if($response.StatusCode -eq 200){Write-Output "SOMI is running: http://$serverAddress/admin";exit 0}} catch {}

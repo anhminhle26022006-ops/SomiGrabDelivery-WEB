@@ -4,9 +4,10 @@ declare(strict_types=1);
 require_once __DIR__ . '/../_bootstrap.php';
 
 somi_api_require_post();
-$input = somi_api_input();
+$input = somi_api_input(true);
+require_once __DIR__.'/../../../app/Services/ShipperApplicationService.php';
 $userId = somi_api_current_user_id();
-$target = strtoupper(trim((string) ($input['target'] ?? '')));
+$target = is_string($input['target'] ?? null) ? strtoupper(trim($input['target'])) : '';
 if (!in_array($target, ['CUSTOMER', 'SHIPPER'], true)) {
     somi_api_json(422, ['error' => 'Choose a valid workspace.']);
 }
@@ -43,10 +44,12 @@ try {
         somi_api_json(200, ['status' => 'WORKSPACE_READY', 'role' => 'customer']);
     }
 
-    $existingShipper = $db->prepare('SELECT verification_status FROM shipper_profiles WHERE user_id = :user_id');
+    $existingShipper = $db->prepare('SELECT verification_status,application_details FROM shipper_profiles WHERE user_id = :user_id FOR UPDATE');
     $existingShipper->execute(['user_id' => $userId]);
-    $existingShipperStatus = $existingShipper->fetchColumn();
-    if ($existingShipperStatus !== false && !in_array($existingShipperStatus, ['REJECTED', 'NEEDS_INFO'], true)) {
+    $existingProfile = $existingShipper->fetch();
+    $existingShipperStatus = $existingProfile['verification_status'] ?? false;
+    $isSubmission = isset($input['documents']);
+    if ($existingShipperStatus !== false && (!$isSubmission || $existingShipperStatus === 'APPROVED' || ($existingShipperStatus === 'PENDING' && $existingProfile['application_details'] !== null))) {
         $grantExisting = $db->prepare(
             'INSERT INTO user_roles (user_id, role_id) VALUES (:user_id, :role_id)
              ON CONFLICT (user_id, role_id) DO NOTHING'
@@ -57,14 +60,11 @@ try {
         somi_api_json(200, ['status' => 'WORKSPACE_READY', 'role' => 'shipper', 'verification_status' => $existingShipperStatus]);
     }
 
-    $vehicleType = trim((string) ($input['vehicle_type'] ?? ''));
-    $vehicleRegistration = strtoupper(preg_replace('/\s+/', '', trim((string) ($input['vehicle_registration'] ?? ''))));
-    if ($vehicleType === '' || mb_strlen($vehicleType) > 80) {
-        throw new InvalidArgumentException('Enter a vehicle type up to 80 characters.');
-    }
-    if ($vehicleRegistration === '' || strlen($vehicleRegistration) > 40) {
-        throw new InvalidArgumentException('Enter a vehicle registration up to 40 characters.');
-    }
+    $applicationService = new ShipperApplicationService($db);
+    $applicationService->assertApplicant($userId);
+    $application = ShipperApplicationService::validate($input);
+    $vehicleType = $application['vehicle_type'];
+    $vehicleRegistration = $application['vehicle_registration'] ?? 'BICYCLE-'.$userId;
 
     $identity = $db->prepare('SELECT review_status FROM user_identity_documents WHERE user_id = :user_id FOR UPDATE');
     $identity->execute(['user_id' => $userId]);
@@ -72,12 +72,9 @@ try {
     if ($identityStatus === false) {
         throw new RuntimeException('An identity document is required before applying as a shipper.');
     }
-    if ($identityStatus === 'REJECTED') {
-        throw new RuntimeException('Your identity document needs to be updated before applying as a shipper.');
-    }
-    if ($identityStatus === 'NOT_REQUIRED') {
+    if (in_array($identityStatus, ['NOT_REQUIRED','REJECTED','NEEDS_INFO'], true)) {
         $markIdentityPending = $db->prepare(
-            "UPDATE user_identity_documents SET review_status = 'PENDING', updated_at = now() WHERE user_id = :user_id"
+            "UPDATE user_identity_documents SET review_status = 'PENDING', rejection_reason=NULL, reviewed_at=NULL, reviewed_by=NULL, updated_at = now() WHERE user_id = :user_id"
         );
         $markIdentityPending->execute(['user_id' => $userId]);
     }
@@ -95,13 +92,14 @@ try {
              vehicle_registration = EXCLUDED.vehicle_registration,
              verification_status = 'PENDING', availability = FALSE,
              approved_at = NULL, approved_by = NULL, updated_at = now()
-         WHERE shipper_profiles.verification_status IN ('REJECTED', 'NEEDS_INFO')"
+         WHERE shipper_profiles.verification_status IN ('REJECTED', 'NEEDS_INFO') OR (shipper_profiles.verification_status='PENDING' AND shipper_profiles.application_details IS NULL)"
     );
     $profile->execute([
         'user_id' => $userId,
         'vehicle_type' => $vehicleType,
         'vehicle_registration' => $vehicleRegistration,
     ]);
+    $applicationService->save($userId, $application);
     $statusQuery = $db->prepare('SELECT verification_status FROM shipper_profiles WHERE user_id = :user_id');
     $statusQuery->execute(['user_id' => $userId]);
     $verificationStatus = (string) $statusQuery->fetchColumn();

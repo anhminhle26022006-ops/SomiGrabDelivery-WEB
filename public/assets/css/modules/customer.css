@@ -616,3 +616,11 @@ body[data-page="customer"] .modal-footer > * { margin: 0; }
   .c-create-layout .form-control, .c-create-layout .form-select { font-size: 16px; }
   .c-current-location, .c-create-map-tabs .btn { min-height: 44px; }
 }
+.c-live-tracking{overflow:hidden}.c-live-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}.c-live-heading h2{margin:0}.c-live-progress{list-style:none;display:flex;gap:6px;justify-content:space-between;margin:22px 0;padding:0}.c-live-progress li{flex:1;display:flex;flex-direction:column;align-items:center;gap:7px;font-size:11px;text-align:center;color:#8291a5;position:relative}.c-live-progress li>span{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:#edf2f7;font-weight:700}.c-live-progress .is-current{color:#1769e0;font-weight:700}.c-live-progress .is-current>span{background:#1769e0;color:#fff}.c-live-progress .is-done{color:#16865b}.c-live-progress .is-done>span{background:#e2f5ec;color:#16865b}.c-live-tracking .somi-leaflet-map{height:360px;min-height:300px;border-radius:14px;z-index:0}
+@media(max-width:600px){.c-live-heading{align-items:start;flex-direction:column}.c-live-tracking .somi-leaflet-map{height:300px}.c-live-progress li{font-size:10px}}
+/* Ô chọn phương thức thanh toán: nhãn dài ngắn khác nhau nên dòng chú thích
+ * (Admin, SePay) bị lệch nhau giữa các ô. Đẩy chú thích xuống đáy ô. */
+.c-tiles { align-items: stretch; }
+.c-tiles .c-tile { align-content: space-between; min-height: 86px; row-gap: 10px; }
+.c-tiles .c-tile strong { align-items: flex-start; line-height: 1.45; }
+.c-tiles .c-tile small { align-self: end; }

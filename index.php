@@ -41,7 +41,7 @@ $shipperIdentityReviewStatus = null;
 $shipperRejectionReason = null;
 $pendingShipperApplications = [];
 $adminView = $_GET['view'] ?? 'index';
-if (!is_string($adminView) || !in_array($adminView, ['index','users','customers','shippers','orders','complaints','disputes','payments','reviews','notifications','audit-logs','backend','categories','policies','nationality','refunds','operations'], true)) $adminView = 'index';
+if (!is_string($adminView) || !in_array($adminView, ['index','users','customers','shippers','orders','complaints','disputes','payments','reviews','notifications','audit-logs','backend','categories','policies','nationality','refunds','bank-accounts','operations'], true)) $adminView = 'index';
 if (in_array($page, ['customer', 'shipper', 'admin'], true)) {
     session_set_cookie_params([
         'httponly' => true,
@@ -88,8 +88,8 @@ if (!in_array($shipperView, $allowedShipperViews, true)) $shipperView = 'dashboa
 $shipperViewPages = [
     'dashboard' => 'dashboard', 'offers' => 'offers', 'detail' => 'active', 'active' => 'active',
     'history' => 'history', 'earnings' => 'earnings', 'account' => 'account', 'registration' => 'account',
-    'chat' => 'active', 'support' => 'active', 'cancel' => 'active', 'withdraw' => 'earnings',
-    'report' => 'earnings', 'notifications' => 'notifications',
+    'chat' => 'support', 'support' => 'support', 'cancel' => 'active', 'withdraw' => 'earnings',
+    'report' => 'earnings', 'notifications' => 'dashboard',
 ];
 $shipperPage = $shipperViewPages[$shipperView];
 

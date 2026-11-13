@@ -42,12 +42,13 @@ const base = 'http://127.0.0.1:3087';
       await page.screenshot({path:`tests/.runtime/bootstrap/home-${width}.png`,fullPage:true});
       await page.goto(base+'/__shipper-test', {waitUntil:'networkidle'});
       const metrics = await page.locator('.cards.row > div').evaluateAll(nodes => nodes.map(n => ({x:n.offsetLeft,y:n.offsetTop,w:n.offsetWidth})));
-      assert.equal(metrics.length, 4);
-      assert.equal(metrics[0].y === metrics[3].y, width > 1200); checks++;
+      assert.equal(metrics.length, 5);
+      assert.equal(metrics[0].y === metrics[4].y, width > 1200); checks++;
+      assert.equal(metrics[0].y === metrics[1].y, true, 'hai thẻ đầu luôn cùng hàng'); checks++;
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)); checks++;
-      await page.evaluate(() => document.querySelector('#contactModal').classList.remove('hidden'));
-      assert.ok(await page.locator('#contactModal .somi-modal').isVisible()); checks++;
-      await page.evaluate(() => document.querySelector('#contactModal').classList.add('hidden'));
+      await page.evaluate(() => document.querySelector('#orderDetailModal').classList.remove('hidden'));
+      assert.ok(await page.locator('#orderDetailModal .somi-modal').isVisible()); checks++;
+      await page.evaluate(() => document.querySelector('#orderDetailModal').classList.add('hidden'));
       assert.equal(await page.locator('.toast').count(), 0, 'No API fixture errors'); checks++;
       await page.screenshot({path:`tests/.runtime/bootstrap/shipper-${width}.png`,fullPage:true});
     }

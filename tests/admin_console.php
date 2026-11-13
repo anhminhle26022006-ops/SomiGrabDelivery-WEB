@@ -26,7 +26,7 @@ try{
     $sql=preg_replace('/^BEGIN;\s*|^COMMIT;\s*|^CREATE SCHEMA[^;]+;\s*|^SET search_path[^;]+;\s*/m','',$sql);
     $sql=preg_replace('/CREATE FUNCTION erase_identity_document_on_account_close\(\).*?(?=CREATE TABLE shipper_score_policies)/s','',$sql);
     $db->exec(str_replace('CREATE TABLE ','CREATE TEMP TABLE ',$sql));
-    foreach(['20261105_customer_orders','20261105_approved_pricing','20261105_distance_weight_pricing','20261106_person1_backend','20261112_shipper_policy_workflows'] as $migration){
+    foreach(['20261105_customer_orders','20261105_approved_pricing','20261105_distance_weight_pricing','20261106_person1_backend','20261112_shipper_policy_workflows','20261113_manual_escrow','20261113_admin_finance'] as $migration){
         $sql=file_get_contents(__DIR__.'/../database/migrations/'.$migration.'.sql');$sql=preg_replace('/^BEGIN;\s*|^COMMIT;\s*|^SET LOCAL search_path[^;]+;\s*/m','',$sql);$db->exec(str_replace('CREATE TABLE ','CREATE TEMP TABLE ',$sql));
     }
     check(value($db,"SELECT current_setting('search_path')")==='pg_temp, pg_catalog','isolated schema');
@@ -45,12 +45,21 @@ function newOrder(PDO $db,string $currency='VND'):int{
     check(count(tx($db,fn()=>$console->accounts(1,['q'=>'no-such-customer']))['items'])===0,'search empty');
     rejects(fn()=>$console->accounts(1,['status'=>'INVALID']),'VALIDATION_ERROR');
     $account=tx($db,fn()=>$console->account(1,4));check($account['account']['shipper']['vehicle_type']==='TEST','shipper detail');
+    check($account['account']['bank_accounts']===[],'missing bank is explicit empty state');
+    $db->prepare('INSERT INTO customer_bank_accounts(customer_id,bank_name,account_holder,encrypted_payload) VALUES(?,?,?,?)')->execute([2,'Fixture Bank','Customer',EncryptedPayload::seal(['account_number'=>'000001234567'])]);
+    $customerAccount=tx($db,fn()=>$console->account(1,2))['account'];
+    check($customerAccount['bank_accounts'][0]['account_number']==='000001234567','admin sees saved customer bank number with leading zeros');
+    check(!isset($customerAccount['bank_accounts'][0]['encrypted_payload']),'admin bank response excludes encrypted envelope');
+    $db->prepare('INSERT INTO shipper_bank_accounts(shipper_id,bank_code,bank_name,account_holder,account_number_enc,verified_at) VALUES(?,?,?,?,?,now())')->execute([4,'TEST','Shipper Bank','Shipper',EncryptedPayload::seal(['account_number'=>'000009876543'])]);
+    $shipperAccount=tx($db,fn()=>$console->account(1,4))['account'];
+    check(count($shipperAccount['bank_accounts'])===1&&$shipperAccount['bank_accounts'][0]['role']==='SHIPPER'&&$shipperAccount['bank_accounts'][0]['account_number']==='000009876543','admin sees correct saved shipper bank');
+
     rejects(fn()=>tx($db,fn()=>$console->account(1,99999)),'ACCOUNT_NOT_FOUND');
     $db->exec("INSERT INTO users(full_name,email,phone,password_hash,nationality_code,date_of_birth,gender,app_language,account_status) SELECT 'Fixture '||i,'extra'||i||'@example.invalid','098'||lpad(i::text,7,'0'),'hash','VN','2000-01-01','M','vi','PENDING_VERIFICATION' FROM generate_series(1,52)i");
     $first=$console->accounts(1,[]);$second=$console->accounts(1,['before_id'=>$first['next_before_id']]);check(count($first['items'])===50&&count($second['items'])===6,'cursor pagination');check(count(array_intersect(array_column($first['items'],'user_id'),array_column($second['items'],'user_id')))===0,'no duplicate page rows');
     $id=newOrder($db);$db->prepare("UPDATE orders SET status='SHIPPER_ASSIGNED',pricing_snapshot=CAST(? AS jsonb),paid_at=now() WHERE order_id=?")->execute([json_encode(['cancellation_fees'=>['SHIPPER_ASSIGNED'=>'7']]),$id]);
     $db->prepare('INSERT INTO order_assignments(order_id,shipper_id) VALUES(?,4)')->execute([$id]);
-    $db->prepare("INSERT INTO support_tickets(ticket_code,order_id,opened_by,category,subject,description) VALUES('TEST-TICKET',?,2,'DELIVERY','Test support','Fixture description')")->execute([$id]);$ticket=(int)value($db,'SELECT ticket_id FROM support_tickets LIMIT 1');
+    $db->prepare("INSERT INTO support_tickets(ticket_code,order_id,opened_by,opened_role,category,subject,description) VALUES('TEST-TICKET',?,2,'CUSTOMER','DELIVERY','Test support','Fixture description')")->execute([$id]);$ticket=(int)value($db,'SELECT ticket_id FROM support_tickets LIMIT 1');
     check(count(tx($db,fn()=>$console->tickets(1,[]))['items'])===1,'tickets list');
     check(tx($db,fn()=>$console->tickets(1,['id'=>$ticket]))['ticket']['description']==='Fixture description','ticket detail');
     rejects(fn()=>tx($db,fn()=>$console->ticketStatus(1,['ticket_id'=>$ticket,'status'=>'CLOSED','note'=>'skip'])),'TICKET_STATE_CONFLICT');

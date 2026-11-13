@@ -30,6 +30,11 @@ final class ShipperDashboardService
 
         return [
             'range' => $range,
+            'timezone' => self::TIMEZONE,
+            'start' => $start->format(DATE_ATOM),
+            'end' => $end->format(DATE_ATOM),
+            'completed_deliveries' => $current['deliveries'],
+            'delivery_seconds' => $current['delivery_seconds'],
             'period' => ['start' => $start->format(DATE_ATOM), 'end' => $end->format(DATE_ATOM)],
             'current' => $current,
             'previous' => $previous,
@@ -92,7 +97,14 @@ final class ShipperDashboardService
         $offers = $q->fetch();
         $decided = (int) $offers['decided'];
 
+        $q = $this->db->prepare("SELECT COALESCE(SUM(GREATEST(0, EXTRACT(EPOCH FROM (
+            LEAST(COALESCE(ended_at, CURRENT_TIMESTAMP), CAST(? AS timestamptz), CURRENT_TIMESTAMP)
+            - GREATEST(assigned_at, CAST(? AS timestamptz))
+        )))), 0) FROM order_assignments WHERE shipper_id = ?");
+        $q->execute([$to->format(DATE_ATOM), $from->format(DATE_ATOM), $shipperId]);
+        $seconds = (int) $q->fetchColumn();
         return [
+            'delivery_seconds' => $seconds,
             'deliveries' => (int) $done['deliveries'],
             'returns' => (int) $done['returns'],
             'distance_km' => number_format((float) $done['distance_km'], 1, '.', ''),

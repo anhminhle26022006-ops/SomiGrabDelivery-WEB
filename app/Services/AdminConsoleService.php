@@ -2,6 +2,8 @@
 declare(strict_types=1);
 require_once __DIR__.'/AdminService.php';
 require_once __DIR__.'/CustomerOrderService.php';
+require_once __DIR__.'/EncryptedPayload.php';
+require_once __DIR__.'/AdminWorkQueue.php';
 
 /** Live Admin queries and audited mutations; never returns password hashes or encrypted payloads. */
 final class AdminConsoleService
@@ -35,11 +37,10 @@ final class AdminConsoleService
         if(!empty($in['q'])){$term=DeliveryInput::text($in['q'],'q',100);$where.=' AND (u.full_name ILIKE ? OR u.email ILIKE ? OR u.phone ILIKE ?)';array_push($params,'%'.$term.'%','%'.$term.'%','%'.$term.'%');}
         if(!empty($in['status'])){if(!in_array($in['status'],['ACTIVE','SUSPENDED','PENDING_VERIFICATION','CLOSED'],true))DeliveryInput::invalid('status');$where.=' AND u.account_status=?';$params[]=$in['status'];}
         if(!empty($in['verification'])){if(!in_array($in['verification'],['PENDING','NEEDS_INFO','APPROVED','REJECTED'],true))DeliveryInput::invalid('verification');$where.=' AND sp.verification_status=?';$params[]=$in['verification'];}
-        if(isset($in['before_id'])){$where.=' AND u.user_id<?';$params[]=DeliveryInput::id($in['before_id']);}
-        $data=$this->page("SELECT u.user_id,u.full_name,u.email,u.phone,u.nationality_code,u.account_status,u.created_at,
+        $data=AdminWorkQueue::page($this->db,"SELECT CASE WHEN sp.verification_status='PENDING' THEN 0 ELSE 1 END AS work_priority,u.user_id,u.full_name,u.email,u.phone,u.nationality_code,u.account_status,u.created_at,
           sp.verification_status,sp.vehicle_type,sp.vehicle_registration,sp.reliability_score,sp.availability,
           (SELECT json_agg(r.role_code) FROM user_roles ur JOIN roles r USING(role_id) WHERE ur.user_id=u.user_id) AS roles
-          FROM users u LEFT JOIN shipper_profiles sp ON sp.user_id=u.user_id WHERE ".$where.' ORDER BY u.user_id DESC',$params,'user_id');
+          FROM users u LEFT JOIN shipper_profiles sp ON sp.user_id=u.user_id WHERE ".$where,$params,'user_id',$in);
         foreach($data['items']as &$row)$row['roles']=json_decode($row['roles']??'[]',true);unset($row);
         return $data;
     }
@@ -48,6 +49,14 @@ final class AdminConsoleService
         $row=$this->rows('SELECT user_id,full_name,email,phone,nationality_code,date_of_birth,gender,account_status,email_verified_at,phone_verified_at,created_at FROM users WHERE user_id=?',[$id])[0]??null;
         if(!$row)throw new DeliveryApiError(404,'ACCOUNT_NOT_FOUND','Account not found.');
         $row['shipper']=$this->rows('SELECT user_id,vehicle_type,vehicle_registration,verification_status,reliability_score,customer_rating_average,customer_rating_count,availability FROM shipper_profiles WHERE user_id=?',[$id])[0]??null;
+        $row['bank_accounts']=[];
+        $customerBank=$this->rows('SELECT bank_account_id,bank_name,account_holder,review_status,review_note,encrypted_payload,created_at FROM customer_bank_accounts WHERE customer_id=? ORDER BY bank_account_id DESC LIMIT 1',[$id])[0]??null;
+        $shipperBank=$this->rows("SELECT bank_account_id,bank_code,bank_name,account_holder,review_status,review_note,verified_at,convert_from(account_number_enc,'UTF8') AS encrypted_payload FROM shipper_bank_accounts WHERE shipper_id=? AND replaced_at IS NULL",[$id])[0]??null;
+        foreach(['CUSTOMER'=>$customerBank,'SHIPPER'=>$shipperBank] as $role=>$bank){
+            if(!$bank)continue;
+            try{$bank['account_number']=EncryptedPayload::open($bank['encrypted_payload'])['account_number'];}catch(Throwable $e){$bank['account_number']=null;$bank['needs_reentry']=true;}unset($bank['encrypted_payload']);$bank['role']=$role;$row['bank_accounts'][]=$bank;
+        }
+        if($row['bank_accounts'])AuditService::record($this->db,$admin,'ADMIN','ACCOUNT_BANK_READ','USER',$id);
         $row['identity']=$this->rows('SELECT document_type,document_country_code,review_status,rejection_reason,reviewed_at FROM user_identity_documents WHERE user_id=?',[$id])[0]??null;
         $row['history']=$this->rows('SELECT old_status,new_status,reason,changed_by,created_at FROM account_status_history WHERE user_id=? ORDER BY history_id DESC LIMIT 50',[$id]);
         AuditService::record($this->db,$admin,'ADMIN','ACCOUNT_READ','USER',$id);return ['account'=>$row];
@@ -62,20 +71,19 @@ final class AdminConsoleService
         }
         if(!empty($in['status'])){if(!in_array($in['status'],['NEW','IN_PROGRESS','RESOLVED','CLOSED'],true))DeliveryInput::invalid('status');$where.=' AND t.status=?';$params[]=$in['status'];}
         if(!empty($in['q'])){$where.=' AND (t.ticket_code ILIKE ? OR t.subject ILIKE ? OR o.order_code ILIKE ?)';$q='%'.DeliveryInput::text($in['q'],'q',100).'%';array_push($params,$q,$q,$q);}
-        if(isset($in['before_id'])){$where.=' AND t.ticket_id<?';$params[]=DeliveryInput::id($in['before_id']);}
-        return $this->page('SELECT t.ticket_id,t.ticket_code,t.order_id,t.category,t.subject,t.status,t.created_at,o.order_code,u.full_name AS reporter_name FROM support_tickets t LEFT JOIN orders o USING(order_id) JOIN users u ON u.user_id=t.opened_by WHERE '.$where.' ORDER BY t.ticket_id DESC',$params,'ticket_id');
+        return AdminWorkQueue::page($this->db,"SELECT CASE WHEN t.status IN ('NEW','IN_PROGRESS') THEN 0 ELSE 1 END AS work_priority,t.ticket_id,t.ticket_code,t.order_id,t.category,t.subject,t.status,t.created_at,o.order_code,u.full_name AS reporter_name FROM support_tickets t LEFT JOIN orders o USING(order_id) JOIN users u ON u.user_id=t.opened_by WHERE ".$where,$params,'ticket_id',$in);
     }
     public function ticketStatus(int $admin,array $in):array{
         $this->guard($admin,'support.manage_all');DeliveryInput::only($in,['ticket_id','status','note']);
         $id=DeliveryInput::id($in['ticket_id']??null);$status=DeliveryInput::text($in['status']??null,'status',20);$note=DeliveryInput::text($in['note']??null,'note',2000);
-        $old=$this->rows('SELECT ticket_id,ticket_code,order_id,opened_by,status FROM support_tickets WHERE ticket_id=? FOR UPDATE',[$id])[0]??null;
+        $old=$this->rows('SELECT ticket_id,ticket_code,order_id,opened_by,opened_role,status FROM support_tickets WHERE ticket_id=? FOR UPDATE',[$id])[0]??null;
         if(!$old)throw new DeliveryApiError(404,'TICKET_NOT_FOUND','Ticket not found.');
         if((self::TICKET_NEXT[$old['status']]??null)!==$status)throw new DeliveryApiError(409,'TICKET_STATE_CONFLICT','Refresh the ticket before changing its status.');
         $q=$this->db->prepare("UPDATE support_tickets SET status=?,resolution=CASE WHEN ?='RESOLVED' THEN ? ELSE resolution END,resolved_by=CASE WHEN ?='RESOLVED' THEN ? ELSE resolved_by END,resolved_at=CASE WHEN ?='RESOLVED' THEN now() ELSE resolved_at END,closed_at=CASE WHEN ?='CLOSED' THEN now() ELSE closed_at END,updated_at=now() WHERE ticket_id=?");
         $q->execute([$status,$status,$note,$status,$admin,$status,$status,$id]);
         $this->db->prepare('INSERT INTO support_ticket_events(ticket_id,old_status,new_status,note,changed_by) VALUES(?,?,?,?,?)')->execute([$id,$old['status'],$status,$note,$admin]);
         if($status==='CLOSED')$this->db->prepare("UPDATE support_attachments SET delete_after=now()+interval '3 months' WHERE ticket_id=? AND deleted_at IS NULL")->execute([$id]);
-        $this->db->prepare("INSERT INTO notifications(user_id,order_id,notification_type,title_vi,message_vi,title_en,message_en,in_app_status,email_status) VALUES(?,?,'TICKET_STATUS_CHANGED',?,?,?,?,'SENT','SKIPPED')")->execute([$old['opened_by'],$old['order_id'],'Cập nhật ticket hỗ trợ',$old['ticket_code'].' → '.$status,'Support ticket updated',$old['ticket_code'].' → '.$status]);
+        if($old['opened_role']!==null)$this->db->prepare("INSERT INTO notifications(user_id,recipient_role,order_id,notification_type,title_vi,message_vi,title_en,message_en,in_app_status,email_status) VALUES(?,?,?,'TICKET_STATUS_CHANGED',?,?,?,?,'SENT','SKIPPED')")->execute([$old['opened_by'],$old['opened_role'],$old['order_id'],'Cập nhật ticket hỗ trợ',$old['ticket_code'].' → '.$status,'Support ticket updated',$old['ticket_code'].' → '.$status]);
         AuditService::record($this->db,$admin,'ADMIN','SUPPORT_TICKET_UPDATED','SUPPORT_TICKET',$id,$old,['status'=>$status,'note'=>$note]);return ['ticket_id'=>$id,'status'=>$status];
     }
     public function chat(int $admin,int $ticketId):array{
@@ -92,12 +100,11 @@ final class AdminConsoleService
         return $this->page('SELECT r.review_id,r.order_id,r.rating,r.comment,r.created_at,o.order_code,c.full_name AS customer_name,s.full_name AS shipper_name FROM order_reviews r JOIN orders o USING(order_id) JOIN users c ON c.user_id=r.customer_id JOIN users s ON s.user_id=r.shipper_id WHERE '.$where.' ORDER BY r.review_id DESC',$params,'review_id');
     }
     public function notifications(int $admin,array $in):array{
-        $this->guard($admin,'account.read');$params=[$admin];$where='user_id=?';
-        if(isset($in['before_id'])){$where.=' AND notification_id<?';$params[]=DeliveryInput::id($in['before_id']);}
-        return $this->page('SELECT notification_id,order_id,title_vi,message_vi,title_en,message_en,notification_type,read_at,created_at FROM notifications WHERE '.$where.' ORDER BY notification_id DESC',$params,'notification_id');
+        $this->guard($admin,'account.read');$params=[$admin];$where="user_id=? AND recipient_role='ADMIN'";
+        return AdminWorkQueue::page($this->db,'SELECT CASE WHEN read_at IS NULL THEN 0 ELSE 1 END AS work_priority,notification_id,order_id,title_vi,message_vi,title_en,message_en,notification_type,read_at,created_at FROM notifications WHERE '.$where,$params,'notification_id',$in);
     }
     public function markRead(int $admin,int $id):array{
-        $this->guard($admin,'account.read');$q=$this->db->prepare('UPDATE notifications SET read_at=COALESCE(read_at,now()) WHERE notification_id=? AND user_id=? RETURNING notification_id');$q->execute([$id,$admin]);
+        $this->guard($admin,'account.read');$q=$this->db->prepare("UPDATE notifications SET read_at=COALESCE(read_at,now()) WHERE notification_id=? AND user_id=? AND recipient_role='ADMIN' RETURNING notification_id");$q->execute([$id,$admin]);
         if(!$q->fetchColumn())throw new DeliveryApiError(404,'NOTIFICATION_NOT_FOUND','Notification not found.');return ['read'=>true];
     }
     public function restoreScore(int $admin,array $in):array {

@@ -15,6 +15,7 @@
   }
 
   function paint(fullName) {
+    document.querySelectorAll('[data-shipper-name]').forEach(el => { el.textContent = fullName; });
     const name = document.querySelector("#profileDropdown .drophead strong");
     if (name) name.textContent = fullName;
     for (const id of ["avatar", "accountAvatar"]) {
@@ -28,6 +29,7 @@
     }
   }
 
+  api.paintProfile = ({profile}) => paint(profile.full_name);
   api.profile().then((data) => paint(data.profile.full_name)).catch(() => {
     // Không tải được hồ sơ thì bỏ tên mẫu đi, tránh hiển thị tên của người khác.
     paint("");

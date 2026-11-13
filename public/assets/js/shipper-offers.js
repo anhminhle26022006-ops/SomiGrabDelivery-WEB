@@ -3,7 +3,7 @@
 (() => {
   const api = window.SomiShipper;
   const { esc, money, toast } = api;
-  const POLL_MS = 8000;        // hỏi offer mới mỗi 8 giây khi đang bật nhận đơn
+  const POLL_MS = 5000;        // hỏi offer mới mỗi 5 giây khi đang bật nhận đơn
   const HEARTBEAT_MS = 120000; // gửi lại vị trí mỗi 2 phút để hệ thống ghép đơn theo vị trí còn mới
 
   let available = false;
@@ -11,6 +11,12 @@
   let loadedAt = 0;
   let pollTimer = null;
   let heartbeatTimer = null;
+  let loadPending = false;
+  let heartbeatTask = null;
+  let toggling = false;
+  let stateVersion = 0;
+  let restoreVersion = 0;
+  const online = value => [true, 1, '1', 't', 'true'].includes(value);
 
   const BLOCKERS = {
     ACCOUNT_NOT_ACTIVE: "tài khoản chưa ở trạng thái hoạt động",
@@ -21,9 +27,13 @@
 
   // ---------- Trạng thái nhận đơn ----------
   function paintAvailability(state) {
-    available = Boolean(state.availability);
+    const next = online(state.availability);
+    if (available !== next) stateVersion++;
+    available = next;
     const on = available;
     document.getElementById("availabilityToggle")?.classList.toggle("on", on);
+    const toggle = document.getElementById("availabilityToggle");
+    if (toggle) { toggle.disabled = false; toggle.setAttribute('aria-pressed', String(on)); }
     for (const id of ["availabilityPill", "offerAvailability"]) {
       const pill = document.getElementById(id);
       if (!pill) continue;
@@ -51,8 +61,12 @@
 
   async function toggleAvailability() {
     const button = document.getElementById("availabilityToggle");
+    if (toggling) return;
+    toggling = true;
+    restoreVersion++;
     button.disabled = true;
     try {
+      if (heartbeatTask) await heartbeatTask;
       if (available) {
         paintAvailability(await api.setAvailability({ available: false }));
         toast("Đã tắt nhận đơn.");
@@ -64,30 +78,57 @@
     } catch (error) {
       toast(error.message);
     } finally {
+      toggling = false;
       button.disabled = false;
+      if (available) loadOffers();
     }
   }
 
-  async function heartbeat() {
-    try {
-      const point = await api.position();
-      await api.setAvailability({ available: true, latitude: point.latitude, longitude: point.longitude });
-    } catch (error) {
-      // Mất điều kiện hoạt động (ví dụ bị khóa tài khoản) thì đọc lại trạng thái thật từ máy chủ.
-      if (error.code === "SHIPPER_NOT_ELIGIBLE") api.availability().then(paintAvailability).catch(() => {});
-    }
+  function heartbeat() {
+    if (!available || toggling || heartbeatTask) return heartbeatTask;
+    const version = stateVersion;
+    heartbeatTask = (async () => {
+      try {
+        const point = await api.position();
+        if (!available || toggling || version !== stateVersion) return;
+        await api.setAvailability({ available: true, latitude: point.latitude, longitude: point.longitude });
+        if (available && version === stateVersion) await loadOffers();
+      } catch (error) {
+        if (error.code === "SHIPPER_NOT_ELIGIBLE") api.availability().then(paintAvailability).catch(() => {});
+        else {
+          const help = document.getElementById("availabilityHelp");
+          if (help) help.textContent = "Không cập nhật được GPS: " + error.message;
+        }
+      } finally { heartbeatTask = null; }
+    })();
+    return heartbeatTask;
   }
 
   // ---------- Danh sách offer ----------
   async function loadOffers() {
+    if (!available || toggling || loadPending || document.hidden) return;
     if (!document.getElementById("allOrders") && !document.getElementById("overviewOrders")) return;
+    const version = stateVersion;
+    loadPending = true;
     try {
-      offers = (await api.offers()).items;
+      const state = await api.availability();
+      if (version !== stateVersion || toggling) return;
+      if (online(state.availability) !== available || !state.can_work) {
+        paintAvailability(state);
+        return;
+      }
+      const result = await api.refreshOffers();
+      if (!available || toggling || version !== stateVersion) return;
+      offers = result.items;
       loadedAt = Date.now();
       renderOffers();
     } catch (error) {
       if (error.status === 401) clearInterval(pollTimer);
-    }
+      for (const id of ['allOrders', 'overviewOrders']) {
+        const target = document.getElementById(id);
+        if (target && version === stateVersion) target.textContent = error.message;
+      }
+    } finally { loadPending = false; }
   }
 
   // Số giây còn lại tính từ lúc tải danh sách, để đồng hồ chạy mượt mà không cần hỏi máy chủ mỗi giây.
@@ -103,11 +144,11 @@
     const id = esc(offer.offer_id);
     return `<article class="order" data-offer="${id}">
       <div class="orderhead"><div><span class="orderid">${esc(offer.order_code)}</span><span class="tag">Còn <b data-countdown="${id}">${secondsLeft(offer)}</b> giây</span></div>
-        <span class="muted" style="font-size:11px">Cách điểm lấy hàng ${esc(offer.distance_to_pickup_km)} km</span></div>
+        <span class="muted" style="font-size:11px">Cách điểm lấy hàng ${esc(api.distance(offer.distance_to_pickup_km))} km</span></div>
       <div class="route"><div class="routepoints"><span class="dot"></span><span class="routebar"></span><span class="dot red"></span></div>
         <div class="address"><strong>Điểm lấy hàng</strong><small>${esc(offer.pickup_address)}</small><div style="height:12px"></div><strong>Điểm giao hàng</strong><small>${esc(offer.delivery_address)}</small></div>
         <div class="pay"><small>Thu nhập dự kiến</small><strong>${esc(earningText(offer))}</strong><small class="feehint">Đối soát sau khi giao thành công</small></div></div>
-      <div class="orderfoot"><div class="mini">⌖ <span><b>${esc(offer.distance_km)} km</b><br>Quãng đường</span></div>
+      <div class="orderfoot"><div class="mini">⌖ <span><b>${esc(api.distance(offer.distance_km))} km</b><br>Quãng đường</span></div>
         <div class="mini">◷ <span><b>${esc(offer.estimated_duration_minutes ?? "?")} phút</b><br>Ước tính</span></div>
         <div class="mini">▣ <span><b>${esc(offer.category_name_vi)}</b><br>${esc(offer.estimated_weight_kg)} kg</span></div>
         <div class="orderactions"><button class="outline" data-offer-detail="${id}">Xem chi tiết</button><button class="outline rejectbtn" data-offer-reject="${id}">Từ chối</button><button class="primary blue" data-offer-accept="${id}">Nhận đơn</button></div></div>
@@ -146,7 +187,7 @@
     if (!body || !offer) return;
     const id = esc(offer.offer_id);
     document.getElementById("orderDetailTitle").textContent = "Chi tiết đơn " + offer.order_code;
-    body.innerHTML = `<div class="detail-summary"><div><h3>${esc(offer.order_code)}</h3><p>${esc(offer.distance_km)} km, khoảng ${esc(offer.estimated_duration_minutes ?? "?")} phút</p></div>
+    body.innerHTML = `<div class="detail-summary"><div><h3>${esc(offer.order_code)}</h3><p>${esc(api.distance(offer.distance_km))} km, khoảng ${esc(offer.estimated_duration_minutes ?? "?")} phút</p></div>
         <div class="detail-earning"><small>Thu nhập dự kiến</small><b>${esc(earningText(offer))}</b><span>Đối soát sau khi giao thành công</span></div></div>
       <div class="detail-grid"><section class="detailbox"><h3>Hàng vận chuyển</h3><b>${esc(offer.category_name_vi)}</b><span>${esc(offer.estimated_weight_kg)} kg</span><p>${esc(offer.parcel_description || "Không có mô tả thêm.")}</p></section>
         <section class="detailbox"><h3>Liên hệ</h3><p>Tên và số điện thoại người gửi, người nhận chỉ hiển thị sau khi bạn nhận đơn.</p></section></div>
@@ -159,6 +200,8 @@
     button.disabled = true;
     try {
       await api.acceptOffer(offerId);
+      document.dispatchEvent(new CustomEvent('somi:delivery-refresh'));
+      offers = []; renderOffers();
       window.closeOrderDetail?.();
       toast("Đã nhận đơn. Mở Đơn đang giao để bắt đầu.");
       window.go?.("active");
@@ -195,6 +238,34 @@
       else openDetail(offers.find((offer) => String(offer.offer_id) === button.dataset.offerDetail));
     });
     setInterval(tickCountdowns, 1000);
-    api.availability().then(paintAvailability).catch((error) => toast(error.message));
+    // Ignore reads started before a toggle or a newer restore request.
+    async function restoreAvailability() {
+      if (toggling) return;
+      const request = ++restoreVersion;
+      const version = stateVersion;
+      try {
+        const state = await api.availability();
+        if (request !== restoreVersion || version !== stateVersion || toggling) return;
+        paintAvailability(state);
+        if (available) heartbeat();
+      } catch (error) {
+        if (request !== restoreVersion || toggling) return;
+        const help = document.getElementById('availabilityHelp');
+        if (help) help.textContent = error.message;
+        toast(error.message);
+      }
+    }
+    restoreAvailability();
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) restoreAvailability();
+    });
+    window.addEventListener('pageshow', event => {
+      if (event.persisted) restoreAvailability();
+    });
+    window.addEventListener('online', () => { if (available) { heartbeat(); loadOffers(); } });
+    window.addEventListener('pagehide', () => {
+      clearInterval(pollTimer); clearInterval(heartbeatTimer);
+      // Leave persisted availability unchanged when navigating or reloading.
+    });
   });
 })();

@@ -17,19 +17,18 @@ function showSupport(){window.somiPerson3Open?.('tickets');}
 function openProfile(){document.getElementById('profileDropdown').classList.add('open');document.getElementById('profileBtn').setAttribute('aria-expanded','true')}
 // Sidebar navigation is handled once by shipper-navigation.js.
 // Header branding/navigation may also carry data-page; do not let it hide every view.
-document.getElementById('bellBtn')?.addEventListener('click',()=>go('notifications'));
+
 document.getElementById('chatForm')?.addEventListener('submit',e=>{e.preventDefault();window.somiPerson3Open?.('chat');});
 document.getElementById('supportForm')?.addEventListener('submit',e=>{e.preventDefault();window.somiPerson3Open?.('tickets');});
 
 document.getElementById('profileBtn')?.addEventListener('click',e=>{e.stopPropagation();let d=document.getElementById('profileDropdown');d.classList.toggle('open');e.currentTarget.setAttribute('aria-expanded',d.classList.contains('open')?'true':'false')});
 document.addEventListener('click',e=>{if(!e.target.closest('.profile')){document.getElementById('profileDropdown')?.classList.remove('open');document.getElementById('profileBtn')?.setAttribute('aria-expanded','false')}});
-document.getElementById('avatarUpload')?.addEventListener('change',e=>{let f=e.target.files[0];if(!f)return;if(!f.type.startsWith('image/')){toast('Vui lòng chọn file hình ảnh.');return}let reader=new FileReader();reader.onload=ev=>{document.getElementById('avatar').innerHTML=`<img src="${ev.target.result}" alt="Ảnh đại diện">`;document.getElementById('accountAvatar').innerHTML=`<img src="${ev.target.result}" alt="Ảnh đại diện">`;toast('Đã cập nhật ảnh đại diện trong bản demo. Ảnh chưa được lưu lên máy chủ.');};reader.readAsDataURL(f)});
 // Hỗ trợ, chính sách và đăng xuất được xử lý trong app/Views/shipper/index.php và app.js; ở đây chỉ còn mục Tài khoản.
 document.querySelectorAll('[data-profile-action="account"]').forEach(b=>b.addEventListener('click',()=>{document.getElementById('profileDropdown').classList.remove('open');go('account')}));
 document.querySelectorAll('[data-notice-filter]').forEach(b=>b.addEventListener('click',()=>filterNotices(b.dataset.noticeFilter)));
 document.getElementById('markAll')?.addEventListener('click',()=>{notices.forEach(n=>n.unread=false);renderNotices();toast('Đã đánh dấu tất cả thông báo là đã đọc.')});
 function openContactChat(){window.somiPerson3Open?.('chat');}
-function closeContactChat(){document.getElementById('contactModal').classList.add('hidden');}
+function closeContactChat(){window.go?.('active');}
 
 // Offers/history load through shipper-offers.js and shipper-active.js; notifications use person3.js.
 

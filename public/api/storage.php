@@ -11,10 +11,10 @@ if(($_SERVER['REQUEST_METHOD']??'')==='GET'&&isset($_GET['signature'])){
  somi_run_api(['GET','POST','DELETE'],['CUSTOMER','SHIPPER','ADMIN'],$permission,true,function(PDO $db,int $user,string $role):array {
     $service=new PrivateStorageService($db);
     if(isset($_GET['ticket_id'])&&$role!=='ADMIN')throw new DeliveryApiError(403,'ADMIN_REQUIRED','Admin workspace required.');
-    if($_SERVER['REQUEST_METHOD']==='DELETE')return [200,$service->discard($user,DeliveryInput::id($_GET['file_id']??null))];
+    if($_SERVER['REQUEST_METHOD']==='DELETE')return [200,$service->discard($user,DeliveryInput::id($_GET['file_id']??null),$role)];
     if(isset($_GET['reference_file_id']))return [200,$service->reference($user,$role,$_GET)];
     if($_SERVER['REQUEST_METHOD']==='POST'){if($role==='ADMIN')throw new DeliveryApiError(403,'UPLOAD_FORBIDDEN','Customer or Shipper upload only.');if(!preg_match('/^multipart\/form-data\s*;/i',$_SERVER['CONTENT_TYPE']??''))throw new DeliveryApiError(415,'MULTIPART_REQUIRED','Use multipart/form-data for upload.');return [201,$service->upload($user,$role,$_POST,$_FILES['file']??[])];}
-    if(!isset($_GET['file_id']))return [200,$service->listing($user,$_GET)];
+    if(!isset($_GET['file_id']))return [200,$service->listing($user,$_GET,$role)];
     return [200,$service->signed(DeliveryInput::id($_GET['file_id']??null),$user,$role)];
  });
 }

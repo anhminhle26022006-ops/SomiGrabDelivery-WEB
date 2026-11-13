@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require_once __DIR__ . '/OrderLifecycleService.php';
 require_once __DIR__ . '/ShipperInput.php';
+require_once __DIR__ . '/ShipperEligibility.php';
 
 /**
  * Ghép đơn: chọn Shipper phù hợp và gửi offer có thời hạn.
@@ -61,6 +62,32 @@ final class MatchingService
         return ['result' => 'OFFERED', 'offers' => count($candidates)];
     }
 
+    /** Bounded fallback when an online shipper polls; the worker remains the primary dispatcher. */
+    public function dispatchNearby(int $shipperId): array
+    {
+        $profile = ShipperEligibility::profile($this->db, $shipperId);
+        ShipperEligibility::assertCanWork($this->db, $profile);
+        if (!\Somi\Domain\Shipper::fromRow($profile)->isAvailable()) return [];
+        $q = $this->db->prepare(
+            "SELECT o.order_id FROM orders o
+             JOIN shipper_profiles sp ON sp.user_id = ?
+             WHERE o.status = 'SEARCHING_SHIPPER' AND o.paid_at IS NOT NULL AND o.customer_id <> sp.user_id
+               AND sp.last_location_at > now() - make_interval(secs => ?)
+               AND 6371 * 2 * asin(sqrt(least(1.0,
+                 power(sin(radians(sp.last_latitude - o.pickup_latitude) / 2), 2)
+                 + cos(radians(o.pickup_latitude)) * cos(radians(sp.last_latitude))
+                   * power(sin(radians(sp.last_longitude - o.pickup_longitude) / 2), 2)))) <= ?
+               AND NOT EXISTS (SELECT 1 FROM order_assignments a WHERE a.shipper_id=sp.user_id AND a.assignment_status='ACTIVE')
+               AND NOT EXISTS (SELECT 1 FROM order_match_offers f WHERE f.order_id=o.order_id AND f.status='PENDING' AND f.expires_at>now())
+             ORDER BY o.paid_at,o.order_id LIMIT 5"
+        );
+        $q->execute([$shipperId, ShipperInput::config('location_max_age_seconds'), ShipperInput::config('radius_km')]);
+        $orders = $q->fetchAll(PDO::FETCH_COLUMN);
+        $results = [];
+        foreach ($orders as $id) $results[(int)$id] = $this->dispatch((int)$id);
+        return $results;
+    }
+
     /**
      * Shipper đủ điều kiện nhận offer của đơn này, gần điểm lấy hàng nhất xếp trước.
      * Điều kiện: đang bật nhận đơn, hồ sơ và giấy tờ đã duyệt, tài khoản ACTIVE, không bị
@@ -86,7 +113,8 @@ final class MatchingService
                    AND sp.user_id <> ?
                    AND sp.last_location_at > now() - make_interval(secs => ?)
                    AND NOT EXISTS (SELECT 1 FROM order_assignments a WHERE a.shipper_id = sp.user_id AND a.assignment_status = 'ACTIVE')
-                   AND NOT EXISTS (SELECT 1 FROM order_match_offers f WHERE f.order_id = ? AND f.shipper_id = sp.user_id AND f.sent_at >= CAST(? AS timestamptz))
+                   AND NOT EXISTS (SELECT 1 FROM order_match_offers f WHERE f.order_id = ? AND f.shipper_id = sp.user_id AND f.sent_at >= CAST(? AS timestamptz)
+                                   AND NOT (f.status = 'CANCELLED' AND f.response_note = 'AVAILABILITY_OFF'))
                    AND NOT EXISTS (SELECT 1 FROM order_assignments cancelled WHERE cancelled.order_id=? AND cancelled.shipper_id=sp.user_id AND cancelled.assignment_status='CANCELLED_BEFORE_PICKUP')
                    AND (u.email LIKE '%@demo.somi.invalid') = EXISTS (SELECT 1 FROM users dc WHERE dc.user_id=? AND dc.email LIKE '%@demo.somi.invalid')
                    AND NOT EXISTS (SELECT 1 FROM shipper_score_policies sc

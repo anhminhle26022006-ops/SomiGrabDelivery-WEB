@@ -99,7 +99,7 @@ window.SomiLangEN = {
   "Đang tìm shipper": "Finding a shipper",
   "Chưa có shipper": "No shipper yet",
   "Chưa tìm được shipper": "No shipper found yet",
-  "Shipper đã nhận": "Shipper assigned",
+  "Shipper đã nhận": "Shipper accepted your order",
   "Shipper đã nhận đơn": "Shipper accepted the order",
   "Shipper đã hủy": "Shipper cancelled",
   "Shipper đã hủy nhận đơn": "The shipper cancelled the job",

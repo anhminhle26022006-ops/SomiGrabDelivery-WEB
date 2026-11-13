@@ -121,6 +121,8 @@ CREATE TABLE shipper_profiles (
     user_id                    BIGINT PRIMARY KEY REFERENCES users(user_id) ON DELETE RESTRICT,
     vehicle_type               VARCHAR(80) NOT NULL,
     vehicle_registration       VARCHAR(40) NOT NULL,
+    application_details        JSONB CHECK (application_details IS NULL OR jsonb_typeof(application_details) = 'object'),
+    application_submitted_at   TIMESTAMPTZ,
     verification_status        VARCHAR(20) NOT NULL DEFAULT 'PENDING'
                                CHECK (verification_status IN ('PENDING', 'NEEDS_INFO', 'APPROVED', 'REJECTED')),
     availability               BOOLEAN NOT NULL DEFAULT FALSE,
@@ -629,6 +631,7 @@ CREATE TABLE support_tickets (
     ticket_code          VARCHAR(32) NOT NULL UNIQUE,
     order_id             BIGINT NOT NULL REFERENCES orders(order_id) ON DELETE RESTRICT,
     opened_by            BIGINT NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
+    opened_role          VARCHAR(20) CHECK (opened_role IN ('CUSTOMER', 'SHIPPER')),
     category             VARCHAR(60) NOT NULL,
     subject              VARCHAR(200),
     description          TEXT NOT NULL,
@@ -702,6 +705,7 @@ CREATE INDEX ix_chat_attachments_retention ON chat_attachments(delete_after) WHE
 CREATE TABLE notifications (
     notification_id     BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     user_id             BIGINT NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
+    recipient_role      VARCHAR(20) CHECK (recipient_role IN ('CUSTOMER', 'SHIPPER', 'ADMIN')),
     order_id            BIGINT REFERENCES orders(order_id) ON DELETE RESTRICT,
     notification_type   VARCHAR(60) NOT NULL,
     title_vi            VARCHAR(200) NOT NULL,

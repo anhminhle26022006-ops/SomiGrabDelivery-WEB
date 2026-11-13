@@ -3,16 +3,16 @@
   const root = document.querySelector('[data-customer-server]'); if (!root) return;
   const vi = (window.SomiI18n?.lang || document.documentElement.lang) === 'vi', t = (vn,en) => vi?vn:en;
   const h = s => String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-  const url = (view,id) => '?'+new URLSearchParams({page:'customer',view,...(id?{id:String(id)}:{})});
+  const url = (view,id) => '?'+new URLSearchParams({page:'customer',view,...(id?{id:String(id)}:{}),...(view==='payment'?{checkout:'1'}:{})});
   const money = (minor,currency) => new Intl.NumberFormat(vi?'vi-VN':'en-US',{style:'currency',currency}).format(Number(minor)/(currency==='USD'?100:1));
   const link = (view,label,id) => `<a class="btn btn-outline-dark" href="${h(url(view,id))}">${h(label)}</a>`;
   const view = document.body.dataset.cView, params = new URLSearchParams(location.search);
-  let profile, currency='VND', pendingKey=null;
+  let profile, currency='VND', pendingKey=null, detailVersion=0;
   function embeddedProfile(){try{const data=JSON.parse(document.getElementById('customer-profile-data')?.textContent||'null');if(data?.profile&&typeof data.profile.full_name==='string'&&['vi','en'].includes(data.profile.app_language))return data.profile;}catch{}return null;}
   function savedCurrency(){try{const saved=localStorage.getItem('somi-currency');if(['VND','USD'].includes(saved))return saved;}catch{}return profile?.app_language==='en'?'USD':'VND';}
   let mapHandles=[],lookupHandles=[],stopTracking=()=>{};
   window.addEventListener('pagehide',()=>{stopTracking();resetMaps();});
-  window.addEventListener('pageshow',e=>{if(e.persisted&&['order','tracking'].includes(view))run(detail);});
+  window.addEventListener('pageshow',e=>{if(e.persisted&&['order','tracking','matching','payment'].includes(view))run(detail);});
   const resetMaps=()=>{mapHandles.forEach(m=>m?.destroy());mapHandles=[];lookupHandles.forEach(l=>l.destroy());lookupHandles=[];};
   function addressMap(container,input,apply,invalidate){
     const canvas=document.createElement('div');canvas.className='somi-leaflet-map';container.append(canvas);
@@ -24,7 +24,7 @@
     mapHandles.push(handle);return handle;
   }
   const statusLabels = {
-    PENDING_PAYMENT:['Chờ thanh toán','Awaiting payment'],SEARCHING_SHIPPER:['Đang tìm người giao','Finding a shipper'],NO_SHIPPER_FOUND:['Chưa tìm được người giao','No shipper found'],SHIPPER_ASSIGNED:['Đã phân công','Shipper assigned'],PICKED_UP:['Đã lấy hàng','Picked up'],IN_DELIVERY:['Đang giao','In delivery'],DELIVERED:['Đã giao','Delivered'],RETURNING:['Đang hoàn','Returning'],RETURNED:['Đã hoàn hàng','Returned'],CANCELLED:['Đã hủy','Cancelled']
+    PENDING_PAYMENT:['Chờ thanh toán','Awaiting payment'],SEARCHING_SHIPPER:['Đang tìm shipper','Finding a shipper'],NO_SHIPPER_FOUND:['Chưa tìm được shipper','No shipper found'],SHIPPER_ASSIGNED:['Shipper đã nhận đơn','Shipper accepted your order'],PICKED_UP:['Đã lấy hàng','Picked up'],IN_DELIVERY:['Đang giao hàng','In delivery'],DELIVERED:['Đã giao','Delivered'],RETURNING:['Đang hoàn hàng','Returning'],RETURNED:['Đã hoàn hàng','Returned'],CANCELLED:['Đã hủy','Cancelled']
   };
   const paymentState = s => ({PENDING:['Chờ xử lý','Pending'],PROCESSING:['Đang xử lý','Processing'],PAID:['Đã thanh toán','Paid'],FAILED:['Thất bại','Failed'],CANCELLED:['Đã hủy','Cancelled'],PARTIALLY_REFUNDED:['Đã hoàn một phần','Partially refunded'],REFUNDED:['Đã hoàn tiền','Refunded'],SUCCEEDED:['Thành công','Succeeded']})[s]?.[vi?0:1]||s;
   const state = s => statusLabels[s]?.[vi?0:1] || s;
@@ -87,11 +87,27 @@
     }
     ['[data-search]','[data-from]','[data-to]'].forEach(s=>$(s).addEventListener('input',render));
     $('[data-clear]').onclick=()=>{['[data-search]','[data-from]','[data-to]'].forEach(s=>$(s).value='');render();};render();
+    let active=true,timer;
+    stopTracking=()=>{active=false;clearTimeout(timer);};
+    async function refresh(){
+      try{
+        if(!active||document.hidden||loadingMore)return;
+        const data=await api('customer/orders.php?limit=50');
+        if(!active)return;
+        const updated=new Map(items.map(o=>[String(o.order_id),o]));
+        data.items.forEach(o=>updated.set(String(o.order_id),o));
+        const next=[...updated.values()].sort((a,b)=>Number(b.order_id)-Number(a.order_id));
+        if(JSON.stringify(next)!==JSON.stringify(items)){items.splice(0,items.length,...next);render();}
+      }catch(e){if(e.status===401)stopTracking();}
+      finally{if(active)timer=setTimeout(refresh,5000);}
+    }
+    timer=setTimeout(refresh,5000);
   }
   const trackedStatuses=['SHIPPER_ASSIGNED','PICKED_UP','IN_DELIVERY','RETURNING'];
   function trackShipper(o,section){
     const hint=$('[data-location-status]',section),canvas=$('[data-route-map]',section);
     const map=window.SomiMaps?.create(canvas);mapHandles.push(map);
+    if(!map&&!canvas.textContent)canvas.textContent=t('Bản đồ chưa sẵn sàng. Trạng thái đơn vẫn được cập nhật tự động.','Map unavailable. Order status still updates automatically.');
     const stops=[{id:'pickup',label:t('Điểm lấy','Pickup'),latitude:o.pickup_latitude,longitude:o.pickup_longitude},{id:'delivery',label:t('Điểm giao','Delivery'),latitude:o.delivery_latitude,longitude:o.delivery_longitude}];
     map?.points(stops);
     let active=true,timer=null;
@@ -105,28 +121,30 @@
         if(data.status!==o.status){stopTracking();await detail();return;}
         const point=data.location;
         map?.points(point?[...stops,{...point,id:'user',label:t('Shipper','Shipper')}]:stops);
-        hint.textContent=point?t('Vị trí Shipper cập nhật lúc: ','Shipper location updated: ')+date(point.recorded_at)+(Date.now()-new Date(point.recorded_at).getTime()>120000?t(' · Vị trí đã cũ',' · Location may be outdated'):''):t('Shipper chưa chia sẻ vị trí.','The shipper has not shared a location yet.');
+        hint.textContent=point?t('Vị trí Shipper cập nhật lúc: ','Shipper location updated: ')+date(point.recorded_at)+(Date.now()-new Date(point.recorded_at).getTime()>120000?t(' · Vị trí đã cũ',' · Location may be outdated'):''):(o.status==='SEARCHING_SHIPPER'?t('Đang tìm shipper. Trạng thái tự cập nhật mỗi 5 giây.','Finding a shipper. Status updates every 5 seconds.'):trackedStatuses.includes(o.status)?t('Đã có shipper. Đang chờ vị trí GPS đầu tiên.','Shipper accepted your order. Waiting for the first GPS location.'):t('Lộ trình của đơn hàng.','Order route.'));
       }catch(e){if(active){map?.points(stops);hint.textContent=errorMessage(e);if(e.status===401||e.status===403||e.status===404)stopTracking();}}
-      finally{if(active)timer=setTimeout(poll,15000);}
+      finally{if(active)timer=setTimeout(poll,5000);}
     }
-    poll();
-    if(view==='tracking'&&map&&o.pickup_latitude!=null&&o.delivery_latitude!=null){
+    if(!['DELIVERED','RETURNED','CANCELLED'].includes(o.status))poll();
+    if(map&&o.pickup_latitude!=null&&o.delivery_latitude!=null){
       api('customer/places.php','POST',{action:'route',pickup:{latitude:o.pickup_latitude,longitude:o.pickup_longitude},delivery:{latitude:o.delivery_latitude,longitude:o.delivery_longitude}}).then(data=>{if(active&&section.isConnected)map.route(data.route);}).catch(e=>{if(active&&section.isConnected){const message=document.createElement('p');message.className='c-hint';message.textContent=errorMessage(e);section.append(message);}});
     }
   }
   async function detail(){
+    const version=++detailVersion;
     stopTracking();resetMaps();
     let id=params.get('id');if(!id&&params.get('code')){const found=(await allOrders()).find(o=>o.order_code===params.get('code'));id=found?.order_id;}
     if(!id)throw new Error(t('Mở đơn từ danh sách đơn hàng của bạn.','Open an order from your order list.'));
     const [data,payments,refunds]=await Promise.all([api('customer/orders.php?id='+encodeURIComponent(id)),api('customer/payments.php?order_id='+encodeURIComponent(id)),api('customer/refunds.php?order_id='+encodeURIComponent(id))]);
+    if(version!==detailVersion)return;
     const o=data.order,p=payments.payment,target=$('[data-order],[data-payment],[data-matching],[data-tracking]');
     const back=$('[data-back]');if(back)back.href=url('order',id);
     const canCancel=['PENDING_PAYMENT','SEARCHING_SHIPPER'].includes(o.status);
     target.innerHTML=`<section class="c-head"><div><h1>${h(o.order_code)}</h1><div class="c-head-meta">${badge(o.status)}<span>${h(date(o.created_at))}</span></div></div><div class="c-head-actions c-actions">${view!=='payment'&&o.status==='PENDING_PAYMENT'?link('payment',t('Thanh toán','Pay'),id):''}<button class="btn btn-outline-dark" data-refresh>${h(t('Tải trạng thái mới','Refresh status'))}</button></div></section><div class="row g-4 align-items-start"><div class="col-lg-7 vstack gap-4"><section class="card card-body"><div class="c-panel-head"><h2>${h(t('Lộ trình','Route'))}</h2><span class="c-chip">${h(o.distance_km)} km</span></div>${route(o)}</section><section class="card card-body"><h2>${h(t('Hành trình đơn hàng','Order timeline'))}</h2><ol class="c-timeline">${(o.status_history||[]).map(s=>`<li class="c-tl-item is-done"><span class="c-tl-dot"></span><div><strong>${h(state(s.new_status))}</strong><small>${h(date(s.created_at))}</small>${s.note?`<p>${h(s.note)}</p>`:''}</div></li>`).join('')}</ol></section><section class="card card-body"><h2>${h(t('Kiện hàng','Parcel'))}</h2><dl class="c-pkg"><div><dt>${h(t('Khối lượng','Weight'))}</dt><dd>${h(o.estimated_weight_kg)} kg</dd></div><div class="c-span-2"><dt>${h(t('Mô tả','Description'))}</dt><dd>${h(o.parcel_description||'—')}</dd></div>${o.customer_note?`<div class="c-span-2"><dt>${h(t('Ghi chú','Note'))}</dt><dd>${h(o.customer_note)}</dd></div>`:''}</dl></section></div><div class="col-lg-5 vstack gap-4"><section class="card card-body${view==='payment'?' c-dark':''}"><h2>${h(t('Chi phí','Charges'))}</h2>${fees(o)}</section><section class="card card-body" data-payment-card><h2>${h(t('Thanh toán','Payment'))}</h2>${p?`<p>${h(paymentState(p.status))} · ${h(money(p.amount_minor,p.currency_code))}</p>`:`<p>${h(t('Chưa tạo yêu cầu thanh toán.','No payment request yet.'))}</p>`}</section></div></div>`;
     const card=$('[data-payment-card]');
-    if(o.status==='PENDING_PAYMENT'&&!p&&o.currency_code==='VND')card.insertAdjacentHTML('beforeend',`<form data-pay><div class="c-tiles">${(profile.email?.endsWith('@demo.somi.invalid')?[['GATEWAY',t('Thanh toán DEMO — không thu tiền','DEMO payment — no charge')]]:[['BANK_TRANSFER',t('Chuyển khoản QR','QR bank transfer')],['CARD',t('Thẻ','Card')],['GATEWAY',t('Cổng thanh toán','Payment gateway')]]).map(([method,label],i)=>`<label class="c-tile"><input type="radio" name="method" value="${method}" ${i===0?'checked':''}><strong>${h(label)}</strong><small>${profile.email?.endsWith('@demo.somi.invalid')?'DEMO':'SePay'}</small></label>`).join('')}</div><div class="c-form-actions"><button class="btn btn-dark">${h(t('Tạo yêu cầu thanh toán','Create payment request'))}</button></div><div data-payment-error></div></form>`);
+    if(o.status==='PENDING_PAYMENT'&&!p&&o.currency_code==='VND')card.insertAdjacentHTML('beforeend',`<form data-pay><div class="c-form-actions"><button class="btn btn-dark">${h(profile.email?.endsWith('@demo.somi.invalid')?t('Thanh toán DEMO — không thu tiền','DEMO payment — no charge'):t('Thanh toán qua SePay','Pay with SePay'))}</button></div><div data-payment-error role="alert"></div></form>`);
     if(o.status==='PENDING_PAYMENT'&&o.currency_code==='USD')card.insertAdjacentHTML('beforeend',`<p class="c-panel-sub">${h(t('Thanh toán USD tạm khóa. SePay chỉ hỗ trợ VND.','USD payments are temporarily disabled. SePay only supports VND.'))}</p>`);
-    if(p?.checkout_url&&o.status==='PENDING_PAYMENT'&&['PENDING','PROCESSING'].includes(p.status))card.insertAdjacentHTML('beforeend',`<a class="btn btn-dark" href="${h(p.checkout_url)}">${h(t('Mở trang thanh toán','Open checkout'))}</a>`);
+    if(p?.checkout_url&&o.status==='PENDING_PAYMENT'&&['PENDING','PROCESSING'].includes(p.status))card.insertAdjacentHTML('beforeend',`<a class="btn btn-dark" href="public/api/customer/checkout.php?order_id=${encodeURIComponent(id)}">${h(t('Mở trang thanh toán','Open checkout'))}</a>`);
     const right=card.parentElement;
     if(refunds.items.length)right.insertAdjacentHTML('beforeend',`<section class="card card-body"><h2>${h(t('Hoàn tiền','Refunds'))}</h2>${refunds.items.map(r=>`<p>${h(paymentState(r.status))} · ${h(money(r.refund_amount_minor,r.currency_code))}</p>`).join('')}</section>`);
     if(canCancel)right.insertAdjacentHTML('beforeend',`<section class="card card-body"><h2>${h(t('Hủy đơn','Cancel order'))}</h2><p class="c-panel-sub">${h(t('Phí hủy theo báo giá','Cancellation fee from your quote'))}: ${h(money(o.pricing_snapshot?.cancellation_fees?.[o.status]||'0',o.currency_code))}</p><form data-cancel><div class="c-field"><label class="form-label" for="cancel-reason">${h(t('Lý do hủy','Reason'))}</label><textarea id="cancel-reason" class="form-control" name="reason" required maxlength="500"></textarea></div><div class="c-form-actions"><button class="btn btn-outline-dark">${h(t('Hủy đơn','Cancel order'))}</button></div><div data-cancel-error></div></form></section>`);
@@ -134,7 +152,31 @@
     if(o.status==='RETURNING')right.insertAdjacentHTML('afterbegin',`<section class="card card-body"><h2>${h(t('Nhận lại hàng hoàn','Receive returned parcel'))}</h2><p>${h(t('Chỉ xác nhận khi bạn đã nhận và kiểm tra hàng Shipper trả lại.','Confirm only after receiving and checking the returned parcel.'))}</p><form data-confirm-return><label class="form-check"><input class="form-check-input" type="checkbox" required name="received"> ${h(t('Tôi đã nhận lại hàng','I have received the parcel back'))}</label><button class="btn btn-dark mt-3">${h(t('Xác nhận nhận hàng hoàn','Confirm return received'))}</button><div data-return-message role="status"></div></form></section>`);
     const returnForm=$('[data-confirm-return]');if(returnForm)returnForm.onsubmit=async e=>{e.preventDefault();if(!returnForm.reportValidity())return;const button=$('button',returnForm);if(button.disabled)return;button.disabled=true;try{await api('customer/confirm-return.php','POST',{order_id:String(id)});await detail();}catch(error){report(error,$('[data-return-message]',returnForm));button.disabled=false;}};
     $('[data-refresh]').onclick=()=>run(detail);
-    const pay=$('[data-pay]');if(pay)pay.onsubmit=async e=>{e.preventDefault();const button=$('button',pay);if(button.disabled)return;button.disabled=true;pendingKey??=crypto.randomUUID();try{await api('customer/payments.php?order_id='+id,'POST',{method:pay.elements.method.value},pendingKey);await detail();}catch(error){report(error,$('[data-payment-error]',pay));button.disabled=false;}};
+    async function openCheckout() {
+      let payment=p;
+      if (!payment) {
+        pendingKey??=crypto.randomUUID();
+        try { payment=(await api('customer/payments.php?order_id='+encodeURIComponent(id),'POST',{method:'GATEWAY'},pendingKey)).payment; }
+        catch(error) {
+          if(error.code!=='PAYMENT_ALREADY_EXISTS')throw error;
+          payment=(await api('customer/payments.php?order_id='+encodeURIComponent(id))).payment;
+        }
+      }
+      if(payment?.checkout_url&&['PENDING','PROCESSING'].includes(payment.status)) {
+        // Use the local authenticated signing endpoint; SePay return URLs carry no checkout flag.
+        location.assign('public/api/customer/checkout.php?order_id='+encodeURIComponent(id));
+      } else await detail();
+    }
+    const pay=$('[data-pay]');if(pay)pay.onsubmit=async e=>{e.preventDefault();const button=$('button',pay);if(button.disabled)return;button.disabled=true;try{await openCheckout();}catch(error){report(error,$('[data-payment-error]',pay));button.disabled=false;}};
+    if(view==='payment'&&params.get('checkout')==='1') {
+      params.delete('checkout');
+      const current=new URL(location.href);current.searchParams.delete('checkout');history.replaceState(null,'',current);
+      if(o.status==='PENDING_PAYMENT'&&o.currency_code==='VND'&&(!p||['PENDING','PROCESSING'].includes(p.status))) {
+        const button=pay?.querySelector('button');if(button)button.disabled=true;
+        try { await openCheckout(); return; }
+        catch(error) { report(error,pay?.querySelector('[data-payment-error]')||card);if(button)button.disabled=false; }
+      }
+    }
     const cancel=$('[data-cancel]');if(cancel)cancel.onsubmit=async e=>{e.preventDefault();const button=$('button',cancel);if(button.disabled)return;button.disabled=true;try{await api('customer/cancel-order.php?id='+id,'POST',{reason:cancel.elements.reason.value});await detail();}catch(error){report(error,$('[data-cancel-error]',cancel));button.disabled=false;}};
     if(view==='payment'){
       const left=$('.col-lg-7',target),summary=$('.col-lg-5 .c-dark',target);left.replaceChildren(card);
@@ -145,10 +187,13 @@
       panel.innerHTML=`${o.status==='SEARCHING_SHIPPER'?'<div class="c-radar" aria-hidden="true"><i></i><i></i><i></i><span>↗</span></div>':''}<h1>${h(o.status==='SEARCHING_SHIPPER'?t('Đang tìm shipper gần bạn','Finding a shipper near you'):state(o.status))}</h1><p>${h(o.order_code)}</p><div class="c-actions">${link('order',t('Xem chi tiết đơn','View order details'),id)}</div>`;
       $('.c-actions',panel).append($('[data-refresh]',target));const routeCard=$('.col-lg-7 .card',target);if(routeCard)panel.append(routeCard);const cancelForm=$('[data-cancel]',target);if(cancelForm)panel.append(cancelForm.closest('section'));target.replaceChildren(panel);
     }
-    if(['order','tracking'].includes(view)&&trackedStatuses.includes(o.status)){
+    if(['order','tracking','matching','payment'].includes(view)&&!['DELIVERED','RETURNED','CANCELLED'].includes(o.status)){
       const section=document.createElement('section');section.className='card card-body';
-      section.innerHTML='<h2>'+h(t('Vị trí Shipper','Shipper location'))+'</h2><div class="somi-leaflet-map" data-route-map></div><p class="c-hint" role="status" data-location-status>'+h(t('Đang tải vị trí…','Loading location…'))+'</p>';
-      $('.col-lg-7',target).prepend(section);trackShipper(o,section);
+      const milestones=[['SEARCHING_SHIPPER',t('Tìm shipper','Matching')],['SHIPPER_ASSIGNED',t('Đã nhận đơn','Accepted')],['PICKED_UP',t('Đã lấy hàng','Picked up')],['IN_DELIVERY',t('Đang giao','In transit')],['DELIVERED',t('Đã giao','Delivered')]];
+      const current=milestones.findIndex(([status])=>status===o.status);
+      section.classList.add('c-live-tracking');
+      section.innerHTML='<div class="c-live-heading"><h2>'+h(t('Theo dõi giao hàng','Live delivery tracking'))+'</h2><span class="c-chip">'+h(state(o.status))+'</span></div><ol class="c-live-progress">'+milestones.map(([,label],i)=>'<li class="'+(i<current?'is-done':i===current?'is-current':'')+'"><span>'+(i<current?'✓':i+1)+'</span>'+h(label)+'</li>').join('')+'</ol><div class="somi-leaflet-map" data-route-map></div><p class="c-hint" role="status" data-location-status>'+h(t('Đang tải vị trí…','Loading location…'))+'</p>';
+      ($('.col-lg-7',target)||target).prepend(section);trackShipper(o,section);
     }
   }
 
@@ -157,13 +202,28 @@
     const [addressData,categoryData]=await Promise.all([api('customer/addresses.php'),api('customer/parcel-categories.php')]);
     const addresses=addressData.items,categories=categoryData.items.filter(c=>c.restriction_type==='ALLOWED');
     if(!categories.length){$('[data-create-blocked]').hidden=false;$('[data-create-blocked]').innerHTML=empty(t('Chưa có loại hàng được phép','No parcel categories available'),t('Vui lòng liên hệ hỗ trợ để được mở danh mục hàng.','Please contact support to enable parcel categories.'));$('[data-create-form-wrap]').hidden=true;return;}
-    let step=1,quote=null,key=null,revision=0,busy=false;
+    let step=1,quote=null,key=null,revision=0,busy=false,restoring=false;
+    let routePicker;
+    const draftKey='somi-create-draft:'+String(profile.user_id||profile.email||'current');
+    let completed=false;
+    function saveDraft(){
+      if(completed||restoring||!routePicker)return;
+      const fields={};
+      for(const control of form.elements){
+        if(!control.name||['file','password','submit','button'].includes(control.type))continue;
+        if(control.type==='radio'){if(control.checked)fields[control.name]=control.value;}
+        else fields[control.name]=control.type==='checkbox'?control.checked:control.value;
+      }
+      try{sessionStorage.setItem(draftKey,JSON.stringify({fields,step,currency,quote,key,route:routePicker.snapshot(),savedAt:Date.now()}));}catch{}
+    }
+    window.addEventListener('pagehide',saveDraft);
+    document.addEventListener('somi:before-preference-change',saveDraft);
     const error=document.createElement('div');error.dataset.createError='';error.setAttribute('role','alert');form.append(error);
     const field=name=>form.elements.namedItem(name);
     function quoteView(){sidebar.innerHTML=quote?`<h2>${h(t('Báo giá của bạn','Your quote'))}</h2>${fees({pricing_snapshot:quote.snapshot,currency_code:quote.snapshot.currency_code,total_charge_minor:quote.snapshot.components.total_charge_minor})}<p class="c-quote-note">${h(quote.snapshot.context.distance_km)} km · ${h(quote.snapshot.parcel.weight_kg)} kg</p><p class="c-quote-note">${h(t('Hiệu lực đến','Valid until'))}: ${h(date(quote.expires_at))}</p>`:`<h2>${h(t('Phí giao hàng','Delivery quote'))}</h2><p class="c-quote-note">${h(t('Hoàn tất thông tin để nhận báo giá trước khi xác nhận.','Complete the details to receive a quote before confirming.'))}</p>`;}
-    function invalidate(){revision++;quote=null;key=null;quoteView();if(step===4)show(3);}
+    function invalidate(){if(restoring)return;revision++;quote=null;key=null;quoteView();if(step===4)show(3);saveDraft();}
     function show(n){step=n;$('[data-create-map-panel]').hidden=n!==1;sidebar.hidden=n===1;$$('[data-step]',form).forEach(el=>el.hidden=Number(el.dataset.step)!==step);$$('[data-stepper] li').forEach((el,i)=>{el.classList.toggle('is-current',i+1===step);el.classList.toggle('is-done',i+1<step);});$('[data-prev]',form).hidden=step===1;$('[data-next]',form).textContent=step===4?t('Xác nhận tạo đơn','Confirm order'):step===3?t('Lấy báo giá','Get quote'):t('Tiếp tục','Continue');if(step===4)$('[data-next]',form).dataset.confirm='';else delete $('[data-next]',form).dataset.confirm;}
-    const routePicker=window.SomiCreateRoute.attach({root,form,addresses,profile,api,t,onChange:invalidate});
+    routePicker=window.SomiCreateRoute.attach({root,form,addresses,profile,api,t,onChange:invalidate});
     mapHandles.push(routePicker);
     $('[data-types]').innerHTML=categories.map((c,i)=>`<label class="c-tile"><input type="radio" name="type" value="${h(c.category_id)}" ${i===0?'checked':''}><strong>${h(vi?c.name_vi:c.name_en)}</strong></label>`).join('');
     field('pkg-weight').min='0.001';field('pkg-weight').step='0.001';field('pkg-weight').max='30';$('[data-weight-hint]').textContent=t('Tổng khối lượng tối đa 30 kg.','Maximum combined weight: 30 kg.');
@@ -179,12 +239,31 @@
       if(!quote||Date.parse(quote.expires_at)<=Date.now()){invalidate();throw new Error(t('Báo giá đã hết hạn. Vui lòng lấy báo giá mới.','Quote expired. Please request a new quote.'));}
       if(!field('agree').checked)throw new Error(t('Vui lòng xác nhận điều kiện kiện hàng.','Please confirm the parcel declaration.'));
       if(!await routePicker.confirmPickup())return;
-      setBusy(true);try{const result=await api('customer/orders.php','POST',{quote_id:quote.quote_id},key);location.href=url('payment',result.order.order_id);}catch(err){if(err.code==='QUOTE_EXPIRED')invalidate();throw err;}finally{setBusy(false);}
+      setBusy(true);try{const result=await api('customer/orders.php','POST',{quote_id:quote.quote_id},key);completed=true;try{sessionStorage.removeItem(draftKey);}catch{}location.href=url('payment',result.order.order_id);}catch(err){if(err.code==='QUOTE_EXPIRED')invalidate();throw err;}finally{setBusy(false);}
     }catch(err){report(err,error);}};
     // Agreement does not affect the quote or the creation idempotency key.
     field('agree').addEventListener('input',e=>e.stopPropagation());field('agree').addEventListener('change',e=>e.stopPropagation());
     root.addEventListener('currencychange',invalidate);
-    quoteView();show(1);
+    let saved=null;
+    try{saved=JSON.parse(sessionStorage.getItem(draftKey)||'null');}catch{}
+    if(saved&&Date.now()-saved.savedAt<2*60*60*1000&&saved.fields){
+      restoring=true;
+      routePicker.restore(saved.route);
+      for(const control of form.elements){
+        if(!control.name||!Object.hasOwn(saved.fields,control.name)||['file','password','submit','button'].includes(control.type))continue;
+        if(control.type==='radio')control.checked=control.value===saved.fields[control.name];
+        else if(control.type==='checkbox')control.checked=Boolean(saved.fields[control.name]);
+        else control.value=saved.fields[control.name];
+      }
+      quote=saved.currency===currency&&Date.parse(saved.quote?.expires_at)>Date.now()?saved.quote:null;
+      key=quote?saved.key:null;
+      step=Math.max(1,Math.min(4,Number(saved.step)||1));if(step===4&&!quote)step=3;
+      if(step===4)$('[data-summary]').innerHTML=route({pickup_address:field('pickup-detail').value,delivery_address:field('delivery-detail').value,sender_name:field('pickup-name').value,sender_phone:field('pickup-phone').value,receiver_name:field('delivery-name').value,receiver_phone:field('delivery-phone').value});
+      restoring=false;
+    }
+    form.addEventListener('input',saveDraft);form.addEventListener('change',saveDraft);
+    quoteView();show(step);
+    form.addEventListener('submit',()=>queueMicrotask(saveDraft));
   }
   async function account(){
     $('[data-profile]').innerHTML=`<span class="c-avatar">${h(profile.full_name.split(/\s+/).slice(-2).map(s=>s[0]).join(''))}</span><h2>${h(profile.full_name)}</h2><p class="c-panel-sub">${h(profile.email)}</p><span class="c-chip">${h(t('Tài khoản đang hoạt động','Active account'))}</span>`;
@@ -235,7 +314,7 @@
   }
   async function run(fn){root.setAttribute('aria-busy','true');try{await fn();}catch(err){report(err);}finally{root.setAttribute('aria-busy','false');root.dataset.loaded='true';}}
   $$('form').forEach(form=>form.addEventListener('submit',e=>e.preventDefault()));
-  document.querySelectorAll('[data-set-lang]').forEach(button=>button.addEventListener('click',()=>{try{localStorage.setItem('somi-language',button.dataset.setLang);}catch{}location.reload();}));
+  document.querySelectorAll('[data-set-lang]').forEach(button=>button.addEventListener('click',()=>{document.dispatchEvent(new Event('somi:before-preference-change'));try{localStorage.setItem('somi-language',button.dataset.setLang);}catch{}location.reload();}));
   document.querySelectorAll('[data-set-currency]').forEach(button=>button.addEventListener('click',()=>{
     const next=button.dataset.setCurrency;if(!profile||button.disabled||!['VND','USD'].includes(next)||next===currency)return;
     currency=next;try{localStorage.setItem('somi-currency',currency);}catch{}
@@ -245,5 +324,11 @@
   if(!window.bootstrap?.Dropdown)document.querySelectorAll('[data-bs-toggle=dropdown]').forEach(button=>button.addEventListener('click',()=>{const menu=button.parentElement.querySelector('.dropdown-menu');if(menu){const open=menu.classList.toggle('show');button.setAttribute('aria-expanded',String(open));}}));
   document.querySelectorAll('[data-copy-vi][data-copy-en]').forEach(el=>el.textContent=vi?el.dataset.copyVi:el.dataset.copyEn);
   const flag=document.querySelector('[data-locale-flag]'),selectedFlag=document.querySelector(`[data-set-lang="${vi?'vi':'en'}"] .language-flag-svg`);if(flag&&selectedFlag)flag.replaceChildren(selectedFlag.cloneNode(true));
-  run(async()=>{profile=embeddedProfile()||(await api('account/profile.php')).profile;currency=savedCurrency();header();if(view==='dashboard')await dashboard();else if(view==='orders')await orders();else if(view==='create')await create();else if(view==='account')await account();else if(view==='addresses')await addresses();else await detail();});
+  run(async()=>{profile=embeddedProfile()||(await api('account/profile.php')).profile;currency=savedCurrency();header();if(view==='dashboard'){
+      await dashboard();
+      let active=true,timer=null;
+      stopTracking=()=>{active=false;clearTimeout(timer);};
+      const refresh=async()=>{try{if(active&&!document.hidden)await dashboard();}catch(e){if(e.status===401)stopTracking();}finally{if(active)timer=setTimeout(refresh,10000);}};
+      timer=setTimeout(refresh,10000);
+    }else if(view==='orders')await orders();else if(view==='create')await create();else if(view==='account')await account();else if(view==='addresses')await addresses();else await detail();});
 })();

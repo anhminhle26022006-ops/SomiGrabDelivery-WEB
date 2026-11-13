@@ -2,7 +2,7 @@
 declare(strict_types=1);
 require_once __DIR__.'/_kernel.php';
 require_once __DIR__.'/../../app/Services/PrivateStorageService.php';
-$permission=($_SESSION['somi_role']??'')==='ADMIN'?'storage.read_support':'person3.use';
+$permission=strtoupper((string)($_SESSION['somi_role']??''))==='ADMIN'?'storage.read_support':'person3.use';
 if(($_SERVER['REQUEST_METHOD']??'')==='GET'&&(isset($_GET['signature'])||isset($_GET['content']))){
  somi_run_api(['GET'],['CUSTOMER','SHIPPER','ADMIN'],$permission,true,fn(PDO $db,int $user,string $role)=>[200,isset($_GET['signature'])?(new PrivateStorageService($db))->download(DeliveryInput::id($_GET['file_id']??null),$user,$role,$_GET):(new PrivateStorageService($db))->content(DeliveryInput::id($_GET['file_id']??null),$user,$role)],false,function(array $file):void {
     header('Content-Type: '.$file['mime_type']);header('X-Content-Type-Options: nosniff');header('Cache-Control: private, no-store');header('Content-Disposition: '.(($_GET['disposition']??'')==='inline'&&in_array($file['mime_type'],['image/jpeg','image/png','image/webp'],true)?'inline':'attachment').'; filename="download"; filename*=UTF-8\'\''.rawurlencode($file['original_name']));header('Content-Length: '.(isset($file['bytes'])?strlen($file['bytes']):filesize($file['path'])));if(isset($file['bytes']))echo $file['bytes'];else readfile($file['path']);

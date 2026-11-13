@@ -22,8 +22,6 @@ final class AdminMediaService
             AccessControl::requirePermission($this->db,$admin,'ADMIN','order.read_all');
             AccessControl::requirePermission($this->db,$admin,'ADMIN','support.manage_all');
             $id=DeliveryInput::id($in['order_id']);
-            $q=$this->db->prepare('SELECT 1 FROM support_tickets WHERE order_id=? LIMIT 1');$q->execute([$id]);
-            if(!$q->fetchColumn())throw new DeliveryApiError(403,'RELATED_TICKET_REQUIRED','Open a related support ticket before viewing delivery evidence.');
             $sql="SELECT f.file_id,f.original_name,f.mime_type,f.byte_size,e.evidence_type AS kind,e.uploaded_at AS created_at
                 FROM private_files f JOIN delivery_evidence e ON e.object_key=f.object_key AND e.uploaded_by=f.owner_id
                 JOIN deliveries d ON d.delivery_id=e.delivery_id

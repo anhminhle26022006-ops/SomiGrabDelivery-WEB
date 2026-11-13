@@ -7,6 +7,7 @@ require_once __DIR__.'/../app/Services/CustomerOrderService.php';
 require_once __DIR__.'/../app/Services/Person3Worker.php';
 require_once __DIR__.'/../app/Services/PrivateStorageService.php';
 require_once __DIR__.'/../app/Services/ShipperBankService.php';
+require_once __DIR__.'/../app/Services/AdminFinanceService.php';
 require_once __DIR__.'/../app/Services/AdminService.php';
 require_once __DIR__.'/../app/Services/AdminPolicyService.php';
 require_once __DIR__.'/../app/Services/Person1Worker.php';
@@ -31,7 +32,7 @@ try{
     $sql=preg_replace('/^BEGIN;\s*|^COMMIT;\s*|^CREATE SCHEMA[^;]+;\s*|^SET search_path[^;]+;\s*/m','',$sql);
     $sql=preg_replace('/CREATE FUNCTION erase_identity_document_on_account_close\(\).*?(?=CREATE TABLE shipper_score_policies)/s','',$sql);
     $db->exec(str_replace('CREATE TABLE ','CREATE TEMP TABLE ',$sql));
-    foreach(['20261105_customer_orders','20261105_approved_pricing','20261105_distance_weight_pricing','20261106_person1_backend','20261111_person3','20261111_person3_complete','20261111_person3_supabase','20261112_shipper_policy_workflows'] as $migration){
+    foreach(['20261105_customer_orders','20261105_approved_pricing','20261105_distance_weight_pricing','20261106_person1_backend','20261111_person3','20261111_person3_complete','20261111_person3_supabase','20261112_shipper_policy_workflows','20261113_manual_escrow','20261113_admin_finance'] as $migration){
         $sql=file_get_contents(__DIR__.'/../database/migrations/'.$migration.'.sql');$sql=preg_replace('/^BEGIN;\s*|^COMMIT;\s*|^SET LOCAL search_path[^;]+;\s*/m','',$sql);$db->exec(str_replace('CREATE TABLE ','CREATE TEMP TABLE ',$sql));
     }
     check(value($db,"SELECT current_setting('search_path')")==='pg_temp, pg_catalog','isolated schema');
@@ -183,6 +184,9 @@ try{
     check(tx($db,fn()=>$bankSvc->confirm(4,['request_id'=>$change['request_id'],'code'=>$otp]))['bank_account_id']===$confirmed['bank_account_id'],'OTP confirmation replay no new account');
     check((int)value($db,'SELECT count(*) FROM shipper_bank_accounts WHERE shipper_id=4 AND replaced_at IS NULL')===1,'exactly one current bank account');
     check($bankSvc->current(4)['bank_account']['account_number_masked']==='••••6543','own bank API masks number');
+    check($bankSvc->current(4)['bank_account']['account_number']===$bankInput['account_number'],'owner can view full bank number to edit');
+    check($bankSvc->current(4)['bank_account']['review_status']==='PENDING','changed bank waits for admin review');
+    tx($db,fn()=>(new AdminFinanceService($db))->review(1,['role'=>'SHIPPER','bank_account_id'=>$confirmed['bank_account_id'],'decision'=>'APPROVED','note'=>'Fixture account verified']));
     check(value($db,'SELECT encrypted_payload FROM bank_account_changes WHERE request_id=?',[$change['request_id']])===null,'consumed bank change payload purged');
     $db->exec("UPDATE bank_account_changes SET created_at=now()-interval '2 minutes'");$expiredInput=array_replace($bankInput,['client_key'=>'bank-change-expired']);$expiredRequest=tx($db,fn()=>$bankSvc->request(4,$expiredInput));
     $db->prepare("UPDATE bank_account_changes SET expires_at=now()-interval '1 second' WHERE request_id=?")->execute([$expiredRequest['request_id']]);

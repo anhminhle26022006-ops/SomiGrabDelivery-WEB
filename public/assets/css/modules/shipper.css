@@ -108,3 +108,67 @@ body[data-page="shipper"] .settlementnote span{color:var(--muted);line-height:1.
  body[data-page="shipper"] .top-actions { gap:8px; }
  body[data-page="shipper"] .top-actions > [data-workspace-switch] { max-width:88px; padding:5px 10px; border-radius:14px; font-size:11px; line-height:1.2; white-space:normal; }
 }
+/* Active delivery: stable map alongside operational steps and a separate conversation. */
+body[data-page="shipper"] .delivery-workspace{display:grid;grid-template-columns:minmax(0,1fr) minmax(340px,.9fr);gap:20px;align-items:start;margin-bottom:22px}
+body[data-page="shipper"] .delivery-workspace>.card{min-width:0;margin:0;padding:24px}
+body[data-page="shipper"] .delivery-map-panel[hidden]{display:none}
+body[data-page="shipper"] .delivery-live-map{height:380px;width:100%;border-radius:16px;background:#edf2f7;z-index:0;overflow:hidden}
+body[data-page="shipper"] .delivery-map-panel .sectiontitle{gap:12px;align-items:start}
+body[data-page="shipper"] .delivery-map-panel p{font-size:12px;line-height:1.65;color:#64748b;margin:12px 0}
+body[data-page="shipper"] .delivery-map-panel [data-gps-status][data-state="live"]{color:#07864b}
+body[data-page="shipper"] .delivery-map-panel [data-gps-status][data-state="warning"]{color:#a15c0a}
+body[data-page="shipper"] .delivery-map-legend{display:flex;gap:16px;flex-wrap:wrap}
+body[data-page="shipper"] .delivery-map-legend span:nth-child(1){color:#14284b}
+body[data-page="shipper"] .delivery-map-legend span:nth-child(2){color:#237657}
+body[data-page="shipper"] .delivery-map-legend span:nth-child(3){color:#2877e3}
+body[data-page="shipper"] .delivery-map-panel>a{display:block;text-align:center;text-decoration:none;padding:12px;border-radius:12px}
+body[data-page="shipper"] #activeDelivery .progress{margin:24px 0;height:auto;background:transparent}
+body[data-page="shipper"] #activeDelivery .sectiontitle h2{font-size:17px;overflow-wrap:anywhere}
+body[data-page="shipper"] [data-order-chat]{margin-top:22px;overflow:hidden;scroll-margin-top:90px}
+body[data-page="shipper"] [data-order-chat-content] .support-messages{max-height:360px}
+@media(max-width:1000px){body[data-page="shipper"] .delivery-workspace{grid-template-columns:1fr}body[data-page="shipper"] .delivery-live-map{height:320px}}
+@media(max-width:480px){body[data-page="shipper"] .delivery-workspace>.card{padding:18px}body[data-page="shipper"] .delivery-live-map{height:290px}}
+/* Order chat controls outside the support workspace panel. */
+body[data-page="shipper"] [data-order-chat-content]>.support-section-head{padding:22px 24px;margin:0;border-bottom:1px solid #e5eaf1}
+body[data-page="shipper"] [data-order-chat-content] .support-chat-layout{margin:0;border:0;border-radius:0}
+body[data-page="shipper"] [data-order-chat-content] .support-thread-head{padding:16px 24px}
+body[data-page="shipper"] [data-order-chat-content] .support-thread-head .support-refresh{margin-left:auto;border:1px solid #dbe4f1;background:#fff;border-radius:10px;padding:8px 12px;color:#28517b;font:inherit;font-size:12px}
+body[data-page="shipper"] [data-order-chat-content] .support-messages{height:240px;max-height:300px;min-height:180px}
+body[data-page="shipper"] [data-order-chat-content] .support-composer{padding:18px 24px;border-top:1px solid #e5eaf1;background:#fff}
+body[data-page="shipper"] [data-order-chat-content] .support-composer textarea{display:block;width:100%;min-height:76px;resize:vertical;border:1px solid #dbe4f1;border-radius:12px;padding:12px 14px;font:inherit;font-size:13px;color:#172b4d;outline:none}
+body[data-page="shipper"] [data-order-chat-content] .support-composer textarea:focus{border-color:#2877e3;box-shadow:0 0 0 3px #2877e31a}
+body[data-page="shipper"] [data-order-chat-content] .support-primary{border:0;border-radius:11px;background:#2877e3;color:#fff;font:inherit;font-size:12px;font-weight:700;padding:11px 18px}
+body[data-page="shipper"] [data-order-chat-content] .support-primary:disabled{opacity:.55;cursor:wait}
+@media(max-width:480px){body[data-page="shipper"] [data-order-chat-content]>.support-section-head,body[data-page="shipper"] [data-order-chat-content] .support-composer,body[data-page="shipper"] [data-order-chat-content] .support-thread-head{padding:16px}}
+/* Compact notification center; does not replace or obscure the current workspace. */
+body[data-page="shipper"] .shipper-notification-popup{position:fixed;z-index:100;width:420px;max-width:calc(100vw - 24px);background:#fff;color:#172b4d;border:1px solid #e0e7f0;border-radius:20px;box-shadow:0 18px 60px #13284926;overflow:hidden;text-align:left;outline:none}
+body[data-page="shipper"] .shipper-notification-popup[hidden]{display:none!important}
+.notification-popup-head{display:flex;align-items:start;justify-content:space-between;gap:16px;padding:20px 20px 14px}.notification-popup-head h2{font-size:19px;margin:0 0 5px;font-weight:750}.notification-popup-head p{font-size:12px;color:#74849b;margin:0}.notification-popup-head>button{border:0;background:#f1f5f9;border-radius:50%;width:30px;height:30px;color:#58708c}
+.notification-popup-toolbar{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:0 16px 12px;border-bottom:1px solid #edf1f7}.notification-popup-toolbar>div{display:flex;gap:5px}.notification-popup-toolbar button,.shipper-notification-popup footer button{border:0;background:transparent;color:#3377dc;font:inherit;font-size:12px;padding:8px 10px;border-radius:9px}.notification-popup-toolbar [aria-pressed="true"]{background:#edf4ff;color:#1b63ce;font-weight:700}.shipper-notification-popup button:disabled{opacity:.45;cursor:default}
+.notification-popup-list{max-height:min(420px,50vh);overflow:auto;overscroll-behavior:contain}.notification-popup-item{display:flex;gap:12px;padding:16px 20px;border-bottom:1px solid #edf1f7}.notification-popup-item.is-unread{background:#f3f7ff}.notification-item-icon{display:grid;place-items:center;flex:0 0 32px;height:32px;border-radius:10px;background:#e7efff;color:#2774e8}.notification-popup-item>div{min-width:0;flex:1}.notification-popup-item strong{display:block;font-size:13px;line-height:1.5;overflow-wrap:anywhere}.notification-popup-item p{font-size:12px;line-height:1.65;color:#65758a;margin:5px 0;overflow-wrap:anywhere}.notification-popup-item time{font-size:11px;color:#94a0b1}.notification-popup-item button{display:block;border:0;background:transparent;color:#2877e3;padding:7px 0 0;font:inherit;font-size:11px}.notification-popup-empty{padding:38px 24px;text-align:center}.notification-popup-empty>span{display:block;font-size:32px;color:#92a8c6;margin-bottom:12px}.notification-popup-empty strong{font-size:14px}.notification-popup-empty p{font-size:12px;color:#8090a5;line-height:1.6;margin:8px 0 0}.shipper-notification-popup>footer{display:flex;justify-content:space-between;padding:7px 12px;border-top:1px solid #edf1f7}.shipper-notification-popup>[data-notification-status]{margin:0;padding:10px 20px;background:#fffbeb;font-size:12px;line-height:1.6;color:#96631a}.notification-overview-item{display:block;text-align:left;border:0;background:transparent;padding:10px 0;width:100%;color:inherit}.notification-overview-item strong{display:block;font-size:13px}.notification-overview-item span{display:block;font-size:12px;line-height:1.6;color:#718096;margin-top:4px}
+@media(max-width:480px){body[data-page="shipper"] .shipper-notification-popup{right:12px!important;border-radius:16px}.notification-popup-toolbar{padding-inline:10px}.notification-popup-item{padding:14px 16px}}
+body[data-page="shipper"] .shipper-menu-toggle{display:none;border:1px solid #dfe6f0;background:#fff;color:#14284b;border-radius:12px;width:40px;height:40px;align-items:center;justify-content:center;flex-shrink:0}
+@media(max-width:760px){body[data-page="shipper"] .topbar{flex-wrap:nowrap;gap:10px}body[data-page="shipper"] .shipper-menu-toggle{display:inline-flex}body[data-page="shipper"] .top-actions{gap:8px}body[data-page="shipper"] #shipperNav{display:none;position:absolute;left:12px;right:12px;top:calc(100% + 8px);flex:none;margin:0;padding:8px;background:#fff;border:1px solid #dfe6f0;border-radius:16px;box-shadow:0 12px 36px #14284b20;z-index:50}body[data-page="shipper"] #shipperNav.is-open{display:flex;flex-direction:column;align-items:stretch}body[data-page="shipper"] #shipperNav a{padding:13px 16px;border-radius:10px;font-size:14px}body[data-page="shipper"] .brand{font-size:23px}body[data-page="shipper"] .language-trigger{padding:8px 10px;gap:6px}}
+@media(max-width:360px){body[data-page="shipper"] .topbar{padding-inline:8px;gap:6px}body[data-page="shipper"] .top-actions{gap:5px}body[data-page="shipper"] .shipper-menu-toggle{width:34px;height:36px}}
+body[data-page="shipper"] [data-order-chat-content] .support-attachment{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:7px;overflow:hidden;border:1px solid #dbe4f1;border-radius:10px;padding:10px 14px;min-height:42px;font-size:12px;background:#f8fafc;cursor:pointer}
+body[data-page="shipper"] [data-order-chat-content] .support-attachment input{width:100%;height:100%;max-width:100%}
+body[data-page="shipper"] [data-order-chat-content] .support-compose-actions{margin-top:12px;gap:12px}
+body[data-page="shipper"] [data-order-chat-content] .support-form-feedback{font-size:12px;line-height:1.6;margin:10px 0 0;color:#9b4326}
+body[data-page="shipper"] [data-order-chat-content] .support-selected-files{display:block;font-size:12px;color:#64748b;overflow-wrap:anywhere;margin-top:8px}
+body[data-page="shipper"] .delivery-request-form{display:grid;gap:16px;margin-top:20px;padding:20px;background:#f7f9fc;border:1px solid #dfe7f1;border-radius:16px}
+body[data-page="shipper"] .delivery-request-form.hidden{display:none!important}
+body[data-page="shipper"] .delivery-form-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+body[data-page="shipper"] .delivery-form-head h3{margin:0;font-size:16px;font-weight:700}
+body[data-page="shipper"] .delivery-form-head button{border:0;border-radius:50%;width:30px;height:30px;background:#e9eef5;color:#526783}
+body[data-page="shipper"] .delivery-request-form>p{font-size:13px;line-height:1.7;color:#64748b;margin:0}
+body[data-page="shipper"] .delivery-request-form>label{display:grid;gap:8px;font-size:13px;font-weight:600;color:#263d58;margin:0}
+body[data-page="shipper"] .delivery-request-form select,body[data-page="shipper"] .delivery-request-form textarea{width:100%;border:1px solid #d4dfed;border-radius:10px;padding:12px;background:#fff;font:inherit;color:#263d58;box-sizing:border-box}
+body[data-page="shipper"] .delivery-request-form textarea{min-height:110px;resize:vertical}
+body[data-page="shipper"] .delivery-request-form>label:has([type=checkbox]){display:flex;align-items:flex-start;font-size:12px;font-weight:400;line-height:1.6}
+body[data-page="shipper"] .delivery-request-form [type=checkbox]{flex:0 0 17px;width:17px;height:17px;margin:2px 0 0;accent-color:#2877e3}
+body[data-page="shipper"] .delivery-request-form [type=submit]{justify-self:start;min-height:42px;padding:11px 20px}
+@media(max-width:480px){body[data-page="shipper"] .delivery-request-form{padding:16px}body[data-page="shipper"] [data-order-chat-content] .support-compose-actions>.support-primary{min-height:42px;padding:11px 16px}}
+body[data-page="shipper"] [data-order-chat-content] .support-messages .support-empty{min-height:180px}
+body[data-page="shipper"] [data-order-chat-content] .support-message{max-width:85%;flex-shrink:0}
+body[data-page="shipper"] [data-order-chat-content] .support-message p{font-size:13px}
+body[data-page="shipper"] [data-order-chat-content] .support-message.is-mine{background:#eaf1ff;align-self:flex-end}

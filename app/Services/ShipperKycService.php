@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__ . '/ShipperProfileService.php';
+require_once __DIR__ . '/ShipperInput.php';
 require_once __DIR__ . '/IdentityDocumentVault.php';
 require_once __DIR__ . '/PrivateStorageService.php';
 
@@ -10,7 +11,7 @@ require_once __DIR__ . '/PrivateStorageService.php';
  */
 final class ShipperKycService
 {
-    private const DOCUMENT_TYPES = ['IDENTITY_FRONT', 'IDENTITY_BACK', 'DRIVER_LICENSE', 'VEHICLE_REGISTRATION', 'PORTRAIT'];
+    private const DOCUMENT_TYPES = ['IDENTITY_FRONT', 'IDENTITY_BACK', 'DRIVER_LICENSE', 'VEHICLE_REGISTRATION', 'PORTRAIT', 'DRIVER_LICENSE_BACK', 'VEHICLE_INSURANCE', 'VEHICLE_AUTHORIZATION'];
     private const MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
     private const MAX_BYTES = 5 * 1024 * 1024;
 
@@ -84,7 +85,7 @@ final class ShipperKycService
         $q->execute([$shipperId, $type, $country, IdentityDocumentVault::encrypt($number)]);
     }
 
-    private function storeDocument(int $shipperId, mixed $document): void
+    public function storeDocument(int $shipperId, mixed $document): void
     {
         if (!is_array($document)) DeliveryInput::invalid('documents');
         DeliveryInput::only($document, ['document_type', 'reference_file_id']);

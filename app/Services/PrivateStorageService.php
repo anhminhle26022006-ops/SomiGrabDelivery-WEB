@@ -37,13 +37,17 @@ final class PrivateStorageService
             AuditService::record($this->db,$user,'ADMIN','PRIVATE_FILE_READ','PRIVATE_FILE',(int)$file['file_id']);return;
         }
         if($file['purpose']==='CHAT'){
-            if((int)$file['owner_id']===$user)return;
-            if(!$file['message_id'])throw new DeliveryApiError(404,'FILE_NOT_FOUND','File not found.');
+            if((int)$file['owner_id']!==$user&&!$file['message_id'])throw new DeliveryApiError(404,'FILE_NOT_FOUND','File not found.');
             InteractionService::requireConversation($this->db,$user,$role,(int)$file['order_id']);return;
         }
         if((int)$file['owner_id']!==$user)throw new DeliveryApiError(404,'FILE_NOT_FOUND','File not found.');
+        if(($file['purpose']==='EVIDENCE'&&$role!=='SHIPPER')||($file['purpose']==='KYC'&&!in_array($role,['CUSTOMER','SHIPPER'],true)))throw new DeliveryApiError(404,'FILE_NOT_FOUND','File not found.');
+        if($file['purpose']==='TICKET'){
+            $q=$this->db->prepare('SELECT 1 FROM support_tickets WHERE ticket_id=? AND opened_by=? AND opened_role=?');$q->execute([$file['ticket_id'],$user,$role]);
+            if(!$q->fetchColumn())throw new DeliveryApiError(404,'FILE_NOT_FOUND','File not found.');
+        }
     }
-    public function listing(int $user,array $in):array {
+    public function listing(int $user,array $in,string $role='CUSTOMER'):array {
         if(isset($in['ticket_id'])){
             AccessControl::requirePermission($this->db,$user,'ADMIN','storage.read_support');AccessControl::requirePermission($this->db,$user,'ADMIN','support.manage_all');
             $ticket=DeliveryInput::id($in['ticket_id']);$q=$this->db->prepare('SELECT order_id FROM support_tickets WHERE ticket_id=?');$q->execute([$ticket]);$row=$q->fetch();if(!$row)throw new DeliveryApiError(404,'TICKET_NOT_FOUND','Ticket not found.');
@@ -51,7 +55,12 @@ final class PrivateStorageService
             AuditService::record($this->db,$user,'ADMIN','TICKET_FILES_LIST','SUPPORT_TICKET',$ticket);return ['items'=>$q->fetchAll()];
         }
         $before=isset($in['before_id'])?DeliveryInput::id($in['before_id']):PHP_INT_MAX;
-        $q=$this->db->prepare('SELECT file_id,order_id,ticket_id,purpose,original_name,mime_type,byte_size,created_at FROM private_files WHERE owner_id=? AND file_id<? AND deleted_at IS NULL AND delete_after>now() ORDER BY file_id DESC LIMIT 50');$q->execute([$user,$before]);$items=$q->fetchAll();return ['items'=>$items,'next_cursor'=>count($items)===50?(string)end($items)['file_id']:null];
+        $q=$this->db->prepare("SELECT f.file_id,f.order_id,f.ticket_id,f.purpose,f.original_name,f.mime_type,f.byte_size,f.created_at FROM private_files f WHERE f.owner_id=? AND f.file_id<? AND f.deleted_at IS NULL AND f.delete_after>now() AND (
+            (f.purpose IN ('KYC','EVIDENCE') AND ?='SHIPPER')
+            OR (f.purpose='TICKET' AND EXISTS(SELECT 1 FROM support_tickets t WHERE t.ticket_id=f.ticket_id AND t.opened_role=?))
+            OR (f.purpose='CHAT' AND EXISTS(SELECT 1 FROM orders o WHERE o.order_id=f.order_id AND (
+                (?='CUSTOMER' AND o.customer_id=?) OR (?='SHIPPER' AND EXISTS(SELECT 1 FROM order_assignments a WHERE a.order_id=o.order_id AND a.shipper_id=? AND a.assignment_status IN ('ACTIVE','COMPLETED','RETURNED'))))))
+            ) ORDER BY f.file_id DESC LIMIT 50");$q->execute([$user,$before,$role,$role,$role,$user,$role,$user]);$items=$q->fetchAll();return ['items'=>$items,'next_cursor'=>count($items)===50?(string)end($items)['file_id']:null];
     }
     public function upload(int $user,string $role,array $in,array $file):array {
         DeliveryInput::only($in,['purpose','order_id','ticket_id']);$purpose=DeliveryInput::text($in['purpose']??null,'purpose',20);
@@ -61,8 +70,8 @@ final class PrivateStorageService
             if(in_array($o['status'],['DELIVERED','RETURNED','CANCELLED'],true))throw new DeliveryApiError(409,'ORDER_CLOSED','Upload before closing the order.');
             if($purpose==='EVIDENCE'&&$role!=='SHIPPER')throw new DeliveryApiError(403,'SHIPPER_REQUIRED','Shipper required.');
         }elseif($purpose==='TICKET'){
-            $ticket=DeliveryInput::id($in['ticket_id']??null);$q=$this->db->prepare("SELECT 1 FROM support_tickets WHERE ticket_id=? AND opened_by=? AND status<>'CLOSED'");$q->execute([$ticket,$user]);if(!$q->fetchColumn())throw new DeliveryApiError(404,'TICKET_NOT_FOUND','Ticket not found.');
-        }elseif($role!=='SHIPPER')throw new DeliveryApiError(403,'SHIPPER_REQUIRED','Shipper required.');
+            $ticket=DeliveryInput::id($in['ticket_id']??null);$q=$this->db->prepare("SELECT 1 FROM support_tickets WHERE ticket_id=? AND opened_by=? AND opened_role=? AND status<>'CLOSED'");$q->execute([$ticket,$user,$role]);if(!$q->fetchColumn())throw new DeliveryApiError(404,'TICKET_NOT_FOUND','Ticket not found.');
+        }elseif(!in_array($role,['CUSTOMER','SHIPPER'],true))throw new DeliveryApiError(403,'SHIPPER_REQUIRED','Shipper required.');
         $driver=self::driver();$root=$driver==='local'?self::root():null;$remote=$driver==='supabase'?$this->remote():null;self::secret();
         if(in_array($file['error']??null,[UPLOAD_ERR_INI_SIZE,UPLOAD_ERR_FORM_SIZE],true))throw new DeliveryApiError(422,'FILE_SIZE_INVALID','Maximum file size is 5 MiB (also check PHP upload limits).');
         if(($file['error']??UPLOAD_ERR_NO_FILE)!==UPLOAD_ERR_OK||!is_uploaded_file($file['tmp_name']??''))DeliveryInput::invalid('file');
@@ -83,9 +92,9 @@ final class PrivateStorageService
         if($purpose==='EVIDENCE'&&(int)$file['order_id']!==DeliveryInput::id($in['order_id']??null))throw new DeliveryApiError(404,'FILE_NOT_FOUND','File not found.');
         return ['file'=>array_intersect_key($file,array_flip(['file_id','owner_id','order_id','purpose','object_key','original_name','mime_type','byte_size','checksum_sha256','delete_after','storage_backend','storage_bucket']))];
     }
-    public function discard(int $user,int $id):array {
+    public function discard(int $user,int $id,string $role='CUSTOMER'):array {
         $q=$this->db->prepare('SELECT file_id FROM private_files WHERE file_id=? FOR UPDATE');$q->execute([$id]);
-        $file=$this->row($id);if((int)$file['owner_id']!==$user)throw new DeliveryApiError(404,'FILE_NOT_FOUND','File not found.');if($file['purpose']!=='CHAT'||$file['message_id']!==null)throw new DeliveryApiError(409,'FILE_IN_USE','Only an unused CHAT upload can be discarded.');
+        $file=$this->row($id);if((int)$file['owner_id']!==$user)throw new DeliveryApiError(404,'FILE_NOT_FOUND','File not found.');$this->authorize($file,$user,$role);if($file['purpose']!=='CHAT'||$file['message_id']!==null)throw new DeliveryApiError(409,'FILE_IN_USE','Only an unused CHAT upload can be discarded.');
         $this->db->prepare('UPDATE private_files SET delete_after=now() WHERE file_id=?')->execute([$id]);return ['file_id'=>(string)$id,'deletion_queued'=>true];
     }
     public function signed(int $id,int $user,string $role):array {

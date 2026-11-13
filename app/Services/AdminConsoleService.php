@@ -68,14 +68,14 @@ final class AdminConsoleService
     public function ticketStatus(int $admin,array $in):array{
         $this->guard($admin,'support.manage_all');DeliveryInput::only($in,['ticket_id','status','note']);
         $id=DeliveryInput::id($in['ticket_id']??null);$status=DeliveryInput::text($in['status']??null,'status',20);$note=DeliveryInput::text($in['note']??null,'note',2000);
-        $old=$this->rows('SELECT ticket_id,ticket_code,order_id,opened_by,status FROM support_tickets WHERE ticket_id=? FOR UPDATE',[$id])[0]??null;
+        $old=$this->rows('SELECT ticket_id,ticket_code,order_id,opened_by,opened_role,status FROM support_tickets WHERE ticket_id=? FOR UPDATE',[$id])[0]??null;
         if(!$old)throw new DeliveryApiError(404,'TICKET_NOT_FOUND','Ticket not found.');
         if((self::TICKET_NEXT[$old['status']]??null)!==$status)throw new DeliveryApiError(409,'TICKET_STATE_CONFLICT','Refresh the ticket before changing its status.');
         $q=$this->db->prepare("UPDATE support_tickets SET status=?,resolution=CASE WHEN ?='RESOLVED' THEN ? ELSE resolution END,resolved_by=CASE WHEN ?='RESOLVED' THEN ? ELSE resolved_by END,resolved_at=CASE WHEN ?='RESOLVED' THEN now() ELSE resolved_at END,closed_at=CASE WHEN ?='CLOSED' THEN now() ELSE closed_at END,updated_at=now() WHERE ticket_id=?");
         $q->execute([$status,$status,$note,$status,$admin,$status,$status,$id]);
         $this->db->prepare('INSERT INTO support_ticket_events(ticket_id,old_status,new_status,note,changed_by) VALUES(?,?,?,?,?)')->execute([$id,$old['status'],$status,$note,$admin]);
         if($status==='CLOSED')$this->db->prepare("UPDATE support_attachments SET delete_after=now()+interval '3 months' WHERE ticket_id=? AND deleted_at IS NULL")->execute([$id]);
-        $this->db->prepare("INSERT INTO notifications(user_id,order_id,notification_type,title_vi,message_vi,title_en,message_en,in_app_status,email_status) VALUES(?,?,'TICKET_STATUS_CHANGED',?,?,?,?,'SENT','SKIPPED')")->execute([$old['opened_by'],$old['order_id'],'Cập nhật ticket hỗ trợ',$old['ticket_code'].' → '.$status,'Support ticket updated',$old['ticket_code'].' → '.$status]);
+        if($old['opened_role']!==null)$this->db->prepare("INSERT INTO notifications(user_id,recipient_role,order_id,notification_type,title_vi,message_vi,title_en,message_en,in_app_status,email_status) VALUES(?,?,?,'TICKET_STATUS_CHANGED',?,?,?,?,'SENT','SKIPPED')")->execute([$old['opened_by'],$old['opened_role'],$old['order_id'],'Cập nhật ticket hỗ trợ',$old['ticket_code'].' → '.$status,'Support ticket updated',$old['ticket_code'].' → '.$status]);
         AuditService::record($this->db,$admin,'ADMIN','SUPPORT_TICKET_UPDATED','SUPPORT_TICKET',$id,$old,['status'=>$status,'note'=>$note]);return ['ticket_id'=>$id,'status'=>$status];
     }
     public function chat(int $admin,int $ticketId):array{
@@ -92,12 +92,12 @@ final class AdminConsoleService
         return $this->page('SELECT r.review_id,r.order_id,r.rating,r.comment,r.created_at,o.order_code,c.full_name AS customer_name,s.full_name AS shipper_name FROM order_reviews r JOIN orders o USING(order_id) JOIN users c ON c.user_id=r.customer_id JOIN users s ON s.user_id=r.shipper_id WHERE '.$where.' ORDER BY r.review_id DESC',$params,'review_id');
     }
     public function notifications(int $admin,array $in):array{
-        $this->guard($admin,'account.read');$params=[$admin];$where='user_id=?';
+        $this->guard($admin,'account.read');$params=[$admin];$where="user_id=? AND recipient_role='ADMIN'";
         if(isset($in['before_id'])){$where.=' AND notification_id<?';$params[]=DeliveryInput::id($in['before_id']);}
         return $this->page('SELECT notification_id,order_id,title_vi,message_vi,title_en,message_en,notification_type,read_at,created_at FROM notifications WHERE '.$where.' ORDER BY notification_id DESC',$params,'notification_id');
     }
     public function markRead(int $admin,int $id):array{
-        $this->guard($admin,'account.read');$q=$this->db->prepare('UPDATE notifications SET read_at=COALESCE(read_at,now()) WHERE notification_id=? AND user_id=? RETURNING notification_id');$q->execute([$id,$admin]);
+        $this->guard($admin,'account.read');$q=$this->db->prepare("UPDATE notifications SET read_at=COALESCE(read_at,now()) WHERE notification_id=? AND user_id=? AND recipient_role='ADMIN' RETURNING notification_id");$q->execute([$id,$admin]);
         if(!$q->fetchColumn())throw new DeliveryApiError(404,'NOTIFICATION_NOT_FOUND','Notification not found.');return ['read'=>true];
     }
     public function restoreScore(int $admin,array $in):array {

@@ -4,11 +4,11 @@
     <?php // Số liệu bốn thẻ dưới đây do public/assets/js/shipper-dashboard.js điền từ API shipper/dashboard.php. ?>
     <p data-dashboard-status role="status" hidden></p>
     <div class="cards row g-3">
-      <div class="col-12 col-sm-6 col-xl-3"><div class="card metric h-100"><div class="metricicon">▣</div><div><div class="metriclabel" data-period-stat="deliveries">Đơn hoàn thành hôm nay</div><div class="metricvalue" id="dashDeliveries" data-period-value="deliveries">…</div><div class="trend" id="dashDeliveriesTrend"></div></div></div></div>
-      <div class="col-12 col-sm-6 col-xl-3"><div class="card metric h-100"><div class="metricicon">▱</div><div><div class="metriclabel">Thu nhập đã ghi nhận</div><div data-p3-summary>Đang tải…</div><button class="textlink" data-goto="earnings">Xem chi tiết</button></div></div></div>
-      <div class="col-12 col-sm-6 col-xl-3"><div class="card metric h-100"><div class="metricicon" style="background:#f0eaff;color:#8657e8">◷</div><div><div class="metriclabel" data-period-stat="acceptance">Tỷ lệ nhận đơn hôm nay</div><div class="metricvalue" id="dashAcceptance">…</div><div class="muted" id="dashAcceptanceNote" style="font-size:11px"></div></div></div>
-      <div class="col-12 col-sm-6 col-xl-3"><div class="card metric h-100"><div><div class="metriclabel">Thời gian xử lý đơn</div><div class="metricvalue" data-period-value="hours">…</div></div></div></div></div>
-      <div class="col-12 col-sm-6 col-xl-3"><div class="card metric h-100"><div class="metricicon" style="background:#fff0db;color:#e68a17">☆</div><div><div class="metriclabel">Đánh giá trung bình</div><div class="metricvalue" id="dashRating" data-shipper-rating>…</div><div class="muted" id="dashRatingNote" data-shipper-rating-count style="font-size:11px"></div></div></div></div>
+      <div class="col-12 col-sm-6 col-lg-4 col-xl"><div class="card metric h-100"><div class="metricicon">▣</div><div class="metricbody"><div class="metriclabel" data-period-stat="deliveries">Đơn hoàn thành hôm nay</div><div class="metricvalue" id="dashDeliveries" data-period-value="deliveries">…</div><div class="trend" id="dashDeliveriesTrend"></div></div></div></div>
+      <div class="col-12 col-sm-6 col-lg-4 col-xl"><div class="card metric h-100"><div class="metricicon">▱</div><div class="metricbody"><div class="metriclabel" data-copy-vi="Thu nhập đã ghi nhận" data-copy-en="Earnings recorded">Thu nhập đã ghi nhận</div><div class="metricmoney" data-p3-summary>Đang tải…</div><button class="textlink" data-goto="earnings">Xem chi tiết</button></div></div></div>
+      <div class="col-12 col-sm-6 col-lg-4 col-xl"><div class="card metric h-100"><div class="metricicon metricicon-violet">◷</div><div class="metricbody"><div class="metriclabel" data-period-stat="acceptance">Tỷ lệ nhận đơn hôm nay</div><div class="metricvalue" id="dashAcceptance">…</div><div class="metricnote muted" id="dashAcceptanceNote"></div></div></div></div>
+      <div class="col-12 col-sm-6 col-lg-4 col-xl"><div class="card metric h-100"><div class="metricicon metricicon-teal">◴</div><div class="metricbody"><div class="metriclabel" data-copy-vi="Thời gian xử lý đơn" data-copy-en="Time spent on deliveries">Thời gian xử lý đơn</div><div class="metricvalue" data-period-value="hours">…</div></div></div></div>
+      <div class="col-12 col-sm-6 col-lg-4 col-xl"><div class="card metric h-100"><div class="metricicon metricicon-amber">☆</div><div class="metricbody"><div class="metriclabel" data-copy-vi="Đánh giá trung bình" data-copy-en="Average rating">Đánh giá trung bình</div><div class="metricvalue" id="dashRating" data-shipper-rating>…</div><div class="metricnote muted" id="dashRatingNote" data-shipper-rating-count></div></div></div></div>
     </div>
     <div class="dashboardgrid">
       <div class="stack">
@@ -28,7 +28,7 @@
         </section>
         <section class="card">
           <div class="sectiontitle"><div><h2>Thu nhập và chi trả</h2><p>Tổng hợp các khoản đã ghi nhận.</p></div><button class="textlink" data-goto="earnings">Chi tiết →</button></div>
-          <div data-p3-summary>Đang tải…</div>
+          <div class="summarymoney" data-p3-summary>Đang tải…</div>
         </section>
       </div>
     </div>

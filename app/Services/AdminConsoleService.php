@@ -3,6 +3,7 @@ declare(strict_types=1);
 require_once __DIR__.'/AdminService.php';
 require_once __DIR__.'/CustomerOrderService.php';
 require_once __DIR__.'/EncryptedPayload.php';
+require_once __DIR__.'/AdminWorkQueue.php';
 
 /** Live Admin queries and audited mutations; never returns password hashes or encrypted payloads. */
 final class AdminConsoleService
@@ -36,11 +37,10 @@ final class AdminConsoleService
         if(!empty($in['q'])){$term=DeliveryInput::text($in['q'],'q',100);$where.=' AND (u.full_name ILIKE ? OR u.email ILIKE ? OR u.phone ILIKE ?)';array_push($params,'%'.$term.'%','%'.$term.'%','%'.$term.'%');}
         if(!empty($in['status'])){if(!in_array($in['status'],['ACTIVE','SUSPENDED','PENDING_VERIFICATION','CLOSED'],true))DeliveryInput::invalid('status');$where.=' AND u.account_status=?';$params[]=$in['status'];}
         if(!empty($in['verification'])){if(!in_array($in['verification'],['PENDING','NEEDS_INFO','APPROVED','REJECTED'],true))DeliveryInput::invalid('verification');$where.=' AND sp.verification_status=?';$params[]=$in['verification'];}
-        if(isset($in['before_id'])){$where.=' AND u.user_id<?';$params[]=DeliveryInput::id($in['before_id']);}
-        $data=$this->page("SELECT u.user_id,u.full_name,u.email,u.phone,u.nationality_code,u.account_status,u.created_at,
+        $data=AdminWorkQueue::page($this->db,"SELECT CASE WHEN sp.verification_status='PENDING' THEN 0 ELSE 1 END AS work_priority,u.user_id,u.full_name,u.email,u.phone,u.nationality_code,u.account_status,u.created_at,
           sp.verification_status,sp.vehicle_type,sp.vehicle_registration,sp.reliability_score,sp.availability,
           (SELECT json_agg(r.role_code) FROM user_roles ur JOIN roles r USING(role_id) WHERE ur.user_id=u.user_id) AS roles
-          FROM users u LEFT JOIN shipper_profiles sp ON sp.user_id=u.user_id WHERE ".$where.' ORDER BY u.user_id DESC',$params,'user_id');
+          FROM users u LEFT JOIN shipper_profiles sp ON sp.user_id=u.user_id WHERE ".$where,$params,'user_id',$in);
         foreach($data['items']as &$row)$row['roles']=json_decode($row['roles']??'[]',true);unset($row);
         return $data;
     }
@@ -71,8 +71,7 @@ final class AdminConsoleService
         }
         if(!empty($in['status'])){if(!in_array($in['status'],['NEW','IN_PROGRESS','RESOLVED','CLOSED'],true))DeliveryInput::invalid('status');$where.=' AND t.status=?';$params[]=$in['status'];}
         if(!empty($in['q'])){$where.=' AND (t.ticket_code ILIKE ? OR t.subject ILIKE ? OR o.order_code ILIKE ?)';$q='%'.DeliveryInput::text($in['q'],'q',100).'%';array_push($params,$q,$q,$q);}
-        if(isset($in['before_id'])){$where.=' AND t.ticket_id<?';$params[]=DeliveryInput::id($in['before_id']);}
-        return $this->page('SELECT t.ticket_id,t.ticket_code,t.order_id,t.category,t.subject,t.status,t.created_at,o.order_code,u.full_name AS reporter_name FROM support_tickets t LEFT JOIN orders o USING(order_id) JOIN users u ON u.user_id=t.opened_by WHERE '.$where.' ORDER BY t.ticket_id DESC',$params,'ticket_id');
+        return AdminWorkQueue::page($this->db,"SELECT CASE WHEN t.status IN ('NEW','IN_PROGRESS') THEN 0 ELSE 1 END AS work_priority,t.ticket_id,t.ticket_code,t.order_id,t.category,t.subject,t.status,t.created_at,o.order_code,u.full_name AS reporter_name FROM support_tickets t LEFT JOIN orders o USING(order_id) JOIN users u ON u.user_id=t.opened_by WHERE ".$where,$params,'ticket_id',$in);
     }
     public function ticketStatus(int $admin,array $in):array{
         $this->guard($admin,'support.manage_all');DeliveryInput::only($in,['ticket_id','status','note']);
@@ -102,8 +101,7 @@ final class AdminConsoleService
     }
     public function notifications(int $admin,array $in):array{
         $this->guard($admin,'account.read');$params=[$admin];$where="user_id=? AND recipient_role='ADMIN'";
-        if(isset($in['before_id'])){$where.=' AND notification_id<?';$params[]=DeliveryInput::id($in['before_id']);}
-        return $this->page('SELECT notification_id,order_id,title_vi,message_vi,title_en,message_en,notification_type,read_at,created_at FROM notifications WHERE '.$where.' ORDER BY notification_id DESC',$params,'notification_id');
+        return AdminWorkQueue::page($this->db,'SELECT CASE WHEN read_at IS NULL THEN 0 ELSE 1 END AS work_priority,notification_id,order_id,title_vi,message_vi,title_en,message_en,notification_type,read_at,created_at FROM notifications WHERE '.$where,$params,'notification_id',$in);
     }
     public function markRead(int $admin,int $id):array{
         $this->guard($admin,'account.read');$q=$this->db->prepare("UPDATE notifications SET read_at=COALESCE(read_at,now()) WHERE notification_id=? AND user_id=? AND recipient_role='ADMIN' RETURNING notification_id");$q->execute([$id,$admin]);

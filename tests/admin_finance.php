@@ -14,6 +14,9 @@ try{
  rejects(fn()=>tx($db,fn()=>$svc->banks(CUSTOMER,[])),'PERMISSION_DENIED');
  $list=$svc->listing(ADMIN,['q'=>'SOMI-TEST']);check(count($list['items'])===1,'order finance search');
  $d=tx($db,fn()=>$svc->detail(ADMIN,$order));check($d['payment']['payment_id']===$p['payment_id']&&$d['order']['status']==='PENDING_PAYMENT','payment linked to correct order');
+ check($d['customer']['bank']['account_number']==='000123456789','customer bank visible before a refund exists');check($d['admin_bank']['account_number']==='123456789','admin receiving bank is included');
+ $assigned=paid_order($db);$db->prepare('INSERT INTO order_assignments(order_id,shipper_id) VALUES(?,3)')->execute([$assigned]);$db->prepare("INSERT INTO shipper_bank_accounts(shipper_id,bank_code,bank_name,account_holder,account_number_enc,verified_at) VALUES(3,'TEST','Shipper Bank','Shipper',?,now())")->execute([EncryptedPayload::seal(['account_number'=>'000333222111'])]);
+ $assignedDetail=tx($db,fn()=>$svc->detail(ADMIN,$assigned));check($assignedDetail['shippers'][0]['bank']['account_number']==='000333222111'&&$assignedDetail['payouts']===[],'assigned shipper bank visible before payout creation');
  tx($db,fn()=>$svc->review(ADMIN,['role'=>'CUSTOMER','bank_account_id'=>$bank,'decision'=>'APPROVED','note'=>'Matched holder and account']));check(value($db,'SELECT review_status FROM customer_bank_accounts WHERE bank_account_id=?',[$bank])==='APPROVED','bank review persisted');
  rejects(fn()=>tx($db,fn()=>$svc->confirm(ADMIN,['action'=>'PAYMENT','target_id'=>$p['payment_id'],'confirmed'=>'yes'],[])),'RECEIPT_REQUIRED');
  check((int)value($db,'SELECT count(*) FROM finance_evidence')===0,'missing evidence does not change ledger');

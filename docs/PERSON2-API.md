@@ -108,3 +108,31 @@ Giao diện: `shipper-dashboard.js` điền bốn thẻ số liệu và thẻ Đ
 Các trường khu vực, địa chỉ, dòng xe và màu xe chưa hỗ trợ lưu được khóa trên trang Tài khoản. Họ tên được cập nhật qua account/profile.php. API Tổng quan cũng trả delivery_seconds (thời gian xử lý phân công trong kỳ), completed_deliveries, timezone, start và end.
 
 `application` trong GET hồ sơ chỉ trả các trường hiển thị của người đang đăng nhập (địa chỉ, khu vực, liên hệ khẩn cấp, hãng/dòng/màu xe, hạn giấy tờ); không trả số GPLX hoặc ciphertext. Trang Tài khoản hiển thị dữ liệu này ở chế độ chỉ đọc và danh sách KYC có liên kết xem/tải thật.
+## Rà soát giao diện (13/11/2026)
+
+Đợt này chỉ sửa phần nhìn: CSS, lớp bọc và nhãn. Không đổi API, luồng trạng thái đơn hay dữ liệu hiển thị.
+
+### Lỗi đã sửa
+
+- **Thẻ số liệu lồng nhau.** `dashboard.php` thiếu/thừa thẻ `div` nên thẻ "Thời gian xử lý đơn" nằm bên trong thẻ "Tỷ lệ nhận đơn" và tràn ra ngoài hàng. Hàng số liệu giờ có đủ năm thẻ, dùng `col-xl` để chia đều.
+- **Quãng đường sai định dạng.** API trả chuỗi `7.650`. Trang Tổng quan đã định dạng lại, còn Đơn đang giao và Đơn giao phù hợp in thẳng nên cùng một đơn hiện hai con số khác nhau. Thêm `SomiShipper.distance()` dùng chung.
+- **Tương phản chữ ở trang chủ.** Nhãn trong hero là chữ trắng trên nền sáng, gần như không đọc được.
+- **Nút cuối ba trang giới thiệu không dịch** vì thiếu `data-i18n`.
+
+### Thay đổi về trình bày
+
+- Trang Tài khoản tách thành từng thẻ theo nhóm thông tin; form dùng `.form-grid`, `.form-field`, `.form-input` thay cho style inline lặp lại, trên điện thoại chuyển về một cột.
+- Trang Thu nhập có pagehead, các ô tổng tiền và bảng có viền giống những trang Shipper khác.
+- `.empty` có khung nét đứt và icon; `#offerSort` dùng mũi tên riêng.
+- Hàng thao tác đơn đang giao: nút chính tách riêng, nút hủy dùng tông đỏ nhạt, bỏ emoji trong nhãn.
+- Thẻ số liệu trên điện thoại xếp hai cột.
+
+### Quy ước cần giữ
+
+Tất cả `id`, `name` và `data-*` mà `shipper-account.js`, `shipper-dashboard.js`, `shipper-active.js`, `shipper-offers.js` và `person3.js` đang dùng đều giữ nguyên. Khi thêm ô nhập mới trên trang Tài khoản, dùng `.form-field` + `.form-input` thay vì viết style inline.
+
+### Còn tồn, thuộc người khác
+
+- Cột **Chi trả** ở trang Thu nhập hiện `SUCCEEDED` dạng thô: `payoutLabel` trong `person3.js` chưa có nhãn cho giá trị này (Người 3).
+- `tests/shipper_policy_browser.cjs` đang hỏng sẵn trên `dev`: selector `[data-delivery-action="SHOW_CANCEL"]` khớp hai phần tử (nút mở và nút đóng biểu mẫu) nên Playwright báo strict mode violation. Chưa sửa trong đợt này.
+- `tests/bootstrap_workspace_browser.cjs` đã cập nhật từ 4 lên 5 thẻ số liệu cho đúng sau khi sửa lỗi lồng thẻ.

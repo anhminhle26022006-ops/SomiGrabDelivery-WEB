@@ -104,6 +104,10 @@ final class PrivateStorageService
     public function download(int $id,int $user,string $role,array $in):array {
         $expiry=(string)($in['expires']??'');$signature=$in['signature']??'';
         if(!ctype_digit($expiry)||(int)$expiry<time()||(int)$expiry>time()+300||!is_string($signature)||!hash_equals(hash_hmac('sha256',"$id:$user:$expiry",self::secret()),$signature))throw new DeliveryApiError(403,'LINK_EXPIRED','Download link expired or invalid.');
+        return $this->content($id,$user,$role);
+    }
+    /** Authenticated reads authorize once; signed links remain supported for existing clients. */
+    public function content(int $id,int $user,string $role):array {
         $file=$this->row($id);$this->authorize($file,$user,$role);
         if(($file['storage_backend']??'local')==='supabase'){$file['bytes']=$this->remote($file['storage_bucket'])->get($file['object_key']);if(strlen($file['bytes'])!==(int)$file['byte_size']||!hash_equals($file['checksum_sha256'],hash('sha256',$file['bytes'])))throw new DeliveryApiError(503,'FILE_INTEGRITY_ERROR','Stored file failed its integrity check.');}
         else{$file['path']=self::root().DIRECTORY_SEPARATOR.$file['object_key'];if(!is_file($file['path']))throw new DeliveryApiError(404,'FILE_NOT_FOUND','File not found.');}return $file;

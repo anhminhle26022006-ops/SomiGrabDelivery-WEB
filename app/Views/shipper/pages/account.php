@@ -14,7 +14,7 @@
         <div><label class="muted" for="shipperArea">Khu vực hoạt động</label><input id="shipperArea" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" disabled placeholder="Chưa hỗ trợ cập nhật" /></div>
       </div>
       <button id="saveProfileBtn" type="button" class="primary" style="margin-top:16px" disabled>Lưu họ tên</button>
-      <p class="muted">Các trường chưa hỗ trợ cập nhật đang được khóa. Giấy tờ được quản lý qua hồ sơ KYC.</p>
+      <p class="muted">Thông tin đăng ký hiển thị từ hồ sơ đã nộp. Giấy tờ được quản lý qua hồ sơ KYC.</p>
       <div class="sectiontitle" style="margin-top:26px"><div><h2>Địa chỉ liên hệ</h2><p>Địa chỉ cư trú/liên hệ phục vụ hồ sơ người giao.</p></div></div>
       <div class="cards" style="grid-template-columns:repeat(2,minmax(0,1fr))">
         <div style="grid-column:1/-1"><label class="muted" for="shipperAddress">Địa chỉ cụ thể</label><input id="shipperAddress" style="display:block;width:100%;margin-top:6px;padding:11px;border:1px solid var(--line);border-radius:10px" disabled placeholder="Chưa hỗ trợ cập nhật" /></div>
@@ -23,6 +23,7 @@
       </div>
       <div class="sectiontitle" style="margin-top:26px"><div><h2>Tài khoản nhận thanh toán</h2><p>Đổi tài khoản bằng mật khẩu hiện tại và OTP gửi đến email đã xác minh. Admin chuyển khoản và đối soát chứng từ.</p></div></div>
       <button class="outline" type="button" onclick="window.somiPerson3Open('bank')">Quản lý tài khoản nhận tiền</button>
+      <h3 style="margin-top:24px">Tài liệu KYC đã nộp</h3><div id="kycDocuments" aria-live="polite">Đang tải tài liệu…</div>
       <form id="kycResubmitForm" hidden style="margin-top:24px">
         <h3>Bổ sung giấy tờ KYC</h3>
         <label>Loại giấy tờ <select name="document_type"><option value="IDENTITY_FRONT">Mặt trước giấy tờ định danh</option><option value="IDENTITY_BACK">Mặt sau giấy tờ định danh</option><option value="DRIVER_LICENSE">Giấy phép lái xe</option><option value="VEHICLE_REGISTRATION">Đăng ký xe</option><option value="PORTRAIT">Ảnh chân dung</option></select></label>

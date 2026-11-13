@@ -12,6 +12,15 @@
     const profile = data.profile;
     const name = document.getElementById("shipperName");
     if (name) { name.value = profile.full_name; name.readOnly = true; } // đổi họ tên đi qua account/profile.php của nền tảng
+    // Thông tin liên hệ thật của tài khoản, chỉ để xem. Đổi email hay số điện thoại cần xác minh lại
+    // nên đi qua luồng của nền tảng chứ không sửa trực tiếp ở đây.
+    const account = data.account || {};
+    const setText = (id, value) => { const el = document.getElementById(id); if (el) el.textContent = value || "—"; };
+    const setValue = (id, value) => { const el = document.getElementById(id); if (el) { el.value = value || ""; el.readOnly = true; } };
+    setText("accountName", profile.full_name);
+    setText("accountCode", account.code);
+    setValue("shipperPhone", account.phone);
+    setValue("shipperEmail", account.email);
     const plate = document.getElementById("vehiclePlate");
     if (plate) plate.value = profile.vehicle_registration;
     const type = document.getElementById("vehicleType");

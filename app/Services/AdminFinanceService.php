@@ -3,6 +3,7 @@ declare(strict_types=1);
 require_once __DIR__.'/PaymentService.php';
 require_once __DIR__.'/ShipperFinanceService.php';
 require_once __DIR__.'/EncryptedPayload.php';
+require_once __DIR__.'/AdminWorkQueue.php';
 
 final class AdminFinanceService {
     public function __construct(private PDO $db){}
@@ -12,13 +13,13 @@ final class AdminFinanceService {
         $args=[];$where='TRUE';
         if(!empty($in['q'])){$term='%'.DeliveryInput::text($in['q'],'q',100).'%';$where.=' AND (o.order_code ILIKE ? OR u.full_name ILIKE ?)';$args=[$term,$term];}
         if(!empty($in['status'])){$where.=' AND o.status=?';$args[]=DeliveryInput::text($in['status'],'status',30);}
-        if(isset($in['before_id'])){$where.=' AND o.order_id<?';$args[]=DeliveryInput::id($in['before_id']);}
-        $items=$this->rows("SELECT o.order_id,o.order_code,o.status AS order_status,o.currency_code,o.total_charge_minor,u.full_name AS customer_name,p.payment_id,p.status AS payment_status,p.provider,
+        $page=AdminWorkQueue::page($this->db,"SELECT ".AdminWorkQueue::rank(AdminWorkQueue::FINANCE_WORK)." AS work_priority,o.order_id,o.order_code,o.status AS order_status,o.currency_code,o.total_charge_minor,u.full_name AS customer_name,p.payment_id,p.status AS payment_status,p.provider,
         (SELECT json_agg(json_build_object('status',r.status,'amount_minor',r.refund_amount_minor::text)) FROM refunds r WHERE r.order_id=o.order_id) AS refunds,
         (SELECT json_agg(json_build_object('status',p2.status,'amount_minor',p2.payout_amount_minor::text)) FROM shipper_earnings e JOIN shipper_payouts p2 USING(earning_id) WHERE e.order_id=o.order_id) AS payouts
-        FROM orders o JOIN users u ON u.user_id=o.customer_id LEFT JOIN payments p USING(order_id) WHERE $where ORDER BY o.order_id DESC LIMIT 51",$args);
-        $more=count($items)>50;if($more)array_pop($items);foreach($items as &$r){$r['refunds']=json_decode($r['refunds']??'[]',true);$r['payouts']=json_decode($r['payouts']??'[]',true);}unset($r);
-        return ['items'=>$items,'next_before_id'=>$more?(string)end($items)['order_id']:null];
+        FROM orders o JOIN users u ON u.user_id=o.customer_id LEFT JOIN payments p USING(order_id) WHERE $where",$args,'order_id',$in);
+        $items=$page['items'];
+        foreach($items as &$r){$r['refunds']=json_decode($r['refunds']??'[]',true);$r['payouts']=json_decode($r['payouts']??'[]',true);}unset($r);
+        return array_replace($page,['items'=>$items]);
     }
     public function detail(int $admin,int $order):array{
         AccessControl::requirePermission($this->db,$admin,'ADMIN','payment.reconcile');AccessControl::requirePermission($this->db,$admin,'ADMIN','payout.manage');
@@ -42,7 +43,7 @@ final class AdminFinanceService {
     public function banks(int $admin,array $in):array{
         AccessControl::requirePermission($this->db,$admin,'ADMIN','payment.reconcile');AccessControl::requirePermission($this->db,$admin,'ADMIN','payout.manage');
         $args=[];$where='TRUE';if(!empty($in['q'])){$where='(u.full_name ILIKE ? OR b.bank_name ILIKE ?)';$term='%'.DeliveryInput::text($in['q'],'q',100).'%';$args=[$term,$term];}
-        $sql="WITH b AS (SELECT DISTINCT ON(customer_id) 'CUSTOMER' AS role,customer_id AS user_id,bank_account_id,bank_name,account_holder,encrypted_payload,review_status,review_note FROM customer_bank_accounts ORDER BY customer_id,bank_account_id DESC), all_banks AS (SELECT * FROM b UNION ALL SELECT 'SHIPPER',shipper_id,bank_account_id,bank_name,account_holder,convert_from(account_number_enc,'UTF8'),review_status,review_note FROM shipper_bank_accounts WHERE replaced_at IS NULL) SELECT b.*,u.full_name FROM all_banks b JOIN users u USING(user_id) WHERE $where ORDER BY CASE WHEN b.review_status='PENDING' THEN 0 ELSE 1 END,b.user_id DESC LIMIT 100";
+        $sql="WITH b AS (SELECT DISTINCT ON(customer_id) 'CUSTOMER' AS role,customer_id AS user_id,bank_account_id,bank_name,account_holder,encrypted_payload,review_status,review_note FROM customer_bank_accounts ORDER BY customer_id,bank_account_id DESC), all_banks AS (SELECT * FROM b UNION ALL SELECT 'SHIPPER',shipper_id,bank_account_id,bank_name,account_holder,convert_from(account_number_enc,'UTF8'),review_status,review_note FROM shipper_bank_accounts WHERE replaced_at IS NULL) SELECT b.*,u.full_name,CASE WHEN b.review_status='PENDING' THEN 0 ELSE 1 END AS work_priority FROM all_banks b JOIN users u USING(user_id) WHERE $where ORDER BY CASE WHEN b.review_status='PENDING' THEN 0 ELSE 1 END,b.user_id DESC LIMIT 100";
         $items=$this->rows($sql,$args);foreach($items as &$b)$b=$this->bank($b);unset($b);AuditService::record($this->db,$admin,'ADMIN','BANK_REVIEW_LIST','USER',null);return ['items'=>$items];
     }
     public function receipt(int $admin,int $id):array{

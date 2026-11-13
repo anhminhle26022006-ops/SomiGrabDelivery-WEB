@@ -19,7 +19,7 @@ if(!isset($adminSections[$liveView]))$liveView='index';
   <div class="sidebar-category">ADMIN CONSOLE</div>
   <nav class="sidebar-menu nav flex-column">
    <?php foreach($adminSections as $key=>[$vn,$en,$symbol]): ?>
-   <a class="menu-item nav-link <?= $liveView===$key?'active':'' ?>" href="?page=admin&amp;view=<?= e($key) ?>" <?= $liveView===$key?'aria-current="page"':'' ?>><i class="fa-solid fa-<?= e($symbol) ?>" aria-hidden="true"></i><span data-admin-vi="<?= e($vn) ?>" data-admin-en="<?= e($en) ?>"><?= e($vn) ?></span></a>
+   <a class="menu-item nav-link <?= $liveView===$key?'active':'' ?>" href="?page=admin&amp;view=<?= e($key) ?>" <?= $liveView===$key?'aria-current="page"':'' ?>><i class="fa-solid fa-<?= e($symbol) ?>" aria-hidden="true"></i><span data-admin-vi="<?= e($vn) ?>" data-admin-en="<?= e($en) ?>"><?= e($vn) ?></span><span class="admin-nav-count" data-work-count="<?= e($key) ?>" hidden aria-live="polite"></span></a>
    <?php endforeach; ?>
   </nav>
   <div class="sidebar-footer"><button class="menu-item logout" type="button" data-signout><i class="fa-solid fa-right-from-bracket" aria-hidden="true"></i><span data-admin-vi="Đăng xuất" data-admin-en="Sign out">Đăng xuất</span></button></div>

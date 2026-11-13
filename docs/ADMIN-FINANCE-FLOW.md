@@ -24,3 +24,11 @@ Nếu một ngân hàng cũ không giải mã được, các tài khoản khác 
 Migration `20261113_admin_finance` đã áp dụng bằng transaction trên database cấu hình. Khi triển khai môi trường khác chạy `php -d extension=pdo_pgsql database/migrate-customer-orders.php --apply`.
 
 Kiểm thử: `tests/admin_finance.php`, `tests/admin_finance_upload.cjs`, `tests/admin_flow_browser.cjs`, `tests/bank_account_browser.cjs`, `tests/person1_scope.php`, `tests/admin_console.php`, `tests/person3_backend.php`. Các bài database dùng bảng TEMP; bài kiểm tra dữ liệu đang dùng rollback toàn bộ audit. Chưa thử chuyển tiền thật.
+
+## Hiển thị ngân hàng, lọc trực tiếp và quay lại
+
+Hồ sơ Tiền theo đơn luôn hiển thị ngân hàng customer, ngân hàng của các shipper được phân công và ngân hàng admin nhận tiền, kể cả chưa có refund/payout. Nếu chưa lưu hoặc dữ liệu cũ không đọc được, giao diện ghi rõ tình trạng; không suy đoán số tài khoản. Các khoản trả đã tạo vẫn hiển thị ngân hàng đã chốt riêng, không bị thay bằng ngân hàng hiện tại.
+
+Các thanh lọc tự cập nhật khi gõ sau 300 ms; lựa chọn trạng thái cập nhật ngay, không còn nút Áp dụng. Kết quả request cũ không được ghi đè nội dung tìm kiếm mới.
+
+Hộp thoại có nút Quay lại; X, Escape và Hủy trở về hộp thoại cha nếu có, chỉ đóng ra danh sách ở cấp đầu. Màn hình cha giữ nút xử lý, dữ liệu form và vị trí cuộn. Xác nhận biên lai thành công mở lại hồ sơ tài chính đã làm mới.

@@ -29,6 +29,7 @@ Base `/public/api/`; session, workspace CUSTOMER/SHIPPER, permission `person3.us
 | `shipper/earnings.php` | GET | `{items,totals,next_cursor}` của Shipper hiện tại; totals tách currency và payout_status. Không cộng lẫn VND/USD. |
 | `admin/payouts.php` | GET, POST | ADMIN + `payout.manage`. GET danh sách. POST `{payout_id,provider_payout_ref,evidence_reference,amount_minor,currency_code:"VND"}` đối soát khoản đã chuyển. Exact amount + unique reference + audit; không phải lệnh chuyển tiền. |
 | `storage.php` | GET, POST | GET danh sách file của mình; GET `?file_id=` cấp `{download_query,expires_at}`. POST multipart `{file,purpose,order_id?,ticket_id?}`. Purpose CHAT/TICKET/KYC/EVIDENCE. |
+| `storage.php?file_id=&content=1&disposition=inline` | GET | Đọc nội dung trong một request có session. Giữ nguyên quyền chủ sở hữu/admin, retention và audit. Inline chỉ áp dụng JPEG/PNG/WebP; mặc định attachment. `nosniff`, `private, no-store`. Không cần lấy signed link trước. |
 | `storage.php?<download_query>` | GET | Signed link 5 phút, ràng buộc session user; quyền được kiểm tra lại. Nội dung tải xuống qua attachment + nosniff + no-store. |
 
 API Admin ticket/chat giữ nguyên `admin/console.php` và `admin/actions.php`; hỗ trợ ticket tài khoản bằng LEFT JOIN. Ticket tài khoản không có chat theo đơn. Admin đọc chat phải có ticket liên quan và được ghi audit bởi AccessControl.
@@ -149,3 +150,5 @@ Kết quả adapter mới: 117 backend fixture, 13 Supabase transport fixture v�
 Đã siết riêng tư file chat draft (không liệt kê/tải bởi Admin trước khi gửi), gom truy vấn metadata đính kèm theo batch và giữ nguyên ký tự mật khẩu khi xác nhận đổi ngân hàng. Hồi quy: 122 backend, 24 browser, 24 HTTP, 23 multipart local, 14 Supabase adapter; Admin 37 và Người 1 74 đạt.
 
 Dùng `scripts/test-person3.ps1` để chạy bộ kiểm tra theo PHP XAMPP, tự bật driver PostgreSQL khi cần; truyền -NodeModules cho thư viện Playwright. Source/fixture đã kiểm tra không thay thế nghiệm thu có đăng nhập, worker Render và giao dịch thật. Bản trạng thái hiện hành: MINH-ANH-STATUS.md; các đoạn ghi kết quả ngày trước chỉ là lịch sử.
+
+Kiểm thử đọc ảnh trực tiếp: `php tests/private_content.php` (TEMP TABLE, storage giả; quyền admin, chủ sở hữu, truy cập chéo, hết hạn, audit).

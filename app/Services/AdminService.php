@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 require_once __DIR__.'/AccessControl.php';
+require_once __DIR__.'/ShipperApplicationService.php';
 
 final class AdminService
 {
@@ -63,6 +64,8 @@ final class AdminService
         $q=$this->db->prepare('SELECT verification_status FROM shipper_profiles WHERE user_id=? FOR UPDATE');$q->execute([$userId]);$old=$q->fetchColumn();
         if(!in_array($old,['PENDING','NEEDS_INFO'],true))throw new DeliveryApiError(409,'KYC_NOT_PENDING','KYC application is not pending.');
         $q=$this->db->prepare('SELECT review_status FROM user_identity_documents WHERE user_id=? FOR UPDATE');$q->execute([$userId]);if(!$q->fetchColumn())throw new DeliveryApiError(409,'KYC_IDENTITY_REQUIRED','Identity data is required.');
+        if ($decision === 'APPROVED') (new ShipperApplicationService($this->db))->assertReviewable($userId);
+        $this->db->prepare('UPDATE shipper_documents SET review_status=?,rejection_reason=?,reviewed_by=?,reviewed_at=now() WHERE shipper_id=? AND deleted_at IS NULL')->execute([$decision,$decision==='APPROVED'?null:$note,$adminId,$userId]);
         $q=$this->db->prepare("UPDATE shipper_profiles SET verification_status=?,availability=FALSE,approved_at=CASE WHEN ? THEN now() ELSE NULL END,approved_by=?,updated_at=now() WHERE user_id=?");$q->execute([$decision,$decision==='APPROVED'?'true':'false',$decision==='APPROVED'?$adminId:null,$userId]);
         $this->db->prepare('UPDATE user_identity_documents SET review_status=?,rejection_reason=?,reviewed_by=?,reviewed_at=now(),updated_at=now() WHERE user_id=?')->execute([$decision,$decision==='APPROVED'?null:$note,$adminId,$userId]);
         AuditService::record($this->db,$adminId,'ADMIN','SHIPPER_APPLICATION_'.$decision,'SHIPPER_PROFILE',$userId,['verification_status'=>$old],['verification_status'=>$decision,'note'=>$note]);

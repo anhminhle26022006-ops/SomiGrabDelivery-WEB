@@ -12,6 +12,7 @@ require_once __DIR__.'/../app/Services/DeliveryReturnService.php';
 require_once __DIR__.'/../app/Services/Person1Worker.php';
 require_once __DIR__.'/../app/Services/Person3Worker.php';
 require_once __DIR__.'/../app/Services/ShipperBankService.php';
+require_once __DIR__.'/../app/Services/AdminFinanceService.php';
 function assigned(PDO $db,int $shipper=SHIPPER_A):int {
     tx($db,fn()=>(new ShipperAvailabilityService($db))->turnOn($shipper,NEAR[0],NEAR[1]));$id=paid_order($db);
     tx($db,fn()=>(new MatchingService($db))->dispatch($id));$offer=(int)value($db,"SELECT offer_id FROM order_match_offers WHERE order_id=? AND shipper_id=? AND status='PENDING'",[$id,$shipper]);
@@ -34,7 +35,7 @@ function refund_manually(PDO $db,int $id):void {
     tx($db,fn()=>(new PaymentService($db))->reconcileProviderRefund(ADMIN,(int)$refund['refund_id'],['provider_refund_id'=>'TEST-REFUND-'.$id,'original_payment_reference'=>'TEST-PAID-'.$id,'evidence_reference'=>'TEST-NOT-A-REAL-TRANSFER','amount_minor'=>(string)$refund['refund_amount_minor'],'currency_code'=>'VND','original_method_confirmed'=>true]));
 }
 try {
-    $db=shipper_test_db();putenv('SOMI_PAYOUT_MODE=manual');putenv('SOMI_MESSAGE_ENCRYPTION_KEY='.base64_encode(random_bytes(32)));
+    $db=shipper_test_db();foreach(['20261113_manual_escrow','20261113_admin_finance'] as $m){$sql=preg_replace('/^SET LOCAL search_path[^;]+;\s*/m','',file_get_contents(__DIR__.'/../database/migrations/'.$m.'.sql'));$db->exec(str_replace('CREATE TABLE ','CREATE TEMP TABLE ',$sql));}putenv('SOMI_PAYOUT_MODE=manual');putenv('SOMI_MESSAGE_ENCRYPTION_KEY='.base64_encode(random_bytes(32)));
     tx($db,fn()=>ApprovedShipperPolicyRelease::apply($db));tx($db,fn()=>ApprovedShipperPolicyRelease::apply($db));
     check((int)value($db,"SELECT count(*) FROM shipper_earning_policies WHERE effective_until IS NULL")===2,'two approved VND earning policies');
     check((string)value($db,'SELECT deduction_points FROM shipper_score_policies WHERE effective_until IS NULL')==='10.00','before pickup deduction 10');
@@ -68,7 +69,7 @@ try {
     $db->prepare('UPDATE users SET password_hash=? WHERE user_id=3')->execute([password_hash('FixturePassword!234',PASSWORD_DEFAULT)]);
     $bank=new ShipperBankService($db);$b=tx($db,fn()=>$bank->request(3,['bank_code'=>'TEST','bank_name'=>'Fixture','account_holder'=>'Fixture Shipper','account_number'=>'000009876543','current_password'=>'FixturePassword!234','client_key'=>'policy-bank-fixture']));
     $mail=EncryptedPayload::open(value($db,'SELECT encrypted_payload FROM email_messages WHERE deduplication_key=?',['bank-change:'.$b['request_id']]));preg_match('/: ([0-9]{6})/',$mail['text'],$match);
-    tx($db,fn()=>$bank->confirm(3,['request_id'=>$b['request_id'],'code'=>$match[1]]));
+    $confirmedBank=tx($db,fn()=>$bank->confirm(3,['request_id'=>$b['request_id'],'code'=>$match[1]]));tx($db,fn()=>(new AdminFinanceService($db))->review(ADMIN,['role'=>'SHIPPER','bank_account_id'=>$confirmedBank['bank_account_id'],'decision'=>'APPROVED','note'=>'Verified fixture account']));
     $returned=assigned($db);begin_delivery($db,$returned);
     $r=tx($db,fn()=>$cancel->request(3,['order_id'=>$returned,'reason_code'=>'EXTERNAL_ISSUE','reason'=>'Fixture incident','client_key'=>'after-pickup-fixture']));
     check(value($db,'SELECT status FROM orders WHERE order_id=?',[$returned])==='IN_DELIVERY','request after pickup cannot cancel goods custody');

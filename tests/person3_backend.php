@@ -7,6 +7,7 @@ require_once __DIR__.'/../app/Services/CustomerOrderService.php';
 require_once __DIR__.'/../app/Services/Person3Worker.php';
 require_once __DIR__.'/../app/Services/PrivateStorageService.php';
 require_once __DIR__.'/../app/Services/ShipperBankService.php';
+require_once __DIR__.'/../app/Services/AdminFinanceService.php';
 require_once __DIR__.'/../app/Services/AdminService.php';
 require_once __DIR__.'/../app/Services/AdminPolicyService.php';
 require_once __DIR__.'/../app/Services/Person1Worker.php';
@@ -31,7 +32,7 @@ try{
     $sql=preg_replace('/^BEGIN;\s*|^COMMIT;\s*|^CREATE SCHEMA[^;]+;\s*|^SET search_path[^;]+;\s*/m','',$sql);
     $sql=preg_replace('/CREATE FUNCTION erase_identity_document_on_account_close\(\).*?(?=CREATE TABLE shipper_score_policies)/s','',$sql);
     $db->exec(str_replace('CREATE TABLE ','CREATE TEMP TABLE ',$sql));
-    foreach(['20261105_customer_orders','20261105_approved_pricing','20261105_distance_weight_pricing','20261106_person1_backend','20261111_person3','20261111_person3_complete','20261111_person3_supabase','20261112_shipper_policy_workflows'] as $migration){
+    foreach(['20261105_customer_orders','20261105_approved_pricing','20261105_distance_weight_pricing','20261106_person1_backend','20261111_person3','20261111_person3_complete','20261111_person3_supabase','20261112_shipper_policy_workflows','20261113_manual_escrow','20261113_admin_finance'] as $migration){
         $sql=file_get_contents(__DIR__.'/../database/migrations/'.$migration.'.sql');$sql=preg_replace('/^BEGIN;\s*|^COMMIT;\s*|^SET LOCAL search_path[^;]+;\s*/m','',$sql);$db->exec(str_replace('CREATE TABLE ','CREATE TEMP TABLE ',$sql));
     }
     check(value($db,"SELECT current_setting('search_path')")==='pg_temp, pg_catalog','isolated schema');
@@ -53,11 +54,11 @@ try{
     rejects(fn()=>tx($db,fn()=>$svc->chat(3,'CUSTOMER',['order_id'=>$id],false)),'ORDER_NOT_FOUND');
     check(count(tx($db,fn()=>$svc->chat(4,'SHIPPER',['order_id'=>$id],false))['items'])===1,'assigned shipper reads chat');
     tx($db,fn()=>$svc->chat(4,'SHIPPER',['order_id'=>$id,'read_through_id'=>$m['message_id']],true));check(value($db,'SELECT read_at IS NOT NULL FROM chat_messages WHERE message_id=?',[$m['message_id']])===true,'peer read receipt');
-    check($svc->notifications(4,[],false)['unread_count']===1,'chat notification one time');
-    $notification=$svc->notifications(4,[],false)['items'][0]['notification_id'];
-    rejects(fn()=>tx($db,fn()=>$svc->notifications(2,['notification_id'=>$notification,'read'=>true],true)),'NOTIFICATION_NOT_FOUND');
-    tx($db,fn()=>$svc->notifications(4,['notification_id'=>$notification,'read'=>true],true));check($svc->notifications(4,[],false)['unread_count']===0,'mark read');
-    tx($db,fn()=>$svc->notifications(4,['notification_id'=>$notification,'read'=>false],true));check($svc->notifications(4,[],false)['unread_count']===1,'mark unread');
+    check($svc->notifications(4,'SHIPPER',[],false)['unread_count']===1,'chat notification one time');
+    $notification=$svc->notifications(4,'SHIPPER',[],false)['items'][0]['notification_id'];
+    rejects(fn()=>tx($db,fn()=>$svc->notifications(2,'CUSTOMER',['notification_id'=>$notification,'read'=>true],true)),'NOTIFICATION_NOT_FOUND');
+    tx($db,fn()=>$svc->notifications(4,'SHIPPER',['notification_id'=>$notification,'read'=>true],true));check($svc->notifications(4,'SHIPPER',[],false)['unread_count']===0,'mark read');
+    tx($db,fn()=>$svc->notifications(4,'SHIPPER',['notification_id'=>$notification,'read'=>false],true));check($svc->notifications(4,'SHIPPER',[],false)['unread_count']===1,'mark unread');
     $ticketBody=['order_id'=>$id,'category'=>'DELIVERY','subject'=>'Test','description'=>'Need help','client_key'=>'ticket-test-0001'];
     $ticket=tx($db,fn()=>$svc->tickets(2,'CUSTOMER',$ticketBody,true))['ticket'];tx($db,fn()=>$svc->tickets(2,'CUSTOMER',$ticketBody,true));check((int)value($db,'SELECT count(*) FROM support_tickets')===1,'ticket retry dedup');
     rejects(fn()=>$svc->tickets(3,'CUSTOMER',['id'=>$ticket['ticket_id']],false),'TICKET_NOT_FOUND');
@@ -106,6 +107,9 @@ try{
     $q=$db->prepare("INSERT INTO private_files(owner_id,ticket_id,purpose,object_key,original_name,mime_type,byte_size,checksum_sha256) VALUES(2,?,'TICKET',?,'fixture.pdf','application/pdf',7,?) RETURNING file_id");$q->execute([$ticket['ticket_id'],$object,hash('sha256','fixture')]);$fileId=(int)$q->fetchColumn();
     $signed=$storage->signed($fileId,2,'CUSTOMER');parse_str($signed['download_query'],$query);
     check($storage->download($fileId,2,'CUSTOMER',$query)['path']===$path,'signed owner download');
+    check($storage->content($fileId,2,'CUSTOMER')['path']===$path,'direct authenticated owner download');
+    rejects(fn()=>$storage->content($fileId,3,'CUSTOMER'),'FILE_NOT_FOUND');
+    check(tx($db,fn()=>$storage->content($fileId,1,'ADMIN'))['path']===$path,'direct admin read requires permissions and audit');
     check(count(tx($db,fn()=>$storage->listing(1,['ticket_id'=>$ticket['ticket_id']]))['items'])===1,'admin lists related support files');
     check(isset(tx($db,fn()=>$storage->signed($fileId,1,'ADMIN'))['download_query']),'admin signed ticket file audited');
     rejects(fn()=>tx($db,fn()=>$storage->listing(3,['ticket_id'=>$ticket['ticket_id']])),'PERMISSION_DENIED');
@@ -164,7 +168,7 @@ try{
     check(count(tx($db,fn()=>$svc->replies(2,'CUSTOMER',['ticket_id'=>$ticket['ticket_id']],false))['items'])===2,'two-way ticket conversation');
     $db->prepare("UPDATE support_tickets SET status='CLOSED',closed_at=now() WHERE ticket_id=?")->execute([$ticket['ticket_id']]);
     rejects(fn()=>tx($db,fn()=>$svc->replies(2,'CUSTOMER',array_replace($replyBody,['client_key'=>'reply-test-closed']),true)),'TICKET_CLOSED');
-    $latest=value($db,'SELECT max(notification_id) FROM notifications WHERE user_id=2');tx($db,fn()=>$svc->notifications(2,['all'=>true,'read'=>true,'through_id'=>$latest],true));check($svc->notifications(2,[],false)['unread_count']===0,'mark-all respects owner and high-water ID');
+    $latest=value($db,'SELECT max(notification_id) FROM notifications WHERE user_id=2');tx($db,fn()=>$svc->notifications(2,'CUSTOMER',['all'=>true,'read'=>true,'through_id'=>$latest],true));check($svc->notifications(2,'CUSTOMER',[],false)['unread_count']===0,'mark-all respects owner and high-water ID');
     $bankSvc=new ShipperBankService($db);$db->prepare('UPDATE users SET password_hash=? WHERE user_id=4')->execute([password_hash('FixturePassword!234',PASSWORD_DEFAULT)]);
     $bankInput=['bank_code'=>'TEST','bank_name'=>'Fixture bank','account_holder'=>'Fixture Shipper','account_number'=>'000009876543','current_password'=>'FixturePassword!234','client_key'=>'bank-change-test-1'];
     check(tx($db,fn()=>$bankSvc->request(4,array_replace($bankInput,['current_password'=>'wrong'])))['code']==='PASSWORD_INCORRECT','bank request requires current password');
@@ -180,6 +184,9 @@ try{
     check(tx($db,fn()=>$bankSvc->confirm(4,['request_id'=>$change['request_id'],'code'=>$otp]))['bank_account_id']===$confirmed['bank_account_id'],'OTP confirmation replay no new account');
     check((int)value($db,'SELECT count(*) FROM shipper_bank_accounts WHERE shipper_id=4 AND replaced_at IS NULL')===1,'exactly one current bank account');
     check($bankSvc->current(4)['bank_account']['account_number_masked']==='••••6543','own bank API masks number');
+    check($bankSvc->current(4)['bank_account']['account_number']===$bankInput['account_number'],'owner can view full bank number to edit');
+    check($bankSvc->current(4)['bank_account']['review_status']==='PENDING','changed bank waits for admin review');
+    tx($db,fn()=>(new AdminFinanceService($db))->review(1,['role'=>'SHIPPER','bank_account_id'=>$confirmed['bank_account_id'],'decision'=>'APPROVED','note'=>'Fixture account verified']));
     check(value($db,'SELECT encrypted_payload FROM bank_account_changes WHERE request_id=?',[$change['request_id']])===null,'consumed bank change payload purged');
     $db->exec("UPDATE bank_account_changes SET created_at=now()-interval '2 minutes'");$expiredInput=array_replace($bankInput,['client_key'=>'bank-change-expired']);$expiredRequest=tx($db,fn()=>$bankSvc->request(4,$expiredInput));
     $db->prepare("UPDATE bank_account_changes SET expires_at=now()-interval '1 second' WHERE request_id=?")->execute([$expiredRequest['request_id']]);

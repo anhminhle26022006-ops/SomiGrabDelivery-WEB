@@ -52,6 +52,7 @@ if ($shipperPage === 'notifications') $shipperPage = 'dashboard';
     <button class="toggle" id="availabilityToggle" disabled aria-label="Bật tắt nhận đơn"></button><strong>Trạng thái nhận đơn</strong>
     <span class="pill" id="availabilityPill">Đang tải…</span>
     <p class="muted" id="availabilityHelp">Đang kiểm tra trạng thái nhận đơn…</p>
+    <button type="button" class="outline" id="refreshMatchingLocation" hidden>Cập nhật GPS và tìm đơn</button>
   </div>
   <?php endif; ?>
   <?php require __DIR__ . '/pages/' . $shipperPage . '.php'; ?>
@@ -115,6 +116,7 @@ body[data-page="shipper"] .shipper-policy-dialog>.shipper-dialog-body>.shipper-d
   const policy = document.getElementById('shipperPolicyModal');
   let locale = localStorage.getItem('somi-language') === 'vi' ? 'vi' : 'en';
   const shipperCopy = {
+    'Đang chờ nhận đơn':'Awaiting a shipper','Đã đến điểm giao':'Arrived at drop-off','ĐÃ ĐẾN NƠI':'ARRIVED AT DROP-OFF','Chụp ảnh minh chứng':'Take a proof photo','Xác nhận đã giao xong':'Confirm delivery complete',
     'CẬP NHẬT TÀI KHOẢN VÀ ĐƠN HÀNG':'ACCOUNT & DELIVERY UPDATES','Thông báo':'Notifications','Tập trung mọi cập nhật để bạn không bỏ lỡ thông tin quan trọng.':'See all updates in one place so you do not miss important information.','✓ Đánh dấu tất cả đã đọc':'✓ Mark all as read','Tất cả':'All','Đơn hàng':'Orders','Tài khoản':'Account','Xem':'View','5 phút trước':'5 minutes ago','8 phút trước':'8 minutes ago','10 phút trước':'10 minutes ago','12 phút trước':'12 minutes ago','1 giờ trước':'1 hour ago','2 giờ trước':'2 hours ago','3 giờ trước':'3 hours ago','Quản lý tài khoản & trợ giúp':'Account management & help',
     'Có đơn giao mới phù hợp với bạn':'A new delivery offer is available for you','Đơn SOMI-240126 đã được giao thành công':'Order SOMI-240126 was delivered successfully','Yêu cầu xác minh tài khoản':'Account verification required','Tin nhắn từ khách hàng':'Message from a customer','Bạn đã nhận được 42.000 ₫':'You received ₫42,000','Vui lòng cập nhật giấy tờ tùy thân để hoàn tất hồ sơ.':'Update your identity documents to complete your profile.','Xem các thay đổi có hiệu lực trong tuần này.':'Review the changes taking effect this week.','“Vui lòng giao giúp trước 17h nhé.”':'“Please deliver this before 5 PM.”',
     'KHÔNG GIAN NGƯỜI GIAO':'SHIPPER WORKSPACE','Tổng quan':'Dashboard','Đơn giao phù hợp':'Delivery offers','Đơn đang giao':'Active delivery','Lịch sử giao hàng':'Delivery history','Thu nhập':'Earnings','Trạng thái nhận đơn':'Order availability','ĐANG NHẬN ĐƠN':'ONLINE · ACCEPTING ORDERS','ĐÃ TẮT NHẬN ĐƠN':'OFFLINE · NOT ACCEPTING ORDERS','Bạn sẽ nhận được các đơn phù hợp khi trực tuyến.':'You will receive suitable offers while online.','Bạn sẽ không nhận đơn mới khi trạng thái đang tắt.':'You will not receive new offers while offline.',

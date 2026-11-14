@@ -46,7 +46,7 @@ const check=(ok,label)=>{assert.ok(ok,label);checks++;};
   window.fetch=async(url,options={})=>{
    const u=new URL(url,location.href),body=options.body?JSON.parse(options.body):null,method=options.method||'GET';fixtureRequests.push({path:u.pathname,search:u.search,method,body,key:options.headers?.['Idempotency-Key']});let data={};
    if(u.pathname.endsWith('/account/profile.php'))data={profile:{full_name:'Fixture Customer',phone:'0900000001',email:new URLSearchParams(location.search).has('demo')?'fixture@demo.somi.invalid':'fixture@example.invalid',app_language:new URLSearchParams(location.search).get('accountLang')==='en'?'en':'vi'}};
-   else if(u.pathname.endsWith('/shipper-location.php')){if(fixtureLocationMode==='error')return new Response(JSON.stringify({code:'AUTHENTICATION_REQUIRED'}),{status:401});data={order_id:'7',status:fixtureOrder.status,location:fixtureLocationMode==='empty'?null:{latitude:'10.81',longitude:'106.69',recorded_at:new Date().toISOString()}};}
+   else if(u.pathname.endsWith('/shipper-location.php')){if(fixtureLocationMode==='error')return new Response(JSON.stringify({code:'AUTHENTICATION_REQUIRED'}),{status:401});data={order_id:'7',status:fixtureOrder.status,arrived_at:fixtureOrder.arrived_at||null,location:fixtureLocationMode==='empty'?null:{latitude:'10.81',longitude:'106.69',recorded_at:new Date().toISOString()}};}
    else if(u.pathname.endsWith('/confirm-return.php')){if(!fixtureReturnHanded)return new Response(JSON.stringify({code:'RETURN_NOT_HANDED_OVER'}),{status:409});fixtureOrder.status='RETURNED';data={order_id:'7',status:'RETURNED'};}
    else if(u.pathname.endsWith('/addresses.php'))data={items:[{address_id:'1',label:'Home',address_detail:'Saved fixture address',latitude:'10.77',longitude:'106.70',is_default:true}]};
    else if(u.pathname.endsWith('/parcel-categories.php'))data={items:[{category_id:'1',restriction_type:'ALLOWED',name_vi:'Fixture category'}]};
@@ -123,6 +123,11 @@ const check=(ok,label)=>{assert.ok(ok,label);checks++;};
  await evaluate(`fixtureLocationMode='error';document.querySelector('[data-refresh]').click()`);await waitFor(`document.querySelector('[data-location-status]')?.textContent.includes('hết hạn')`);
  await load('tracking&id=7');await evaluate(`fixtureOrder.status='IN_DELIVERY';document.querySelector('[data-refresh]').click()`);await waitFor(`!!window.fixtureRoute&&!!document.querySelector('[data-location-status]')`);
  check(await evaluate(`fixtureRequests.some(r=>r.body?.action==='route')&&fixtureMarkers.some(m=>m.label==='Shipper'&&!m.removed)`),'tracking retains route and live shipper GPS together');
+ await evaluate(`fixtureOrder.arrived_at=new Date().toISOString();document.querySelector('[data-refresh]').click()`);
+ await waitFor(`document.querySelector('[data-location-status]')?.textContent.includes('Shipper đã đến điểm giao')`);
+ check(true,'customer sees arrival separately from completed handover');
+ await evaluate(`delete fixtureOrder.arrived_at`);
+
  await load('order&id=7&lang=en');await evaluate(`fixtureOrder.status='RETURNING';document.querySelector('[data-refresh]').click()`);await waitFor(`!!document.querySelector('[data-confirm-return]')`);
  check(await evaluate(`document.querySelector('[data-confirm-return] button').textContent==='Confirm return received'`),'return confirmation supports English');
  await load('order&id=7&demo=1');check(await evaluate(`!!document.querySelector('[data-demo-banner]')&&document.querySelector('[data-pay]').textContent.includes('DEMO')&&!document.querySelector('[data-pay]').textContent.includes('SePay')`),'demo payment is visibly simulated');
@@ -153,12 +158,25 @@ const check=(ok,label)=>{assert.ok(ok,label);checks++;};
  check(await evaluate(`!document.querySelector('[data-step="1"]').hidden&&document.querySelector('[data-pickup-confirm-message]').textContent.includes('hơn 1 km')`),'remote pickup requires confirmation before proceeding');
  await click('[data-pickup-cancel]');check(await evaluate(`!document.querySelector('[data-pickup-confirm]').open&&!document.querySelector('[data-step="1"]').hidden`),'cancel remote pickup stays on route step');
  await submit();await waitFor(`document.querySelector('[data-pickup-confirm]').open`);await click('[data-pickup-accept]');await waitFor(`!document.querySelector('[data-step="2"]').hidden`);
- await submit();await submit();
+ await submit();
+ check(await evaluate(`!document.querySelector('input[value=later]').disabled&&document.querySelector('[data-later]').hidden`),'schedule choice is available, immediate pickup hides date input');
+ await click('input[name=schedule][value=later]');
+ check(await evaluate(`!document.querySelector('[data-later]').hidden&&field('schedule-at').required&&!field('schedule-at').disabled`),'scheduled pickup shows a required date/time on mobile');
+ const quotesBeforeInvalid=await evaluate(`fixtureRequests.filter(r=>r.path.endsWith('/quotes.php')).length`);
+ await submit();
+ check(await evaluate(`fixtureRequests.filter(r=>r.path.endsWith('/quotes.php')).length===${quotesBeforeInvalid}&&!document.querySelector('[data-step="3"]').hidden`),'missing scheduled date cannot request quote');
+ await evaluate(`window.scheduledAt=new Date(Date.now()+2*3600000);field('schedule-at').value=new Date(scheduledAt.getTime()-scheduledAt.getTimezoneOffset()*60000).toISOString().slice(0,16);field('schedule-at').dispatchEvent(new Event('input',{bubbles:true}))`);
+ await submit();
  await waitFor(`!document.querySelector('[data-step="4"]').hidden`);
+ check(await evaluate(`fixtureRequests.filter(r=>r.path.endsWith('/quotes.php')).at(-1).body.schedule.mode==='later'&&document.querySelector('[data-summary]').textContent.includes('Hẹn lấy hàng')`),'scheduled time is sent in quote and shown in confirmation');
  check(await evaluate(`document.querySelector('[data-quote]').textContent.includes('35.970')&&document.querySelector('[data-quote]').textContent.includes('Mưa nhẹ')`),'quote shows accepted price and weather');
  check(await evaluate(`fixtureRequests.filter(r=>r.path.endsWith('/quotes.php')).at(-1).body.currency_code==='VND'`),'quote request includes selected VND currency');
+ await click('[data-prev]');await click('input[name=schedule][value=now]');await submit();await waitFor(`!document.querySelector('[data-step="4"]').hidden`);
+ check(await evaluate(`fixtureRequests.filter(r=>r.path.endsWith('/quotes.php')).at(-1).body.schedule.mode==='now'&&!document.querySelector('[data-summary]').textContent.includes('Hẹn lấy hàng')`),'immediate order sends now mode without an appointment');
+ await click('[data-prev]');await click('input[name=schedule][value=later]');await submit();await waitFor(`!document.querySelector('[data-step="4"]').hidden`);
+
  await load('create&lang=en',true);await waitFor(`!document.querySelector('[data-use-location]').disabled`);
- check(await evaluate(`!document.querySelector('[data-step="4"]').hidden&&field('delivery-name').value==='Receiver'&&field('pkg-weight').value==='3.5'&&field('pickup-latitude').value==='10.83'`),'language reload preserves confirmation step, addresses, recipient and parcel');
+ check(await evaluate(`!document.querySelector('[data-step="4"]').hidden&&field('delivery-name').value==='Receiver'&&field('pkg-weight').value==='3.5'&&field('pickup-latitude').value==='10.83'&&document.querySelector('input[value=later]').checked&&!!field('schedule-at').value`),'language reload preserves confirmation step, addresses, recipient and parcel');
  await load('create',true);await waitFor(`!document.querySelector('[data-use-location]').disabled`);
  check(await evaluate(`!document.querySelector('[data-step="4"]').hidden&&field('delivery-phone').value==='0900000002'`),'switching language back preserves the draft');
  await click('[data-set-currency="USD"]');

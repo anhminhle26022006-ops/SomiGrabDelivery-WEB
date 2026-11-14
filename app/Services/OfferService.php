@@ -17,23 +17,42 @@ final class OfferService
     {
         $q = $this->db->prepare(
             "SELECT f.offer_id, f.order_id, o.order_code, f.distance_to_pickup_km, f.sent_at, f.expires_at,
-                    greatest(0, floor(extract(epoch FROM f.expires_at - now())))::int AS seconds_left,
+                    NULL AS seconds_left,
                     o.pickup_label, o.pickup_address, o.pickup_latitude, o.pickup_longitude,
                     o.delivery_label, o.delivery_address, o.delivery_latitude, o.delivery_longitude,
                     o.distance_km, o.estimated_duration_minutes, o.estimated_weight_kg, o.parcel_description,
                     c.name_vi AS category_name_vi, c.name_en AS category_name_en,
-                    o.currency_code, o.total_charge_minor
+                    o.currency_code, o.total_charge_minor, o.pricing_snapshot->'schedule' AS pickup_schedule
              FROM order_match_offers f
              JOIN orders o ON o.order_id = f.order_id
              JOIN parcel_categories c ON c.category_id = o.category_id
-             WHERE f.shipper_id = ? AND f.status = 'PENDING' AND f.expires_at > now() AND o.status = 'SEARCHING_SHIPPER'
-             ORDER BY f.expires_at, f.offer_id"
+             WHERE f.shipper_id = ? AND f.status = 'PENDING' AND o.status = 'SEARCHING_SHIPPER' AND clock_timestamp()<" . MatchingService::deadlineSql() . "
+             ORDER BY f.sent_at, f.offer_id"
         );
         $q->execute([$shipperId]);
         $offers = $q->fetchAll();
-        foreach ($offers as &$offer) $offer['estimated_earning_minor'] = $this->estimatedEarning($offer);
+        foreach ($offers as &$offer) {
+            $offer['estimated_earning_minor'] = $this->estimatedEarning($offer);
+            $offer['pickup_schedule'] = $offer['pickup_schedule'] ? json_decode($offer['pickup_schedule'], true) : null;
+        }
         unset($offer);
-        return ['items' => $offers];
+        $notice = null;
+        if (!$offers) {
+            $q = $this->db->prepare("SELECT EXISTS(SELECT 1 FROM orders WHERE customer_id=? AND status IN ('PENDING_PAYMENT','SEARCHING_SHIPPER'))");
+            $q->execute([$shipperId]);
+            if (in_array($q->fetchColumn(), [true,'t',1,'1'], true)) $notice = 'OWN_ORDER_EXCLUDED';
+        }
+        $q = $this->db->prepare("SELECT f.offer_id,o.order_code,
+            CASE WHEN f.status <> 'PENDING' THEN f.status
+                 WHEN o.status <> 'SEARCHING_SHIPPER' THEN 'ORDER_UNAVAILABLE'
+                 ELSE f.status END AS status,
+            f.response_note
+            FROM order_match_offers f JOIN orders o ON o.order_id=f.order_id
+            WHERE f.shipper_id=? AND (f.status<>'PENDING' OR o.status<>'SEARCHING_SHIPPER')
+              AND COALESCE(f.responded_at,f.expires_at)>now()-interval '5 minutes'
+            ORDER BY COALESCE(f.responded_at,f.expires_at) DESC,f.offer_id DESC LIMIT 5");
+        $q->execute([$shipperId]);
+        return ['items' => $offers, 'notice' => $notice, 'recent_updates' => $q->fetchAll()];
     }
 
     /**

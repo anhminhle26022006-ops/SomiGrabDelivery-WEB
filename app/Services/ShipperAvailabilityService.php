@@ -17,6 +17,8 @@ final class ShipperAvailabilityService
             'can_work' => !$blockers,
             'blockers' => $blockers,
             'last_location_at' => $profile['last_location_at'],
+            'location_fresh' => $profile['last_location_at'] !== null
+                && strtotime($profile['last_location_at']) > time() - ShipperInput::config('location_max_age_seconds'),
         ];
     }
 

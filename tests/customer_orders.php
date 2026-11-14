@@ -45,6 +45,7 @@ try {
     $migration = file_get_contents(__DIR__ . '/../database/migrations/20261105_customer_orders.sql');
     $migration = preg_replace('/^BEGIN;\s*|^COMMIT;\s*|^SET LOCAL search_path[^;]+;\s*/m', '', $migration);
     $db->exec(str_replace('CREATE TABLE ', 'CREATE TEMP TABLE ', $migration));
+    $db->exec('ALTER TABLE deliveries ADD COLUMN arrived_at TIMESTAMPTZ');
     check((string) scalar($db, "SELECT current_setting('search_path')") === 'pg_temp, pg_catalog', 'isolated search path');
     check((int) scalar($db, "SELECT count(*) FROM pg_class WHERE relnamespace = pg_my_temp_schema() AND relname IN ('users','orders','payments','order_quotes','order_events')") === 5, 'all business writes target temporary tables');
 
@@ -121,6 +122,21 @@ try {
     rejects(fn() => $orders->cancel(2, $id, 'Test'), 'ORDER_NOT_FOUND');
     check(count($orders->list(2, null, 20, null)['items']) === 0, 'list ownership');
     $input['pickup'] = $input['delivery'];
+    $db->exec('SAVEPOINT schedule_checks');
+    $scheduledInput = $input;
+    $scheduledInput['schedule'] = ['mode'=>'later','at'=>(new DateTimeImmutable('+2 hours'))->format(DATE_ATOM)];
+    $scheduledQuote = $quotes->create(1, $scheduledInput);
+    $scheduledOrder = $orders->create(1, $scheduledQuote['quote_id'], 'test-scheduled-01')['order'];
+    check($scheduledOrder['pricing_snapshot']['schedule'] == $scheduledQuote['snapshot']['schedule'], 'pickup schedule survives quote to order');
+    foreach (['+10 minutes', '-1 hour', '+8 days'] as $offset) {
+        $badSchedule = $input; $badSchedule['schedule']=['mode'=>'later','at'=>(new DateTimeImmutable($offset))->format(DATE_ATOM)];
+        rejects(fn()=>$quotes->create(1,$badSchedule),'INVALID_PICKUP_TIME');
+    }
+    $expiredSchedule = $scheduledQuote['snapshot']; $expiredSchedule['schedule']['at']=(new DateTimeImmutable('-1 minute'))->format(DATE_ATOM);
+    $freshScheduledQuote = $quotes->create(1, $scheduledInput);
+    $db->prepare('UPDATE order_quotes SET snapshot=CAST(? AS jsonb) WHERE quote_id=?')->execute([json_encode($expiredSchedule),$freshScheduledQuote['quote_id']]);
+    rejects(fn()=>$orders->create(1,$freshScheduledQuote['quote_id'],'expired-schedule-1'),'INVALID_PICKUP_TIME');
+    $db->exec('ROLLBACK TO SAVEPOINT schedule_checks');
     $other = $quotes->create(1, $input);
     rejects(fn() => $orders->create(1, $other['quote_id'], 'test-create-0001'), 'IDEMPOTENCY_CONFLICT');
     $db->prepare("UPDATE order_quotes SET created_at = now()-interval '2 hours', expires_at = now()-interval '1 hour' WHERE quote_id = ?")->execute([$other['quote_id']]);

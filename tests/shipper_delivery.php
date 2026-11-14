@@ -25,6 +25,7 @@ function photo(string $name): array { global $db; $order=(int)value($db,"SELECT 
 
 try {
     $db = shipper_test_db();
+    foreach(['20261113_manual_escrow','20261113_admin_finance'] as $migration){$sql=file_get_contents(__DIR__.'/../database/migrations/'.$migration.'.sql');$db->exec(str_replace(['SET LOCAL search_path TO somi, public;','CREATE TABLE '],['','CREATE TEMP TABLE '],$sql));}
     $delivery = new DeliveryService($db); $completion = new DeliveryCompletionService($db);
     $returns = new DeliveryReturnService($db); $gps = new ShipperLocationService($db);
     tx($db, fn() => (new ShipperAvailabilityService($db))->turnOn(SHIPPER_A, NEAR[0], NEAR[1]));
@@ -43,6 +44,22 @@ try {
     check(tx($db, fn() => $delivery->pickup(SHIPPER_A, $order))['delivery']['status'] === 'PICKED_UP', 'pickup replay is harmless');
     check(value($db, 'SELECT picked_up_at IS NOT NULL FROM orders WHERE order_id = ?', [$order]) === true, 'pickup time recorded');
     tx($db, fn() => $delivery->startDelivery(SHIPPER_A, $order));
+    rejects(fn() => tx($db, fn() => $completion->delivered(SHIPPER_A, $order)), 'ARRIVAL_REQUIRED');
+    rejects(fn() => tx($db, fn() => $completion->addEvidence(SHIPPER_A,$order,'DELIVERY_PHOTO',...photo('before-arrival'))), 'ARRIVAL_REQUIRED');
+    rejects(fn()=>tx($db,fn()=>$delivery->arrive(SHIPPER_A,$order)),'ARRIVAL_LOCATION_REQUIRED');
+    check($delivery->current(SHIPPER_A)['delivery']['next_actions']===['ARRIVED','FAIL'],'arrival precedes delivery evidence');
+    $far=tx($db,fn()=>$gps->record(SHIPPER_A,NEAR[0],NEAR[1],8));
+    check($far['arrived_at']===null,'GPS far from destination cannot mark arrival');
+    $db->exec('DELETE FROM shipper_locations');
+    $inaccurate=tx($db,fn()=>$gps->record(SHIPPER_A,'10.7760000','106.6880000',500));
+    check($inaccurate['arrived_at']===null,'inaccurate GPS cannot auto-arrive');
+    $db->exec('DELETE FROM shipper_locations');
+    $arrival=tx($db,fn()=>$gps->record(SHIPPER_A,'10.7760000','106.6880000',8));
+    check($arrival['arrived_at']!==null,'accurate GPS at destination automatically records arrival');
+    check(tx($db,fn()=>$delivery->arrive(SHIPPER_A,$order))['delivery']['arrived_at']===$arrival['arrived_at'],'manual arrival retry is idempotent');
+    check((int)value($db,"SELECT count(*) FROM order_events WHERE order_id=? AND event_type='OrderArrived'",[$order])===1,'arrival event emitted exactly once');
+    check($gps->latest(CUSTOMER,'CUSTOMER',$order)['arrived_at']===$arrival['arrived_at'],'customer sees arrival milestone');
+    $db->exec('DELETE FROM shipper_locations');
     rejects(fn() => tx($db, fn() => $completion->delivered(SHIPPER_A, $order)), 'EVIDENCE_REQUIRED');
     rejects(fn() => tx($db, fn() => $completion->addEvidence(SHIPPER_A, $order, 'RETURN_PHOTO', ...photo('wrong'))), 'INVALID_ORDER_STATE');
     rejects(fn() => tx($db, fn() => $completion->addEvidence(SHIPPER_A, $order, 'DELIVERY_PHOTO', '../../etc/passwd', 'image/jpeg', 10, null)), 'VALIDATION_ERROR');
@@ -120,6 +137,7 @@ try {
     $encrypted=value($db,'SELECT encrypted_payload FROM email_messages WHERE deduplication_key=?',['bank-change:'.$request['request_id']]);
     $mail=EncryptedPayload::open($encrypted);preg_match('/: ([0-9]{6})/',$mail['text'],$match);
     $confirmed=tx($db,fn()=>$bank->confirm(3,['request_id'=>$request['request_id'],'code'=>$match[1]]));check($confirmed['confirmed'],'OTP confirms bank for delivery earning');
+    $db->exec("UPDATE shipper_bank_accounts SET review_status='APPROVED' WHERE shipper_id=3");
     $payout=tx($db,fn()=>$finance->reserve((int)$earning['earning_id']));check($payout['status']==='PROCESSING','manual payout awaits evidence, no bank transfer API');
     $proof=['payout_id'=>$payout['payout_id'],'provider_payout_ref'=>'FIXTURE-TRANSFER-NOT-REAL','evidence_reference'=>'FIXTURE-STATEMENT-NOT-REAL','amount_minor'=>(string)$earning['gross_amount_minor'],'currency_code'=>'VND'];
     check(tx($db,fn()=>$finance->reconcile(1,$proof))['status']==='SUCCEEDED','manual evidence reconciliation marks completed payout');

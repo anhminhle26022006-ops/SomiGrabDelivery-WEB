@@ -3,59 +3,34 @@ declare(strict_types=1);
 require_once __DIR__ . '/OrderLifecycleService.php';
 require_once __DIR__ . '/ShipperInput.php';
 require_once __DIR__ . '/ShipperEligibility.php';
+require_once __DIR__ . '/PickupSchedule.php';
 
-/**
- * Ghép đơn: chọn Shipper phù hợp và gửi offer có thời hạn.
- *
- * Mỗi "vòng" gửi offer cho vài Shipper gần điểm lấy hàng nhất. Khi cả vòng hết hạn
- * hoặc bị từ chối, vòng kế tiếp gửi cho những người chưa được mời. Hết số vòng hoặc
- * hết thời gian tìm kiếm thì đơn chuyển sang NO_SHIPPER_FOUND.
- */
+/** Open dispatch: all eligible nearby shippers can receive an order; no individual offer timeout, with a five-minute customer search window. */
 final class MatchingService
 {
     public function __construct(private PDO $db) {}
 
-    /**
-     * Gửi một vòng offer cho đơn. Hàm an toàn khi gọi lặp lại: nếu đơn không còn
-     * tìm Shipper hoặc vẫn còn offer đang chờ thì không làm gì.
-     * Trả về ['result' => SKIPPED | WAITING | OFFERED | NO_SHIPPER_FOUND, 'offers' => số offer vừa tạo].
-     */
+    /** Invite all currently eligible nearby shippers; existing invitations are never duplicated. */
     public function dispatch(int $orderId): array
     {
         // Khóa đơn trước tiên: hủy đơn, thanh toán và nhận đơn đều khóa cùng dòng này.
         $order = OrderLifecycleService::lock($this->db, $orderId);
         if ($order['status'] !== 'SEARCHING_SHIPPER' || $order['paid_at'] === null) return ['result' => 'SKIPPED', 'offers' => 0];
+        $matchingAt = PickupSchedule::matchingAt($order);
+        if ($matchingAt && $matchingAt > new DateTimeImmutable('now')) return ['result' => 'SCHEDULED', 'offers' => 0];
 
-        $q = $this->db->prepare("SELECT count(*) FROM order_match_offers WHERE order_id = ? AND status = 'PENDING' AND expires_at > now()");
-        $q->execute([$orderId]);
-        if ((int) $q->fetchColumn() > 0) return ['result' => 'WAITING', 'offers' => 0];
+        if ($this->searchExpired($orderId)) return $this->noShipperFound($order);
 
-        // Phiên tìm kiếm hiện tại bắt đầu từ lần gần nhất đơn vào SEARCHING_SHIPPER.
-        $q = $this->db->prepare(
-            "SELECT COALESCE((SELECT max(created_at) FROM order_status_history WHERE order_id = o.order_id AND new_status = 'SEARCHING_SHIPPER'), o.paid_at) AS started_at
-             FROM orders o WHERE o.order_id = ?"
-        );
-        $q->execute([$orderId]);
-        $startedAt = $q->fetchColumn();
-        $q = $this->db->prepare(
-            'SELECT count(DISTINCT sent_at) AS rounds, extract(epoch FROM now() - CAST(? AS timestamptz)) AS elapsed
-             FROM order_match_offers WHERE order_id = ? AND sent_at >= CAST(? AS timestamptz)'
-        );
-        $q->execute([$startedAt, $orderId, $startedAt]);
-        $progress = $q->fetch();
-        $timedOut = (float) $progress['elapsed'] > ShipperInput::config('search_timeout_seconds');
-        if ((int) $progress['rounds'] >= ShipperInput::config('max_rounds') || $timedOut) return $this->noShipperFound($order);
-
-        $candidates = $this->candidates($order, $startedAt);
-        // Chưa có ai phù hợp: giữ đơn ở SEARCHING_SHIPPER để worker thử lại cho tới khi hết thời gian.
+        $this->db->prepare('UPDATE orders SET matching_checked_at=now() WHERE order_id=?')->execute([$orderId]);
+        $candidates = $this->candidates($order);
         if (!$candidates) return ['result' => 'WAITING', 'offers' => 0];
 
         $q = $this->db->prepare(
             'INSERT INTO order_match_offers (order_id, shipper_id, distance_to_pickup_km, match_score, sent_at, expires_at)
-             VALUES (?, ?, ?, ?, now(), now() + make_interval(secs => ?)) RETURNING offer_id'
+             VALUES (?, ?, ?, ?, now(), NULL) RETURNING offer_id'
         );
         foreach ($candidates as $candidate) {
-            $q->execute([$orderId, $candidate['user_id'], $candidate['distance_km'], $candidate['match_score'], ShipperInput::config('offer_ttl_seconds')]);
+            $q->execute([$orderId, $candidate['user_id'], $candidate['distance_km'], $candidate['match_score']]);
             $offerId=(int)$q->fetchColumn();
             OrderLifecycleService::event($this->db,$order,'OfferCreated','offer-created:'.$offerId,['offer_id'=>(string)$offerId]);
         }
@@ -72,14 +47,15 @@ final class MatchingService
             "SELECT o.order_id FROM orders o
              JOIN shipper_profiles sp ON sp.user_id = ?
              WHERE o.status = 'SEARCHING_SHIPPER' AND o.paid_at IS NOT NULL AND o.customer_id <> sp.user_id
+               AND " . PickupSchedule::dueSql() . "
                AND sp.last_location_at > now() - make_interval(secs => ?)
                AND 6371 * 2 * asin(sqrt(least(1.0,
                  power(sin(radians(sp.last_latitude - o.pickup_latitude) / 2), 2)
                  + cos(radians(o.pickup_latitude)) * cos(radians(sp.last_latitude))
                    * power(sin(radians(sp.last_longitude - o.pickup_longitude) / 2), 2)))) <= ?
                AND NOT EXISTS (SELECT 1 FROM order_assignments a WHERE a.shipper_id=sp.user_id AND a.assignment_status='ACTIVE')
-               AND NOT EXISTS (SELECT 1 FROM order_match_offers f WHERE f.order_id=o.order_id AND f.status='PENDING' AND f.expires_at>now())
-             ORDER BY o.paid_at,o.order_id LIMIT 5"
+               AND NOT EXISTS (SELECT 1 FROM order_match_offers f WHERE f.order_id=o.order_id AND f.shipper_id=sp.user_id AND f.status IN ('PENDING','REJECTED','ACCEPTED'))
+             ORDER BY o.matching_checked_at NULLS FIRST,o.paid_at,o.order_id LIMIT 20"
         );
         $q->execute([$shipperId, ShipperInput::config('location_max_age_seconds'), ShipperInput::config('radius_km')]);
         $orders = $q->fetchAll(PDO::FETCH_COLUMN);
@@ -91,10 +67,10 @@ final class MatchingService
     /**
      * Shipper đủ điều kiện nhận offer của đơn này, gần điểm lấy hàng nhất xếp trước.
      * Điều kiện: đang bật nhận đơn, hồ sơ và giấy tờ đã duyệt, tài khoản ACTIVE, không bị
-     * khóa điểm, vị trí còn mới, trong bán kính, đang rảnh, chưa được mời trong phiên này
+     * khóa điểm, vị trí còn mới, trong bán kính, đang rảnh, chưa có lời mời mở hoặc chưa chủ động từ chối
      * và không phải chính người đặt đơn (một tài khoản có thể có cả hai vai trò).
      */
-    private function candidates(array $order, string $startedAt): array
+    private function candidates(array $order): array
     {
         $q = $this->db->prepare(
             "WITH params AS (
@@ -113,8 +89,7 @@ final class MatchingService
                    AND sp.user_id <> ?
                    AND sp.last_location_at > now() - make_interval(secs => ?)
                    AND NOT EXISTS (SELECT 1 FROM order_assignments a WHERE a.shipper_id = sp.user_id AND a.assignment_status = 'ACTIVE')
-                   AND NOT EXISTS (SELECT 1 FROM order_match_offers f WHERE f.order_id = ? AND f.shipper_id = sp.user_id AND f.sent_at >= CAST(? AS timestamptz)
-                                   AND NOT (f.status = 'CANCELLED' AND f.response_note = 'AVAILABILITY_OFF'))
+                   AND NOT EXISTS (SELECT 1 FROM order_match_offers f WHERE f.order_id = ? AND f.shipper_id = sp.user_id AND f.status IN ('PENDING','REJECTED','ACCEPTED'))
                    AND NOT EXISTS (SELECT 1 FROM order_assignments cancelled WHERE cancelled.order_id=? AND cancelled.shipper_id=sp.user_id AND cancelled.assignment_status='CANCELLED_BEFORE_PICKUP')
                    AND (u.email LIKE '%@demo.somi.invalid') = EXISTS (SELECT 1 FROM users dc WHERE dc.user_id=? AND dc.email LIKE '%@demo.somi.invalid')
                    AND NOT EXISTS (SELECT 1 FROM shipper_score_policies sc
@@ -125,48 +100,52 @@ final class MatchingService
                     round((reliability_score / 100 / (1 + distance_km))::numeric, 5) AS match_score
              FROM nearby WHERE distance_km <= ?
              ORDER BY distance_km, reliability_score DESC, user_id
-             LIMIT ?"
+             "
         );
         $q->execute([
             $order['pickup_latitude'], $order['pickup_longitude'], $order['customer_id'],
-            ShipperInput::config('location_max_age_seconds'), $order['order_id'], $startedAt, $order['order_id'], $order['customer_id'],
-            ShipperInput::config('radius_km'), ShipperInput::config('batch_size'),
+            ShipperInput::config('location_max_age_seconds'), $order['order_id'], $order['order_id'], $order['customer_id'],
+            ShipperInput::config('radius_km'),
         ]);
         return $q->fetchAll();
     }
 
+    /** The clock starts at matching, never at advance payment for a scheduled pickup. */
+    public static function deadlineSql(string $alias='o'): string
+    {
+        $seconds=(int)ShipperInput::config('search_timeout_seconds');
+        return "(GREATEST(COALESCE((SELECT max(h.created_at) FROM order_status_history h WHERE h.order_id=$alias.order_id AND h.new_status='SEARCHING_SHIPPER'),$alias.paid_at),CASE WHEN $alias.pricing_snapshot #>> '{schedule,mode}'='later' THEN CAST($alias.pricing_snapshot #>> '{schedule,at}' AS timestamptz)-interval '30 minutes' ELSE NULL END)+make_interval(secs=>$seconds))";
+    }
+
+    public function searchExpired(int $orderId): bool
+    {
+        $q=$this->db->prepare('SELECT clock_timestamp()>=' . self::deadlineSql() . ' FROM orders o WHERE o.order_id=?');
+        $q->execute([$orderId]);
+        return in_array($q->fetchColumn(),[true,'t',1,'1'],true);
+    }
+
     private function noShipperFound(array $order): array
     {
-        $orderId = (int) $order['order_id'];
-        $this->db->prepare("UPDATE orders SET status = 'NO_SHIPPER_FOUND', updated_at = now() WHERE order_id = ?")->execute([$orderId]);
-        OrderLifecycleService::history($this->db, $orderId, 'SEARCHING_SHIPPER', 'NO_SHIPPER_FOUND', null, 'SYSTEM', 'Matching exhausted.');
-        $q = $this->db->prepare("SELECT count(*) FROM order_status_history WHERE order_id = ? AND new_status = 'NO_SHIPPER_FOUND'");
-        $q->execute([$orderId]);
-        // Khóa chống trùng có số lần, vì khách có thể yêu cầu tìm lại rồi lại không có Shipper.
-        OrderLifecycleService::event($this->db, $order, 'NoShipperFound', 'no-shipper:' . $orderId . ':' . $q->fetchColumn());
-        return ['result' => 'NO_SHIPPER_FOUND', 'offers' => 0];
+        $id=(int)$order['order_id'];
+        $this->db->prepare("UPDATE orders SET status='NO_SHIPPER_FOUND',updated_at=now() WHERE order_id=?")->execute([$id]);
+        $this->db->prepare("UPDATE order_match_offers SET status='CANCELLED',responded_at=now(),response_note='SEARCH_TIMEOUT' WHERE order_id=? AND status='PENDING'")->execute([$id]);
+        OrderLifecycleService::history($this->db,$id,'SEARCHING_SHIPPER','NO_SHIPPER_FOUND',null,'SYSTEM','Không tìm được shipper trong 5 phút.');
+        $q=$this->db->prepare("SELECT count(*) FROM order_status_history WHERE order_id=? AND new_status='NO_SHIPPER_FOUND'");$q->execute([$id]);
+        OrderLifecycleService::event($this->db,$order,'NoShipperFound','no-shipper:'.$id.':'.$q->fetchColumn());
+        return ['result'=>'NO_SHIPPER_FOUND','offers'=>0];
     }
 
-    /** Đánh dấu hết hạn các offer quá thời gian. SKIP LOCKED để không chờ giao dịch nhận đơn đang chạy. */
-    public function expireOffers(): int
-    {
-        $q = $this->db->query(
-            "UPDATE order_match_offers SET status = 'EXPIRED', responded_at = now()
-             WHERE offer_id IN (SELECT offer_id FROM order_match_offers
-                                WHERE status = 'PENDING' AND expires_at <= now()
-                                ORDER BY offer_id FOR UPDATE SKIP LOCKED LIMIT 200)"
-        );
-        return $q->rowCount();
-    }
+    /** Retained for older worker entry points. Open invitations never expire. */
+    public function expireOffers(): int { return 0; }
 
-    /** Các đơn đang tìm Shipper mà không còn offer nào chờ: cần gửi vòng tiếp theo. */
+    /** Fair sweep also includes orders already visible to other shippers, so newcomers can join. */
     public function ordersNeedingDispatch(int $limit = 20): array
     {
         $q = $this->db->prepare(
             "SELECT o.order_id FROM orders o
              WHERE o.status = 'SEARCHING_SHIPPER' AND o.paid_at IS NOT NULL
-               AND NOT EXISTS (SELECT 1 FROM order_match_offers f WHERE f.order_id = o.order_id AND f.status = 'PENDING' AND f.expires_at > now())
-             ORDER BY o.paid_at, o.order_id LIMIT ?"
+               AND " . PickupSchedule::dueSql() . "
+             ORDER BY o.matching_checked_at NULLS FIRST, o.paid_at, o.order_id LIMIT ?"
         );
         $q->execute([$limit]);
         return array_map('intval', $q->fetchAll(PDO::FETCH_COLUMN));

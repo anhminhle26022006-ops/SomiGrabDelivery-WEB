@@ -45,6 +45,9 @@ final class EmailService
         elseif($template==='RESET_PASSWORD')$text=$vi?'Đặt lại mật khẩu SOMI: '.($v['url']??'')."\nLiên kết có hiệu lực trong 30 phút.":'Reset your SOMI password: '.($v['url']??'')."\nThis link expires in 30 minutes.";
         elseif($template==='BANK_ACCOUNT_CHANGE')$text=($vi?'Mã xác nhận thay tài khoản nhận tiền kết thúc bằng ':'Confirmation code for payout account ending ').($v['last_four']??'').': '.($v['code']??'').($vi?'. Hết hạn trong 5 phút. Không chia sẻ mã này.':'. Expires in 5 minutes. Do not share this code.');
         else $text=$subject.($code!==''?' — '.$code:'')."\n".($vi?'Xem chi tiết trong tài khoản SOMI của bạn.':'View the details in your SOMI account.');
+        if($template==='OrderCancelled' && ($v['reason']??null)==='NO_SHIPPER_FOUND') {
+            $text.="\n".($vi?'Không tìm được shipper phù hợp trong 5 phút tìm kiếm nên hệ thống tự hủy đơn. Yêu cầu hoàn toàn bộ tiền đã được tạo; đây chưa phải xác nhận đã chuyển tiền hoàn. Theo dõi trạng thái hoàn tiền và kiểm tra tài khoản ngân hàng trong tài khoản SOMI.':'The system cancelled this order because no eligible shipper was found within the five-minute matching window. A full refund has been requested; this does not confirm that the refund has been transferred. Track the refund status and check your bank details in your SOMI account.');
+        }
         return [$subject,$text];
     }
 }

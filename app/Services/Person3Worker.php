@@ -27,14 +27,14 @@ final class Person3Worker
                 'OrderCancelled'=>['Đơn đã hủy','Order cancelled'], 'OrderDelivered'=>['Giao thành công','Order delivered'],
                 'OrderReturning'=>['Đang hoàn hàng','Order returning'], 'OrderReturned'=>['Đã hoàn hàng','Order returned'],
                 'RefundSucceeded'=>['Đã hoàn tiền','Refund completed'], 'ShipperAssigned'=>['Shipper đã nhận đơn','Shipper accepted your order'],
-                'OrderPickedUp'=>['Đã lấy hàng','Order picked up'], 'OrderDelivering'=>['Đang giao hàng','Order delivering']
+                'OrderArrived'=>['Shipper đã đến điểm giao','Shipper arrived at drop-off'], 'OrderPickedUp'=>['Đã lấy hàng','Order picked up'], 'OrderDelivering'=>['Đang giao hàng','Order delivering']
                 ,'NoShipperFound'=>['Chưa tìm được người giao','No shipper found']
             ];
             if($o&&isset($templates[$event['event_type']])){
                 [$vi,$en]=$templates[$event['event_type']];
                 InteractionService::notify($db,(int)$o['customer_id'],(int)$event['order_id'],$event['event_type'],$vi,$en,$o['order_code'].' · '.$vi,$o['order_code'].' · '.$en,'event:'.$event['event_id'],'CUSTOMER');
                 // Customer checkout/payment/matching events never become shipper alerts.
-                if(in_array($event['event_type'],['ShipperAssigned','OrderCancelled','OrderPickedUp','OrderDelivering','OrderDelivered','OrderReturning','OrderReturned'],true)){
+                if(in_array($event['event_type'],['ShipperAssigned','OrderCancelled','OrderArrived','OrderPickedUp','OrderDelivering','OrderDelivered','OrderReturning','OrderReturned'],true)){
                     $q=$db->prepare("SELECT DISTINCT shipper_id FROM order_assignments WHERE order_id=? AND assignment_status IN ('ACTIVE','COMPLETED','RETURNED')");$q->execute([$event['order_id']]);
                     if($event['event_type']==='ShipperAssigned'){ $vi='Bạn đã nhận đơn'; $en='You accepted the order'; }
                     foreach($q->fetchAll() as $a)InteractionService::notify($db,(int)$a['shipper_id'],(int)$event['order_id'],$event['event_type'],$vi,$en,$o['order_code'].' · '.$vi,$o['order_code'].' · '.$en,'event:'.$event['event_id'],'SHIPPER');

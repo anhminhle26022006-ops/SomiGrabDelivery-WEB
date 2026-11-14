@@ -10,6 +10,7 @@ shipper_run(['GET', 'POST'], 'delivery.update_assigned', $method === 'POST',
     static function (PDO $db, int $shipperId) use ($method): array {
         $service = new DeliveryService($db);
         if ($method === 'GET') {
+            if (isset($_GET['assignment_id'])) return [200,$service->historyDetail($shipperId,DeliveryInput::id($_GET['assignment_id'],'assignment_id'))];
             if (!isset($_GET['history'])) return [200, $service->current($shipperId)];
             $before = isset($_GET['before_id']) ? DeliveryInput::id($_GET['before_id'], 'before_id') : null;
             $limit = isset($_GET['limit']) ? DeliveryInput::id($_GET['limit'], 'limit') : 20;

@@ -39,6 +39,7 @@
     const photos = delivery.evidence?.length || 0;
     const map = {
       PICKUP: `<button class="primary blue" data-delivery-action="PICKUP">Đã lấy hàng</button>`,
+      ARRIVED: `<button class="primary blue" data-delivery-action="ARRIVED">Đã đến điểm giao</button>`,
       START_DELIVERY: `<button class="primary blue" data-delivery-action="START_DELIVERY">Bắt đầu giao</button>`,
       ADD_DELIVERY_PHOTO: `<button class="outline" data-evidence="DELIVERY_PHOTO">Thêm ảnh giao hàng (${photos})</button>`,
       DELIVERED: `<button class="primary blue" data-delivery-action="DELIVERED">Đã giao hàng thành công</button>`,
@@ -52,6 +53,7 @@
   function helpText() {
     if (delivery.status === "RETURNING" && delivery.returned_at) return "Đã báo trả hàng. Đơn sẽ đóng khi người gửi xác nhận đã nhận lại.";
     if (delivery.status === "RETURNING") return "Mang hàng về điểm lấy, chụp ảnh lúc trả rồi xác nhận đã trả hàng.";
+    if (delivery.status === "IN_DELIVERY" && !delivery.arrived_at) return "GPS sẽ ghi nhận đã đến nơi khi bạn ở gần điểm giao (trong 200 m). Sau đó chụp ảnh minh chứng và xác nhận giao xong.";
     if (delivery.status === "IN_DELIVERY" && !delivery.next_actions.includes("DELIVERED")) return "Cần ít nhất một ảnh giao hàng trước khi xác nhận giao thành công.";
     return "";
   }
@@ -75,12 +77,13 @@
     }
     const d = delivery;
     box.innerHTML = `
-      <div class="sectiontitle"><div><h2>${esc(d.order_code)}</h2><p>${esc(d.category_name_vi)}, ${esc(d.estimated_weight_kg)} kg, quãng đường ${esc(api.distance(d.distance_km))} km</p></div><span class="pill">${STATUS[d.status] || esc(d.status)}</span></div>
+      <div class="sectiontitle"><div><h2>${esc(d.order_code)}</h2><p>${esc(d.category_name_vi)}, ${esc(d.estimated_weight_kg)} kg, quãng đường ${esc(api.distance(d.distance_km))} km</p></div><span class="pill">${d.arrived_at&&d.status==='IN_DELIVERY'?'ĐÃ ĐẾN NƠI':STATUS[d.status] || esc(d.status)}</span></div>
       <div class="route"><div class="routepoints"><span class="dot"></span><span class="routebar" style="height:34px"></span><span class="dot red"></span></div>
         <div class="address"><strong>Điểm lấy hàng: ${esc(d.sender_name)}</strong><small>${esc(d.pickup_address)}</small><div style="height:18px"></div>
           <strong>Điểm giao hàng: ${esc(d.receiver_name)}</strong><small>${esc(d.delivery_address)}</small></div></div>
       ${d.customer_note ? `<p class="muted" style="font-size:12px">Ghi chú của khách: ${esc(d.customer_note)}</p>` : ""}
       ${progress(d.status)}
+      ${d.status==='IN_DELIVERY'?`<div class="s-delivery-checklist" role="status"><span>${d.arrived_at?'✓':'1.'} Đến điểm giao${d.arrived_at?' · '+esc(new Date(d.arrived_at).toLocaleTimeString('vi-VN')):''}</span><span>${d.evidence?.some(e=>e.evidence_type==='DELIVERY_PHOTO')?'✓':'2.'} Chụp ảnh minh chứng</span><span>3. Xác nhận đã giao xong</span></div>`:''}
       <div class="delivery-actions">
         <a class="outline call-link" href="tel:${esc(d.sender_phone)}">Gọi người gửi</a><a class="outline call-link" href="tel:${esc(d.receiver_phone)}">Gọi người nhận</a>
         <button class="outline" type="button" data-open-order-chat>${esc(t('Chat với khách hàng','Chat with customer'))}</button>
@@ -154,6 +157,11 @@
         const fingerprint=JSON.stringify(body);if(cancelSubmission?.fingerprint!==fingerprint)cancelSubmission={fingerprint,key:crypto.randomUUID()};
         const result=await api.requestCancellation({...body,client_key:cancelSubmission.key});
         toast(result.request.decision==='PENDING'?t('Đã gửi yêu cầu, chờ Admin duyệt.','Request sent for Admin review.'):t('Đã hủy phân công. Đơn được tìm Shipper khác.','Assignment cancelled. Matching restarted.'));await load();
+      } else if (action === "ARRIVED") {
+        const point=await api.position();
+        try { await api.sendLocation(point); } catch(error){ if(error.code!=='LOCATION_RATE_LIMITED')throw error; }
+        show(await api.deliveryAction(orderId,'ARRIVED'));
+        toast('Đã đến điểm giao. Hãy chụp ảnh minh chứng trước khi xác nhận giao xong.');
       } else if (action === "PICKUP" || action === "START_DELIVERY") show(await api.deliveryAction(orderId, action));
       else if (action === "FAIL") {
         const reason = document.getElementById("failureReason").value;

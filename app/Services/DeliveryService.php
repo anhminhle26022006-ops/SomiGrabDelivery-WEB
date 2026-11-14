@@ -16,7 +16,7 @@ final class DeliveryService
                     o.delivery_label, o.delivery_address, o.delivery_latitude, o.delivery_longitude, o.receiver_name, o.receiver_phone,
                     o.distance_km, o.estimated_duration_minutes, o.estimated_weight_kg, o.parcel_description, o.customer_note,
                     c.name_vi AS category_name_vi, c.name_en AS category_name_en,
-                    d.delivery_id, d.picked_up_at, d.delivery_started_at, d.delivered_at, d.failure_reason_code,
+                    d.delivery_id, d.picked_up_at, d.delivery_started_at, d.arrived_at, d.delivered_at, d.failure_reason_code,
                     d.return_started_at, d.returned_at, d.customer_return_confirmed_at
              FROM order_assignments a
              JOIN orders o ON o.order_id = a.order_id
@@ -42,7 +42,8 @@ final class DeliveryService
         return match ($delivery['status']) {
             'SHIPPER_ASSIGNED' => ['PICKUP'],
             'PICKED_UP' => ['START_DELIVERY', 'FAIL'],
-            'IN_DELIVERY' => in_array('DELIVERY_PHOTO', $types, true) ? ['ADD_DELIVERY_PHOTO', 'DELIVERED', 'FAIL'] : ['ADD_DELIVERY_PHOTO', 'FAIL'],
+            'IN_DELIVERY' => empty($delivery['arrived_at']) ? ['ARRIVED', 'FAIL']
+                : (in_array('DELIVERY_PHOTO', $types, true) ? ['ADD_DELIVERY_PHOTO', 'DELIVERED', 'FAIL'] : ['ADD_DELIVERY_PHOTO', 'FAIL']),
             'RETURNING' => $delivery['returned_at'] !== null ? []
                 : (in_array('RETURN_PHOTO', $types, true) ? ['ADD_RETURN_PHOTO', 'RETURNED'] : ['ADD_RETURN_PHOTO']),
             default => [],
@@ -84,6 +85,30 @@ final class DeliveryService
         DeliveryContext::transition($this->db, $ctx['order'], 'IN_DELIVERY', $shipperId, 'SHIPPER');
         $this->db->prepare('UPDATE deliveries SET delivery_started_at = now(), updated_at = now() WHERE delivery_id = ?')->execute([$ctx['delivery']['delivery_id']]);
         OrderLifecycleService::event($this->db,$ctx['order'],'OrderDelivering','delivering:'.$ctx['assignment']['assignment_id'],['shipper_id'=>(string)$shipperId]);
+        return $this->current($shipperId);
+    }
+
+    public static function distanceMeters(float $lat, float $lng, float $targetLat, float $targetLng): float
+    {
+        $a=sin(deg2rad($targetLat-$lat)/2)**2+cos(deg2rad($lat))*cos(deg2rad($targetLat))*sin(deg2rad($targetLng-$lng)/2)**2;
+        return 6371000*2*asin(sqrt(min(1,max(0,$a))));
+    }
+
+    /** Arrival is a delivery milestone, not proof that the parcel was handed over. */
+    public function arrive(int $shipperId, int $orderId): array
+    {
+        $ctx=DeliveryContext::lockActive($this->db,$shipperId,$orderId);
+        if($ctx['order']['status']!=='IN_DELIVERY') throw new DeliveryApiError(409,'INVALID_ORDER_STATE','Arrival requires a delivery in progress.');
+        if($ctx['delivery']['arrived_at']!==null) return $this->current($shipperId);
+        $q=$this->db->prepare("SELECT latitude,longitude,accuracy_meters FROM shipper_locations WHERE order_id=? AND shipper_id=? AND deleted_at IS NULL AND recorded_at>now()-interval '2 minutes' AND delete_after>now() ORDER BY recorded_at DESC,location_id DESC LIMIT 1");
+        $q->execute([$orderId,$shipperId]);$point=$q->fetch();
+        if(!$point||$point['accuracy_meters']===null||(float)$point['accuracy_meters']>200
+            ||self::distanceMeters((float)$point['latitude'],(float)$point['longitude'],(float)$ctx['order']['delivery_latitude'],(float)$ctx['order']['delivery_longitude'])>200) {
+            throw new DeliveryApiError(409,'ARRIVAL_LOCATION_REQUIRED','A recent accurate GPS position within 200 meters of the delivery point is required.');
+        }
+        $this->db->prepare('UPDATE deliveries SET arrived_at=now(),arrival_latitude=?,arrival_longitude=?,updated_at=now() WHERE delivery_id=?')->execute([$point['latitude'],$point['longitude'],$ctx['delivery']['delivery_id']]);
+        OrderLifecycleService::history($this->db,$orderId,'IN_DELIVERY','IN_DELIVERY',$shipperId,'SHIPPER','Đã đến điểm giao hàng (GPS).');
+        OrderLifecycleService::event($this->db,$ctx['order'],'OrderArrived','arrived:'.$ctx['assignment']['assignment_id'],['shipper_id'=>(string)$shipperId]);
         return $this->current($shipperId);
     }
 }

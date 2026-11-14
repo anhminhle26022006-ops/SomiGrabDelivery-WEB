@@ -2,6 +2,7 @@
 declare(strict_types=1);
 require_once __DIR__ . '/AccessControl.php';
 require_once __DIR__ . '/ShipperInput.php';
+require_once __DIR__ . '/DeliveryService.php';
 
 /** GPS theo đơn đang giao: ghi điểm, đọc điểm mới nhất và xóa dữ liệu hết hạn lưu. */
 final class ShipperLocationService
@@ -29,6 +30,7 @@ final class ShipperLocationService
         $q->execute([$shipperId]);
         $orderId = $q->fetchColumn();
         if ($orderId === false) throw new DeliveryApiError(409, 'NO_ACTIVE_DELIVERY', 'Location is only recorded during an active delivery.');
+        $ctx=DeliveryContext::lockActive($this->db,$shipperId,(int)$orderId);
 
         $q = $this->db->prepare('SELECT 1 FROM shipper_locations WHERE shipper_id = ? AND recorded_at > now() - make_interval(secs => ?) LIMIT 1');
         $q->execute([$shipperId, ShipperInput::config('gps_min_interval_seconds')]);
@@ -41,7 +43,13 @@ final class ShipperLocationService
         $q->execute([$shipperId, $orderId, $latitude, $longitude, $accuracy === null ? null : round((float) $accuracy, 2), ShipperInput::config('gps_retention_days')]);
         $recordedAt = $q->fetchColumn();
         $this->db->prepare('UPDATE shipper_profiles SET last_latitude = ?, last_longitude = ?, last_location_at = now(), last_active_at = now() WHERE user_id = ?')->execute([$latitude, $longitude, $shipperId]);
-        return ['order_id' => (int) $orderId, 'recorded_at' => $recordedAt];
+        $arrivedAt=$ctx['delivery']['arrived_at'];
+        if ($ctx['order']['status']==='IN_DELIVERY' && !$arrivedAt && $accuracy!==null && $accuracy<=200
+            && DeliveryService::distanceMeters((float)$latitude,(float)$longitude,(float)$ctx['order']['delivery_latitude'],(float)$ctx['order']['delivery_longitude'])<=200) {
+            $result=(new DeliveryService($this->db))->arrive($shipperId,(int)$orderId);
+            $arrivedAt=$result['delivery']['arrived_at'];
+        }
+        return ['order_id' => (int) $orderId, 'recorded_at' => $recordedAt,'arrived_at'=>$arrivedAt];
     }
 
     /**
@@ -60,7 +68,9 @@ final class ShipperLocationService
              ORDER BY l.recorded_at DESC LIMIT 1"
         );
         $q->execute([$orderId]);
-        return ['order_id' => $orderId, 'status' => $order['status'], 'location' => $q->fetch() ?: null];
+        $location=$q->fetch()?:null;
+        $q=$this->db->prepare("SELECT d.arrived_at FROM deliveries d JOIN order_assignments a USING(assignment_id) WHERE a.order_id=? AND a.assignment_status='ACTIVE'");$q->execute([$orderId]);
+        return ['order_id' => $orderId, 'status' => $order['status'], 'location' => $location,'arrived_at'=>$q->fetchColumn()?:null];
     }
 
     /** Xóa hẳn các điểm GPS quá hạn lưu, theo lô để không khóa bảng lâu. Trả về số dòng đã xóa. */

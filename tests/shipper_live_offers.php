@@ -17,8 +17,13 @@ try {
     check(count($offers->pending(SHIPPER_A)['items'])===1,'new offer appears immediately');
     tx($db,fn()=>$matching->dispatchNearby(SHIPPER_A));
     check((int)value($db,'SELECT count(*) FROM order_match_offers WHERE order_id=?',[$order])===1,'poll is idempotent');
+    tx($db,fn()=>$availability->turnOn(SHIPPER_B,FARTHER[0],FARTHER[1]));
+    check(array_key_exists($order,tx($db,fn()=>$matching->dispatchNearby(SHIPPER_B))),'late arriving shipper is invited even while another shipper has an open invitation');
+    check(count($offers->pending(SHIPPER_B)['items'])===1,'both nearby shippers can see the same unassigned order');
+    tx($db,fn()=>$availability->turnOff(SHIPPER_B));
     tx($db,fn()=>$availability->turnOff(SHIPPER_A));
     check(count($offers->pending(SHIPPER_A)['items'])===0,'offline cancels the pending invitation');
+    check($offers->pending(SHIPPER_A)['recent_updates'][0]['status']==='CANCELLED','removed invitation reports a reason instead of silently disappearing');
     tx($db,fn()=>$availability->turnOn(SHIPPER_A,NEAR[0],NEAR[1]));
     tx($db,fn()=>$matching->dispatchNearby(SHIPPER_A));
     check(count($offers->pending(SHIPPER_A)['items'])===1,'online again receives an invitation cancelled only by going offline');

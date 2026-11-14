@@ -3,6 +3,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/AccessControl.php';
 require_once __DIR__ . '/OrderLifecycleService.php';
 require_once __DIR__ . '/ShipperEligibility.php';
+require_once __DIR__ . '/MatchingService.php';
 
 /**
  * Nhận đơn "nguyên tử": trong một transaction, hoặc Shipper nhận được đơn trọn vẹn
@@ -24,8 +25,10 @@ final class OfferAcceptService
 
         // 1) Khóa đơn. Hủy đơn của Customer/Admin cũng khóa dòng này nên không thể chen ngang.
         $order = OrderLifecycleService::lock($this->db, $orderId);
+        // Lock the shipper before individual offers: parallel accepts of different orders cannot deadlock while releasing other invitations.
+        $profile = ShipperEligibility::profile($this->db, $shipperId, true);
         // 2) Khóa offer và đọc lại: dữ liệu đọc trước khi khóa có thể đã cũ.
-        $q = $this->db->prepare('SELECT *, expires_at <= now() AS is_expired FROM order_match_offers WHERE offer_id = ? FOR UPDATE');
+        $q = $this->db->prepare('SELECT * FROM order_match_offers WHERE offer_id = ? FOR UPDATE');
         $q->execute([$offerId]);
         $offer = $q->fetch();
 
@@ -33,10 +36,10 @@ final class OfferAcceptService
         if ($offer['status'] === 'ACCEPTED') return $this->result($orderId, $shipperId, false);
         if ($offer['status'] === 'LOST_RACE') throw new DeliveryApiError(409, 'OFFER_LOST_RACE', 'Another Shipper accepted this order first.');
         if ($offer['status'] !== 'PENDING') throw new DeliveryApiError(409, 'OFFER_NOT_PENDING', 'This offer is no longer open.');
-        if (in_array($offer['is_expired'], [true, 't', '1', 1], true)) throw new DeliveryApiError(409, 'OFFER_EXPIRED', 'This offer has expired.');
 
         // 3) Trạng thái đơn và thanh toán, kiểm tra khi đang giữ khóa.
         if ($order['status'] !== 'SEARCHING_SHIPPER') throw new DeliveryApiError(409, 'ORDER_NOT_AVAILABLE', 'This order is no longer looking for a Shipper.');
+        if ((new MatchingService($this->db))->searchExpired($orderId)) throw new DeliveryApiError(409,'ORDER_SEARCH_EXPIRED','No shipper accepted within the five-minute matching window.');
         $q = $this->db->prepare('SELECT status FROM payments WHERE order_id = ?');
         $q->execute([$orderId]);
         if ($order['paid_at'] === null || $q->fetchColumn() !== 'PAID') throw new DeliveryApiError(409, 'PAYMENT_NOT_CONFIRMED', 'The order payment is not confirmed.');
@@ -45,7 +48,6 @@ final class OfferAcceptService
         if(!in_array($q->fetchColumn(),[true,'t',1,'1'],true))throw new DeliveryApiError(409,'ORDER_NOT_AVAILABLE','Demo and live deliveries cannot be mixed.');
 
         // 4) Điều kiện của Shipper tại đúng thời điểm nhận, không tin trạng thái lúc gửi offer.
-        $profile = ShipperEligibility::profile($this->db, $shipperId, true);
         ShipperEligibility::assertCanWork($this->db, $profile);
         if (!$profile['availability']) throw new DeliveryApiError(409, 'AVAILABILITY_OFF', 'Turn on availability before accepting orders.');
         if ((int) $order['customer_id'] === $shipperId) throw new DeliveryApiError(409, 'ORDER_NOT_AVAILABLE', 'You cannot deliver your own order.');

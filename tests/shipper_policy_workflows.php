@@ -20,6 +20,7 @@ function assigned(PDO $db,int $shipper=SHIPPER_A):int {
 }
 function begin_delivery(PDO $db,int $id):void {tx($db,fn()=>(new DeliveryService($db))->pickup(SHIPPER_A,$id));tx($db,fn()=>(new DeliveryService($db))->startDelivery(SHIPPER_A,$id));}
 function deliver(PDO $db,int $id):array {
+    $db->prepare('UPDATE deliveries SET arrived_at=now() WHERE order_id=?')->execute([$id]);
     $file=storage_file($db,SHIPPER_A,'EVIDENCE',$id);$service=new DeliveryCompletionService($db);
     tx($db,fn()=>$service->addEvidence(SHIPPER_A,$id,'DELIVERY_PHOTO',$file,null,null,null));return tx($db,fn()=>$service->delivered(SHIPPER_A,$id));
 }

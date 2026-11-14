@@ -22,20 +22,24 @@ const PICKUP = ['10.7990000', '106.6800000'];
 const NEAR = ['10.8035000', '106.6800000'];
 const FARTHER = ['10.8125000', '106.6800000'];
 
-function shipper_test_db(): PDO
+function shipper_test_db(?string $sharedSchema=null): PDO
 {
     $db = somi_db();
-    $db->exec('SET search_path TO pg_temp, pg_catalog');
+    if($sharedSchema!==null){
+        if(!preg_match('/^shipper_race_[a-f0-9]{16}$/D',$sharedSchema))throw new LogicException('Invalid isolated test schema.');
+        $db->exec('CREATE SCHEMA "'.$sharedSchema.'"');
+        $db->exec('SET search_path TO "'.$sharedSchema.'", pg_catalog');
+    }else $db->exec('SET search_path TO pg_temp, pg_catalog');
     $sql = file_get_contents(__DIR__ . '/../database/SOMI_database.sql');
     $sql = preg_replace('/^BEGIN;\s*|^COMMIT;\s*|^CREATE SCHEMA[^;]+;\s*|^SET search_path[^;]+;\s*/m', '', $sql);
     $sql = preg_replace('/CREATE FUNCTION erase_identity_document_on_account_close\(\).*?(?=CREATE TABLE shipper_score_policies)/s', '', $sql);
-    $db->exec(str_replace('CREATE TABLE ', 'CREATE TEMP TABLE ', $sql));
-    foreach (['20261105_customer_orders', '20261106_person1_backend', '20261110_shipper_delivery', '20261111_person3', '20261111_person3_complete', '20261111_person3_supabase','20261112_shipper_policy_workflows'] as $migration) {
+    $db->exec(str_replace('CREATE TABLE ', $sharedSchema===null?'CREATE TEMP TABLE ':'CREATE TABLE ', $sql));
+    foreach (['20261105_customer_orders', '20261106_person1_backend', '20261110_shipper_delivery', '20261111_person3', '20261111_person3_complete', '20261111_person3_supabase','20261112_shipper_policy_workflows','20261114_open_dispatch_arrival'] as $migration) {
         $sql = file_get_contents(__DIR__ . '/../database/migrations/' . $migration . '.sql');
         $sql = preg_replace('/^BEGIN;\s*|^COMMIT;\s*|^SET LOCAL search_path[^;]+;\s*/m', '', $sql);
-        $db->exec(str_replace('CREATE TABLE ', 'CREATE TEMP TABLE ', $sql));
+        $db->exec(str_replace('CREATE TABLE ', $sharedSchema===null?'CREATE TEMP TABLE ':'CREATE TABLE ', $sql));
     }
-    check(value($db, "SELECT count(*) FROM pg_class WHERE relnamespace = pg_my_temp_schema() AND relname IN ('orders','order_match_offers','order_assignments','deliveries','shipper_locations')") == 5, 'all writes use temporary tables');
+    check(value($db, "SELECT count(*) FROM pg_class WHERE relnamespace = CASE WHEN current_schema()='pg_temp' OR current_schema() LIKE 'pg_temp_%' THEN pg_my_temp_schema() ELSE current_schema()::regnamespace::oid END AND relname IN ('orders','order_match_offers','order_assignments','deliveries','shipper_locations')") == 5, 'all writes use isolated test tables');
 
     $names = ['Admin', 'Customer', 'Shipper A', 'Shipper B', 'Shipper Pending'];
     foreach ($names as $i => $name) {

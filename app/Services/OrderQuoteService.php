@@ -3,6 +3,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/CustomerAddressService.php';
 require_once __DIR__ . '/PricingContextProvider.php';
 require_once __DIR__ . '/DistanceWeightPrice.php';
+require_once __DIR__ . '/PickupSchedule.php';
 
 final class OrderQuoteService
 {
@@ -16,7 +17,8 @@ final class OrderQuoteService
 
     public function create(int $customerId, array $input): array
     {
-        DeliveryInput::only($input, ['pickup', 'delivery', 'parcel', 'customer_note', 'currency_code']);
+        DeliveryInput::only($input, ['pickup', 'delivery', 'parcel', 'customer_note', 'currency_code', 'schedule']);
+        $schedule = PickupSchedule::validate($input['schedule'] ?? null);
         if (array_key_exists('currency_code', $input) && !in_array($input['currency_code'], ['VND', 'USD'], true)) DeliveryInput::invalid('currency_code');
         $pickup = $this->point($customerId, $input['pickup'] ?? null);
         $delivery = $this->point($customerId, $input['delivery'] ?? null);
@@ -83,6 +85,7 @@ final class OrderQuoteService
         $feeQuery->execute([$policy['pricing_policy_id']]);$cancellationFees=[];
         foreach($feeQuery->fetchAll() as $fee){if(bccomp((string)$fee['fee_minor'],$total)>0) $this->unconfigured();$cancellationFees[$fee['after_status']]=(string)$fee['fee_minor'];}
         $snapshot = [
+            'schedule' => $schedule,
             'cancellation_fees' => $cancellationFees,
             'pickup' => $pickup, 'delivery' => $delivery, 'parcel' => $parcel, 'customer_note' => $note,
             'currency_code' => $currency, 'app_language' => $language,

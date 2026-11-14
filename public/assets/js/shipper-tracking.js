@@ -36,6 +36,7 @@
       const result = await window.SomiShipper.sendLocation(latest);
       if (token !== revision) return;
       lastSent = Date.now();
+      if(result.arrived_at&&!order.arrived_at)document.dispatchEvent(new CustomEvent('somi:delivery-refresh'));
       gps.textContent = 'Đang chia sẻ vị trí · Cập nhật lúc ' + new Date(result.recorded_at || Date.now()).toLocaleTimeString('vi-VN');
       gps.dataset.state = 'live';
       badge.textContent = 'Đang chia sẻ GPS';
@@ -67,7 +68,7 @@
     if (!map) map = window.SomiMaps?.create(panel.querySelector('#shipperDeliveryMap'));
     paintPosition();
     const pickup = order.status === 'SHIPPER_ASSIGNED' || order.status === 'RETURNING';
-    panel.querySelector('[data-navigation-step]').textContent = order.status === 'RETURNING' ? 'Quay về điểm lấy để hoàn hàng' : pickup ? 'Di chuyển đến điểm lấy hàng' : 'Di chuyển đến điểm giao hàng';
+    panel.querySelector('[data-navigation-step]').textContent = order.status === 'RETURNING' ? 'Quay về điểm lấy để hoàn hàng' : pickup ? 'Di chuyển đến điểm lấy hàng' : order.arrived_at ? 'Đã đến nơi · Chụp ảnh minh chứng và xác nhận giao hàng' : 'Di chuyển đến điểm giao hàng';
     const lat = pickup ? order.pickup_latitude : order.delivery_latitude;
     const lng = pickup ? order.pickup_longitude : order.delivery_longitude;
     panel.querySelector('[data-open-navigation]').href = 'https://www.google.com/maps/dir/?api=1&destination=' + encodeURIComponent(lat + ',' + lng) + '&travelmode=driving';

@@ -10,6 +10,7 @@ const server=spawn('C:/xampp/php/php.exe',['-S','127.0.0.1:3095','tests/bootstra
   browser=await chromium.launch({headless:true,executablePath:['C:/Program Files/Google/Chrome/Application/chrome.exe','C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'].find(fs.existsSync)});
   const context=await browser.newContext({permissions:['geolocation'],geolocation:{latitude:10.8035,longitude:106.68}});
   const page=await context.newPage();
+  let locationFresh=false, failOffers=false;
   let available=false, items=[], staleRead=false, releaseStale, staleStarted;
   const writes=[], errors=[];
   page.on('pageerror',e=>errors.push(e.message));
@@ -17,13 +18,13 @@ const server=spawn('C:/xampp/php/php.exe',['-S','127.0.0.1:3095','tests/bootstra
   await page.route('**/public/api/**',async route=>{
    const req=route.request(), path=new URL(req.url()).pathname;
    if(path.endsWith('/availability.php')){
-    if(req.method()==='POST'){const body=req.postDataJSON();available=body.available;writes.push(body);}
-    const state={availability:available,can_work:true,blockers:[]};
+    if(req.method()==='POST'){const body=req.postDataJSON();available=body.available;locationFresh=true;writes.push(body);}
+    const state={availability:available,can_work:true,blockers:[],location_fresh:locationFresh};
     if(req.method()==='GET'&&staleRead){staleRead=false;staleStarted();await new Promise(r=>releaseStale=r);}
     return route.fulfill({json:state});
    }
-   if(path.endsWith('/offers.php'))return route.fulfill({json:{items}});
-   if(path.endsWith('/dashboard.php'))return route.fulfill({json:{timezone:'Asia/Ho_Chi_Minh',start:'2026-11-13T00:00:00+07:00',end:'2026-11-14T00:00:00+07:00',completed_deliveries:0,delivery_seconds:0}});
+   if(path.endsWith('/offers.php'))return failOffers?route.fulfill({status:503,json:{code:'SERVICE_UNAVAILABLE'}}):route.fulfill({json:{items,recent_updates:items.length?[]:[{offer_id:'777',status:'LOST_RACE'}]}});
+   if(path.endsWith('/dashboard.php'))return route.fulfill({json:{range:'today',current:{deliveries:0,acceptance_rate_percent:null,offers_accepted:0,offers_decided:0},deliveries_change_percent:null,rating:{average:null,count:0},timezone:'Asia/Ho_Chi_Minh',start:'2026-11-13T00:00:00+07:00',end:'2026-11-14T00:00:00+07:00',completed_deliveries:0,delivery_seconds:0}});
    if(path.endsWith('/shipper/profile.php'))return route.fulfill({json:{profile:{full_name:'Test Shipper',customer_rating_count:0}}});
    if(path.endsWith('/deliveries.php'))return route.fulfill({json:{delivery:null,items:[]}});
    return route.fulfill({json:{items:[],totals:[],unread_count:0}});
@@ -42,9 +43,29 @@ const server=spawn('C:/xampp/php/php.exe',['-S','127.0.0.1:3095','tests/bootstra
   await page.reload();
   await page.waitForFunction(()=>document.getElementById('availabilityToggle').getAttribute('aria-pressed')==='true');
   assert.ok(!writes.some(x=>x.available===false),'reload never sends an offline update');
-  items=[{offer_id:'777',order_code:'AUTO-NEW-ORDER',seconds_left:60,distance_to_pickup_km:'0.5',pickup_address:'Pickup',delivery_address:'Dropoff',distance_km:3,estimated_duration_minutes:15,category_name_vi:'Test',estimated_weight_kg:1,estimated_earning_minor:'20000'}];
+  locationFresh=false;
+  await page.reload();
+  await page.locator('#refreshMatchingLocation').waitFor({state:'visible'});
+  const previousWrites=writes.length;
+  await page.locator('#refreshMatchingLocation').click();
+  await page.waitForFunction(()=>document.getElementById('availabilityHelp').textContent.includes('Đang tìm đơn trong bán kính'));
+  assert.ok(writes.length>previousWrites,'manual GPS refresh sends current coordinates before searching');
+  items=[{offer_id:'777',order_code:'AUTO-NEW-ORDER',seconds_left:1,distance_to_pickup_km:'0.5',pickup_address:'Pickup',delivery_address:'Dropoff',distance_km:3,estimated_duration_minutes:15,category_name_vi:'Test',estimated_weight_kg:1,estimated_earning_minor:'20000'}];
   await page.waitForFunction(()=>document.getElementById('overviewOrders').textContent.includes('AUTO-NEW-ORDER'),null,{timeout:12000});
   assert.equal(await page.locator('[data-offer-accept="777"]').count(),1,'new order appears without reload');
+  await page.evaluate(()=>window.originalOfferButton=document.querySelector('[data-offer-accept="777"]'));
+  await page.waitForResponse(response=>new URL(response.url()).pathname.endsWith('/offers.php'));
+  await page.waitForTimeout(100);
+  assert.ok(await page.evaluate(()=>window.originalOfferButton===document.querySelector('[data-offer-accept="777"]')),'unchanged polling preserves the receive button during a mobile tap');
+  assert.equal(await page.locator('[data-offer-accept="777"]').count(),1,'legacy countdown reaching zero must not hide an open offer');
+  assert.equal(await page.locator('[data-countdown]').count(),0,'no acceptance countdown is rendered');
+  failOffers=true;
+  await page.locator('[data-offer-feed-status]:not([hidden])').first().waitFor({timeout:12000});
+  assert.equal(await page.locator('[data-offer-accept="777"]').count(),1,'temporary API error must not erase an unexpired offer');
+  failOffers=false;
+  items=[];
+  await page.waitForFunction(()=>!document.querySelector('[data-offer-accept="777"]'),null,{timeout:12000});
+  assert.ok((await page.locator('[data-offer-feed-status]').first().textContent()).includes('shipper khác nhận'),'confirmed removed offer explains the actual server reason');
   await page.locator('#availabilityToggle').click();
   await page.waitForFunction(()=>document.getElementById('availabilityToggle').getAttribute('aria-pressed')==='false');
   await page.reload();

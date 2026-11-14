@@ -34,6 +34,7 @@ final class CustomerOrderService
         if ($q->fetchColumn()) throw new DeliveryApiError(409, 'QUOTE_ALREADY_USED', 'Quote was already used. Retry with the original idempotency key.');
         if (!$quote['valid']) throw new DeliveryApiError(409, 'QUOTE_EXPIRED', 'Quote expired. Request a new quote.');
         $s = json_decode($quote['snapshot'], true, 512, JSON_THROW_ON_ERROR);
+        PickupSchedule::validate($s['schedule'] ?? null, true);
         (new OrderQuoteService($this->db, new HttpPricingContextProvider()))->requireCategory((int) $s['parcel']['category_id']);
         $p = $s['pickup']; $d = $s['delivery']; $parcel = $s['parcel']; $fees = $s['components']; $context = $s['context'];
         $data = [
@@ -83,7 +84,7 @@ final class CustomerOrderService
 
     public function detail(int $customerId, int $id): array
     {
-        $q = $this->db->prepare('SELECT * FROM orders WHERE order_id = :id AND customer_id = :owner');
+        $q = $this->db->prepare('SELECT o.*, (SELECT d.arrived_at FROM deliveries d WHERE d.order_id=o.order_id ORDER BY d.delivery_id DESC LIMIT 1) AS arrived_at FROM orders o WHERE order_id = :id AND customer_id = :owner');
         $q->execute(['id' => $id, 'owner' => $customerId]);
         $order = $q->fetch();
         if (!$order) throw new DeliveryApiError(404, 'ORDER_NOT_FOUND', 'Order not found.');

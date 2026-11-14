@@ -17,8 +17,9 @@ shipper_run(['GET', 'POST'], 'delivery.update_assigned', $method === 'POST',
         }
         $input = shipper_body(['order_id', 'action']);
         $orderId = DeliveryInput::id($input['order_id'] ?? null, 'order_id');
-        return match (ShipperInput::choice($input['action'] ?? null, 'action', ['PICKUP', 'START_DELIVERY'])) {
+        return match (ShipperInput::choice($input['action'] ?? null, 'action', ['PICKUP', 'START_DELIVERY', 'ARRIVED'])) {
             'PICKUP' => [200, $service->pickup($shipperId, $orderId)],
             'START_DELIVERY' => [200, $service->startDelivery($shipperId, $orderId)],
+            'ARRIVED' => [200, $service->arrive($shipperId, $orderId)],
         };
     });

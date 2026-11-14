@@ -26,6 +26,9 @@ final class DeliveryCompletionService
         if ($ctx['order']['status'] !== $requiredStatus) {
             throw new DeliveryApiError(409, 'INVALID_ORDER_STATE', "$type can only be added while the order is $requiredStatus.");
         }
+        if ($type === 'DELIVERY_PHOTO' && empty($ctx['delivery']['arrived_at'])) {
+            throw new DeliveryApiError(409, 'ARRIVAL_REQUIRED', 'Confirm arrival before adding a delivery photo.');
+        }
         $file=(new PrivateStorageService($this->db))->reference($shipperId,'SHIPPER',['reference_file_id'=>$reference,'purpose'=>'EVIDENCE','order_id'=>$orderId])['file'];
         $reference=$file['object_key'];$mime=$file['mime_type'];$size=(int)$file['byte_size'];$checksum=$file['checksum_sha256'];
         $mime = ShipperInput::choice($mime, 'mime_type', self::MIME_TYPES);
@@ -57,6 +60,7 @@ final class DeliveryCompletionService
         if ($ctx['order']['status'] !== 'IN_DELIVERY') {
             throw new DeliveryApiError(409, 'INVALID_ORDER_STATE', 'Only an order in delivery can be marked delivered.');
         }
+        if (empty($ctx['delivery']['arrived_at'])) throw new DeliveryApiError(409, 'ARRIVAL_REQUIRED', 'Arrival must be recorded before completing delivery.');
         if (DeliveryContext::evidenceCount($this->db, $deliveryId, 'DELIVERY_PHOTO') < 1) {
             throw new DeliveryApiError(409, 'EVIDENCE_REQUIRED', 'A delivery photo is required before completing the order.');
         }

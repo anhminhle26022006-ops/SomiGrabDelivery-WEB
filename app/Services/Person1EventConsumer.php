@@ -21,7 +21,8 @@ final class Person1EventConsumer
         $type=$event['event_type'];
         if($type==='NoShipperFound'){self::resolveNoShipper($db,(int)$event['order_id']);return;}
         if(in_array($type,['OrderCreated','PaymentConfirmed','OrderCancelled','OrderDelivered','OrderReturning','OrderReturned','RefundSucceeded'],true)){
-            EmailService::enqueue($db,(int)$order['customer_id'],$type,'order-event:'.$event['event_id'],['order_code'=>$order['order_code']],(int)$order['order_id']);
+            $payload=is_array($event['payload'])?$event['payload']:json_decode($event['payload'],true,512,JSON_THROW_ON_ERROR);
+            EmailService::enqueue($db,(int)$order['customer_id'],$type,'order-event:'.$event['event_id'],['order_code'=>$order['order_code'],'reason'=>$payload['reason']??null],(int)$order['order_id']);
         }
         if($type==='RefundRequested'){
             $payload=is_array($event['payload'])?$event['payload']:json_decode($event['payload'],true,512,JSON_THROW_ON_ERROR);
@@ -43,7 +44,7 @@ final class Person1EventConsumer
         if($q->fetchColumn())throw new LogicException('Cannot cancel an assigned order.');
         $db->prepare("UPDATE orders SET status='CANCELLED',cancellation_fee_minor=0,cancelled_at=now(),closed_at=now(),updated_at=now() WHERE order_id=?")->execute([$order['order_id']]);
         $db->prepare("UPDATE order_match_offers SET status='CANCELLED',responded_at=now() WHERE order_id=? AND status='PENDING'")->execute([$order['order_id']]);
-        OrderLifecycleService::history($db,(int)$order['order_id'],'NO_SHIPPER_FOUND','CANCELLED',null,'SYSTEM','Matching exhausted; full refund requested.');
+        OrderLifecycleService::history($db,(int)$order['order_id'],'NO_SHIPPER_FOUND','CANCELLED',null,'SYSTEM','Không tìm được shipper trong 5 phút. Hệ thống tự hủy và yêu cầu hoàn toàn bộ tiền.');
         OrderLifecycleService::event($db,$order,'OrderCancelled','cancelled:'.$order['order_id'],['reason'=>'NO_SHIPPER_FOUND','refund_required_hint'=>true]);
         (new PaymentService($db))->requestRefund((int)$order['order_id'],'NO_SHIPPER_FOUND','event-refund:'.$order['order_id'].':NO_SHIPPER_FOUND');
         AuditService::record($db,null,'SYSTEM','NO_SHIPPER_AUTO_CANCELLED','ORDER',(int)$order['order_id']);

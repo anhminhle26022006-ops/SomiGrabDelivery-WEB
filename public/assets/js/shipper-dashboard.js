@@ -111,7 +111,7 @@
     }
     const d = delivery;
     set("overviewActive", `
-      <div class="orderid">${esc(d.order_code)} <span class="tag">${esc(t(STATUS[d.status] || [d.status, d.status]))}</span></div>
+      <div class="orderid">${esc(d.order_code)} <span class="tag">${esc(t(d.arrived_at&&d.status==='IN_DELIVERY'?['ARRIVED AT DROP-OFF','ĐÃ ĐẾN NƠI']:STATUS[d.status] || [d.status, d.status]))}</span></div>
       <div class="route" style="margin-top:12px"><div class="routepoints"><span class="dot"></span><span class="routebar"></span><span class="dot red"></span></div>
         <div class="address"><strong>${esc(t(["Pickup", "Điểm lấy hàng"]))}</strong><small>${esc(d.pickup_address)}</small><div style="height:14px"></div>
           <strong>${esc(t(["Drop-off", "Điểm giao hàng"]))}</strong><small>${esc(d.delivery_address)}</small></div>

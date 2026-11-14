@@ -49,10 +49,10 @@ try {
     check((int) value($db, "SELECT count(*) FROM event_consumer_receipts WHERE consumer = 'shipper-matching'") === 1, 'own consumer receipt');
     check((int) value($db, "SELECT count(*) FROM order_match_offers WHERE order_id = ? AND status = 'PENDING'", [$order]) === 2, 'both nearby shippers get an offer');
     check((float) value($db, 'SELECT distance_to_pickup_km FROM order_match_offers WHERE order_id = ? AND shipper_id = 3', [$order]) < (float) value($db, 'SELECT distance_to_pickup_km FROM order_match_offers WHERE order_id = ? AND shipper_id = 4', [$order]), 'distance to pickup computed per shipper');
-    check((int) value($db, 'SELECT extract(epoch FROM expires_at - sent_at) FROM order_match_offers WHERE order_id = ? LIMIT 1', [$order]) === 60, 'offer has a 60 second deadline');
+    check(value($db,'SELECT expires_at IS NULL FROM order_match_offers WHERE order_id=? LIMIT 1',[$order])===true,'offer has no deadline');
     check(tx($db, fn() => $matching->dispatch($order))['result'] === 'WAITING', 'no duplicate round while offers are pending');
     $list = $offers->pending(SHIPPER_A)['items'];
-    check(count($list) === 1 && $list[0]['seconds_left'] > 0 && !isset($list[0]['receiver_phone']) && !isset($list[0]['sender_phone']), 'offer list hides contact details before acceptance');
+    check(count($list) === 1 && $list[0]['seconds_left'] === null && !isset($list[0]['receiver_phone']) && !isset($list[0]['sender_phone']), 'offer list hides contact details before acceptance');
     check($list[0]['estimated_earning_minor'] === null, 'no earning estimate without an Admin policy');
     $db->exec("INSERT INTO shipper_earning_policies (policy_type, currency_code, percentage_rate, effective_from) VALUES ('SUCCESSFUL_DELIVERY_PERCENT', 'VND', 80, now() - interval '1 day')");
     check($offers->pending(SHIPPER_A)['items'][0]['estimated_earning_minor'] === '24000', 'earning estimate reads the active policy');
@@ -81,22 +81,18 @@ try {
     rejects(fn() => tx($db, fn() => $accept->accept(SHIPPER_B, $offer2)), 'OFFER_NOT_PENDING');
     check((int) value($db, 'SELECT count(*) FROM order_assignments WHERE order_id = ?', [$second]) === 0, 'cancelled order never gets an assignment');
 
-    // --- Offer hết hạn, vòng tiếp theo và NO_SHIPPER_FOUND ---
-    $third = paid_order($db);
-    tx($db, fn() => $matching->dispatch($third));
-    $offer3 = (int) value($db, 'SELECT offer_id FROM order_match_offers WHERE order_id = ?', [$third]);
-    // Lùi thời gian của phiên tìm kiếm và offer 2 phút để giả lập offer đã quá hạn.
-    $db->exec("UPDATE order_status_history SET created_at = created_at - interval '3 minutes' WHERE order_id = $third");
-    $db->exec("UPDATE order_match_offers SET sent_at = sent_at - interval '2 minutes', expires_at = expires_at - interval '2 minutes' WHERE offer_id = $offer3");
-    rejects(fn() => tx($db, fn() => $accept->accept(SHIPPER_B, $offer3)), 'OFFER_EXPIRED');
-    $sweep = ShipperEventConsumer::sweep($db);
-    check($sweep['expired'] === 1 && value($db, 'SELECT status FROM order_match_offers WHERE offer_id = ?', [$offer3]) === 'EXPIRED', 'expired offer is closed by the worker');
-    check($sweep['dispatched'][$third] === 'WAITING', 'order keeps searching while time remains');
-    rejects(fn() => tx($db, fn() => $accept->accept(SHIPPER_B, $offer3)), 'OFFER_NOT_PENDING');
-    $db->exec("UPDATE order_status_history SET created_at = now() - interval '10 minutes' WHERE order_id = $third");
-    check(ShipperEventConsumer::sweep($db)['dispatched'][$third] === 'NO_SHIPPER_FOUND', 'search timeout ends matching');
-    check(value($db, 'SELECT status FROM orders WHERE order_id = ?', [$third]) === 'NO_SHIPPER_FOUND', 'order marked NO_SHIPPER_FOUND');
-    check((int) value($db, "SELECT count(*) FROM order_events WHERE order_id = ? AND event_type = 'NoShipperFound'", [$third]) === 1, 'NoShipperFound published');
+    // No 60-second invitation cutoff, but the customer search still ends after five minutes.
+    $third=paid_order($db);tx($db,fn()=>$matching->dispatch($third));
+    $offer3=(int)value($db,'SELECT offer_id FROM order_match_offers WHERE order_id=?',[$third]);
+    $db->exec("UPDATE order_status_history SET created_at=now()-interval '2 minutes' WHERE order_id=$third");
+    $db->exec("UPDATE order_match_offers SET sent_at=now()-interval '2 minutes' WHERE offer_id=$offer3");
+    check($matching->expireOffers()===0&&count($offers->pending(SHIPPER_B)['items'])===1,'invitation remains visible after 60 seconds');
+    $db->exec("UPDATE order_status_history SET created_at=now()-interval '6 minutes' WHERE order_id=$third");
+    check(count($offers->pending(SHIPPER_B)['items'])===0,'order is unavailable after five-minute search deadline');
+    rejects(fn()=>tx($db,fn()=>$accept->accept(SHIPPER_B,$offer3)),'ORDER_SEARCH_EXPIRED');
+    check(ShipperEventConsumer::sweep($db)['dispatched'][$third]==='NO_SHIPPER_FOUND','worker closes five-minute search');
+    check(value($db,'SELECT status FROM order_match_offers WHERE offer_id=?',[$offer3])==='CANCELLED','parent timeout cancels remaining invitations');
+    check(str_contains(value($db,"SELECT note FROM order_status_history WHERE order_id=? AND new_status='NO_SHIPPER_FOUND'",[$third]),'5 phút'),'timeout reason is recorded');
 
     // --- Từ chối offer và tắt nhận đơn ---
     $fourth = paid_order($db);

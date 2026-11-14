@@ -41,6 +41,15 @@ final class PrivateStorageService
             if((int)$file['owner_id']!==$user&&!$file['message_id'])throw new DeliveryApiError(404,'FILE_NOT_FOUND','File not found.');
             InteractionService::requireConversation($this->db,$user,$role,(int)$file['order_id']);return;
         }
+        if($file['purpose']==='EVIDENCE'&&$role==='CUSTOMER'){
+            $q=$this->db->prepare("SELECT 1 FROM orders o JOIN deliveries d ON d.order_id=o.order_id
+                JOIN order_assignments a ON a.assignment_id=d.assignment_id
+                JOIN delivery_evidence e ON e.delivery_id=d.delivery_id AND e.uploaded_by=a.shipper_id
+                WHERE o.order_id=? AND o.customer_id=? AND e.object_key=? AND e.uploaded_by=? AND e.deleted_at IS NULL AND e.delete_after>now()");
+            $q->execute([$file['order_id'],$user,$file['object_key'],$file['owner_id']]);
+            if(!$q->fetchColumn())throw new DeliveryApiError(404,'FILE_NOT_FOUND','File not found.');
+            return;
+        }
         if((int)$file['owner_id']!==$user)throw new DeliveryApiError(404,'FILE_NOT_FOUND','File not found.');
         if(($file['purpose']==='EVIDENCE'&&$role!=='SHIPPER')||($file['purpose']==='KYC'&&!in_array($role,['CUSTOMER','SHIPPER'],true)))throw new DeliveryApiError(404,'FILE_NOT_FOUND','File not found.');
         if($file['purpose']==='TICKET'){

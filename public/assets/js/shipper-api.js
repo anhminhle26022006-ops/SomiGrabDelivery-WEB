@@ -106,6 +106,8 @@
     currentDelivery: () => request("deliveries.php"),
     requestCancellation: (body) => request("cancellation.php", "POST", body),
     history: () => request("deliveries.php?history=1&limit=50"),
+    historyPage: before => request('deliveries.php?history=1&limit=50&before_id='+encodeURIComponent(before)),
+    historyDetail: id => request('deliveries.php?assignment_id='+encodeURIComponent(id)),
     deliveryAction: (orderId, action) => request("deliveries.php", "POST", { order_id: String(orderId), action }),
     addEvidence: (evidence) => request("evidence.php", "POST", evidence),
     completeDelivery: (orderId) => request("complete-delivery.php", "POST", { order_id: String(orderId) }),

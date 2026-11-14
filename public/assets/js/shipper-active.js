@@ -8,7 +8,7 @@
   let cancelSubmission=null;
   let delivery;
   let loadPending = false, dataVersion = 0, pollTimer = null;
-  let historyRows = [];
+  let historyRows = [], historyFilter="all", historyCursor=null, receiptVersion=0;
   let pendingEvidenceType = null;
 
   const STATUS = {
@@ -113,11 +113,36 @@
     const body = document.getElementById("historyRows");
     if (!body) return;
     document.querySelectorAll("[data-history-filter]").forEach((b) => b.classList.toggle("selected", b.dataset.historyFilter === filter));
-    const rows = historyRows.filter((row) => filter === "all" || (filter === "done") === (row.assignment_status === "COMPLETED"));
-    body.innerHTML = rows.length ? rows.map((row) => `<tr><td><b>${esc(row.order_code)}</b></td><td>${esc(new Date(row.ended_at || row.assigned_at).toLocaleString("vi-VN"))}</td>
-      <td>${esc(row.pickup_address)} đến ${esc(row.delivery_address)}</td><td>Xem ở mục Thu nhập</td>
-      <td><span class="${row.assignment_status === "COMPLETED" ? "statusdone" : "tag"}">${STATUS[row.status] || esc(row.status)}</span></td></tr>`).join("")
-      : `<tr><td colspan="5" class="muted">Chưa có đơn nào.</td></tr>`;
+    historyFilter=filter;
+    const rows = historyRows.filter((row) => filter === "all" || (filter === "done" ? row.assignment_status === "COMPLETED" : filter === "returned" ? row.assignment_status === "RETURNED" : !["COMPLETED","RETURNED"].includes(row.assignment_status)));
+    body.innerHTML = rows.length ? rows.map((row) => `<tr><td><b>${esc(row.order_code)}</b></td><td>${esc(receiptDate(row.ended_at || row.assigned_at))}</td>
+      <td>${esc(row.pickup_address)} đến ${esc(row.delivery_address)}</td><td>${row.gross_amount_minor!=null?esc(receiptMoney(row.gross_amount_minor,row.currency_code)):esc(t('Chưa ghi nhận','Not recorded'))}</td>
+      <td><span class="${row.assignment_status === "COMPLETED" ? "statusdone" : "tag"}">${esc(assignmentLabel(row))}</span></td><td><button type="button" class="outline" data-history-detail="${esc(row.assignment_id)}">${esc(t('Xem chi tiết','View details'))}</button></td></tr>`).join("")
+      : `<tr><td colspan="6" class="muted">Chưa có đơn nào.</td></tr>`;
+  }
+
+  function receiptMoney(amount,currency){
+    try{const value=BigInt(amount),formatter=new Intl.NumberFormat(document.documentElement.lang==='en'?'en-US':'vi-VN',{style:'currency',currency:currency||'VND'});
+      return currency==='USD'?formatter.formatToParts(value/100n).map(p=>p.type==='fraction'?String(value%100n).padStart(2,'0'):p.value).join(''):formatter.format(value);
+    }catch{return '—';}
+  }
+  function assignmentLabel(row){return ({COMPLETED:t('Đã giao','Delivered'),RETURNED:t('Đã hoàn hàng','Returned'),CANCELLED_BEFORE_PICKUP:t('Đã hủy nhận đơn','Assignment cancelled'),ADMIN_CANCELLED:t('Admin đã hủy','Cancelled by Admin')})[row.assignment_status]||row.assignment_status;}
+  const receiptDate=value=>value?new Date(value).toLocaleString(document.documentElement.lang==='en'?'en-US':'vi-VN'):t('Chưa ghi nhận','Not recorded');
+  async function openHistory(id){
+    const dialog=document.querySelector('[data-history-dialog]'),content=document.querySelector('[data-history-content]');if(!dialog)return;
+    const version=++receiptVersion;content.textContent=t('Đang tải chi tiết…','Loading receipt…');if(!dialog.open)dialog.showModal();
+    try{
+      const {receipt:r}=await api.historyDetail(id);if(version!==receiptVersion||!dialog.open)return;
+      const milestones=[['assigned_at',t('Nhận đơn','Accepted')],['picked_up_at',t('Lấy hàng','Picked up')],['delivery_started_at',t('Bắt đầu giao','Delivery started')],['arrived_at',t('Đã đến điểm giao','Arrived at drop-off')],['delivered_at',t('Đã giao thành công','Delivered')],['return_started_at',t('Bắt đầu hoàn hàng','Return started')],['returned_at',t('Shipper đã trả hàng','Returned by shipper')],['customer_return_confirmed_at',t('Khách xác nhận nhận lại','Customer confirmed return')],['ended_at',t('Kết thúc phân công','Assignment ended')]];
+      content.innerHTML=`<div class="s-receipt-heading"><strong>${esc(r.order_code)}</strong><span class="tag">${esc(assignmentLabel(r))}</span></div>
+      <section><h3>${esc(t('Lộ trình và kiện hàng','Route and parcel'))}</h3><dl><dt>${esc(t('Điểm lấy','Pickup'))}</dt><dd>${esc(r.pickup_address)}${r.sender_name?`<small>${esc(r.sender_name)} · ${esc(r.sender_phone)}</small>`:''}</dd><dt>${esc(t('Điểm giao','Drop-off'))}</dt><dd>${esc(r.delivery_address)}${r.receiver_name?`<small>${esc(r.receiver_name)} · ${esc(r.receiver_phone)}</small>`:''}</dd><dt>${esc(t('Hàng hóa','Parcel'))}</dt><dd>${esc(document.documentElement.lang==='en'?r.category_name_en:r.category_name_vi)} · ${esc(r.estimated_weight_kg)} kg · ${esc(api.distance(r.distance_km))} km</dd></dl><p>${esc(r.parcel_description||'')}</p>${r.customer_note?`<p>${esc(t('Ghi chú khách: ','Customer note: '))}${esc(r.customer_note)}</p>`:''}</section>
+      <section><h3>${esc(t('Thu nhập và chi trả','Earnings and payout'))}</h3><p><strong>${r.gross_amount_minor!=null?esc(receiptMoney(r.gross_amount_minor,r.currency_code)):esc(t('Chưa có khoản thu nhập được ghi nhận.','No earnings recorded.'))}</strong></p>${r.payout_status?`<p>${esc(({PENDING:t('Chờ chi trả','Awaiting payout'),PAID:t('Đã chi trả','Paid'),FAILED:t('Chi trả thất bại','Payout failed'),CANCELLED:t('Đã hủy chi trả','Payout cancelled')})[r.payout_status]||r.payout_status)}</p>`:''}</section>
+      <section><h3>${esc(t('Các mốc giao nhận','Delivery milestones'))}</h3><ol class="s-receipt-timeline">${milestones.filter(([key])=>r[key]).map(([key,label])=>`<li><strong>${esc(label)}</strong><time>${esc(receiptDate(r[key]))}</time></li>`).join('')}</ol></section>
+      ${(r.ended_reason||r.failure_reason_code||r.cancellations?.length)?`<section><h3>${esc(t('Lý do và xử lý','Reason and resolution'))}</h3>${r.ended_reason?`<p>${esc(({DELIVERED:t('Giao thành công','Delivered'),RETURNED:t('Đã hoàn hàng','Returned')})[r.ended_reason]||r.ended_reason)}</p>`:''}${r.failure_reason_code?`<p>${esc(REASONS[r.failure_reason_code]||r.failure_reason_code)}${r.failure_note?' · '+esc(r.failure_note):''}</p>`:''}${(r.cancellations||[]).map(c=>`<p>${esc(c.reason)}${c.decision_note?' · '+esc(c.decision_note):''}</p>`).join('')}</section>`:''}
+      <section><h3>${esc(t('Ảnh minh chứng','Photo evidence'))}</h3>${r.evidence?.length?`<div class="s-receipt-photos">${r.evidence.map(e=>{const src='public/api/storage.php?content=1&disposition=inline&file_id='+encodeURIComponent(e.file_id);return `<button type="button" data-history-image="${esc(src)}"><img src="${esc(src)}" alt="${esc(e.evidence_type==='RETURN_PHOTO'?t('Ảnh hoàn hàng','Return photo'):t('Ảnh giao hàng','Delivery photo'))}" loading="lazy"><span>${esc(e.evidence_type==='RETURN_PHOTO'?t('Ảnh hoàn hàng','Return photo'):t('Ảnh giao hàng','Delivery photo'))}</span><small>${esc(receiptDate(e.uploaded_at))}</small></button>`;}).join('')}</div>`:`<p class="muted">${esc(t('Không có ảnh minh chứng còn trong thời hạn lưu trữ cho lần giao này.','No retained photo evidence for this assignment.'))}</p>`}</section>
+      <details><summary>${esc(t('Nhật ký trạng thái','Status log'))}</summary>${(r.timeline||[]).map(e=>`<p><time>${esc(receiptDate(e.created_at))}</time> · ${esc(STATUS[e.new_status]||e.new_status)}${e.note?' · '+esc(e.note):''}</p>`).join('')||esc(t('Chưa có nhật ký.','No log recorded.'))}</details>`;
+      content.querySelectorAll('.s-receipt-photos img').forEach(img=>img.addEventListener('error',()=>{const text=document.createElement('span');text.textContent=t('Không tải được ảnh. Bấm để thử xem lại.','Image unavailable. Select to retry.');img.replaceWith(text);},{once:true}));
+    }catch(error){if(version!==receiptVersion||!dialog.open)return;content.replaceChildren();const message=document.createElement('p');message.textContent=error.message;content.append(message);const retry=document.createElement('button');retry.className='outline';retry.textContent=t('Thử lại','Retry');retry.onclick=()=>openHistory(id);content.append(retry);}
   }
 
   // ---------- Dữ liệu ----------
@@ -214,6 +239,10 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     document.addEventListener("click", (event) => {
+      const historyDetail=event.target.closest('[data-history-detail]');if(historyDetail)return openHistory(historyDetail.dataset.historyDetail);
+      if(event.target.closest('[data-close-history]')){receiptVersion++;return document.querySelector('[data-history-dialog]').close();}
+      if(event.target.closest('[data-close-history-photo]'))return document.querySelector('[data-history-photo]').close();
+      const photo=event.target.closest('[data-history-image]');if(photo){document.querySelector('[data-history-full-photo]').src=photo.dataset.historyImage;return document.querySelector('[data-history-photo]').showModal();}
       const action = event.target.closest("[data-delivery-action]");
       if (action && delivery) return act(action.dataset.deliveryAction, action);
       const evidence = event.target.closest("[data-evidence]");
@@ -236,7 +265,7 @@
     window.addEventListener('pagehide', () => clearInterval(pollTimer));
     window.addEventListener('pageshow', e => { if (e.persisted) { load(); pollTimer = setInterval(() => { if (!document.hidden) load(); }, 5000); } });
     if (document.getElementById("historyRows")) {
-      api.history().then((result) => { historyRows = result.items; renderHistory(); }).catch((error) => toast(error.message));
+      api.history().then((result) => { historyRows = result.items; historyCursor=result.next_before_id; renderHistory(); const more=document.querySelector('[data-history-more]');if(more){more.hidden=!historyCursor;more.onclick=async()=>{more.disabled=true;try{const next=await api.historyPage(historyCursor);const ids=new Set(historyRows.map(r=>String(r.assignment_id)));historyRows.push(...next.items.filter(r=>!ids.has(String(r.assignment_id))));historyCursor=next.next_before_id;more.hidden=!historyCursor;renderHistory(historyFilter);}catch(error){toast(error.message);}finally{more.disabled=false;}};} }).catch((error) => toast(error.message));
     }
   });
 })();

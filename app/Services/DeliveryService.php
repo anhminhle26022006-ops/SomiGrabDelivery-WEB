@@ -56,13 +56,45 @@ final class DeliveryService
         $limit = max(1, min(50, $limit));
         $q = $this->db->prepare(
             "SELECT a.assignment_id, a.assignment_status, a.assigned_at, a.ended_at, o.order_id, o.order_code, o.status,
-                    o.pickup_address, o.delivery_address, o.distance_km
+                    o.pickup_address, o.delivery_address, o.distance_km,
+                    e.gross_amount_minor,e.currency_code,e.payout_status
              FROM order_assignments a JOIN orders o ON o.order_id = a.order_id
+             LEFT JOIN shipper_earnings e ON e.order_id=a.order_id AND e.shipper_id=a.shipper_id AND a.assignment_status IN ('COMPLETED','RETURNED')
              WHERE a.shipper_id = ? AND a.assignment_status <> 'ACTIVE' AND (CAST(? AS bigint) IS NULL OR a.assignment_id < CAST(? AS bigint))
              ORDER BY a.assignment_id DESC LIMIT ?"
         );
         $q->execute([$shipperId, $beforeId, $beforeId, $limit]);
-        return ['items' => $q->fetchAll()];
+        $items=$q->fetchAll();
+        return ['items' => $items,'next_before_id'=>count($items)===$limit?(string)$items[count($items)-1]['assignment_id']:null];
+    }
+
+    /** Read-only receipt for this shipper's ended assignment, never another courier's delivery. */
+    public function historyDetail(int $shipperId,int $assignmentId): array
+    {
+        $q=$this->db->prepare("SELECT a.assignment_id,a.assignment_status,a.assigned_at,a.ended_at,a.ended_reason,
+            o.order_id,o.order_code,o.pickup_address,o.delivery_address,o.sender_name,o.sender_phone,o.receiver_name,o.receiver_phone,o.distance_km,o.parcel_description,o.estimated_weight_kg,o.customer_note,
+            c.name_vi AS category_name_vi,c.name_en AS category_name_en,
+            d.delivery_id,d.picked_up_at,d.delivery_started_at,d.arrived_at,d.delivered_at,d.return_started_at,d.returned_at,d.customer_return_confirmed_at,d.failure_reason_code,d.failure_note,
+            e.gross_amount_minor,e.currency_code,e.payout_status
+            FROM order_assignments a JOIN orders o ON o.order_id=a.order_id
+            JOIN parcel_categories c ON c.category_id=o.category_id
+            LEFT JOIN deliveries d ON d.assignment_id=a.assignment_id
+            LEFT JOIN shipper_earnings e ON e.order_id=a.order_id AND e.shipper_id=a.shipper_id AND a.assignment_status IN ('COMPLETED','RETURNED')
+            WHERE a.assignment_id=? AND a.shipper_id=? AND a.assignment_status<>'ACTIVE'");
+        $q->execute([$assignmentId,$shipperId]);$receipt=$q->fetch();
+        if(!$receipt)throw new DeliveryApiError(404,'ORDER_NOT_FOUND','History receipt not found.');
+        $q=$this->db->prepare("SELECT new_status,note,created_at FROM order_status_history WHERE order_id=? AND created_at>=CAST(? AS timestamptz) AND created_at<=COALESCE(CAST(? AS timestamptz),now()) ORDER BY status_history_id");
+        $q->execute([$receipt['order_id'],$receipt['assigned_at'],$receipt['ended_at']??$receipt['delivered_at']??$receipt['customer_return_confirmed_at']??$receipt['returned_at']??$receipt['assigned_at']]);$receipt['timeline']=$q->fetchAll();
+        $q=$this->db->prepare("SELECT reason,decision,decision_note,requested_at FROM cancellation_requests WHERE assignment_id=? AND requested_by=? ORDER BY cancellation_request_id DESC");
+        $q->execute([$assignmentId,$shipperId]);$receipt['cancellations']=$q->fetchAll();
+        $q=$this->db->prepare("SELECT f.file_id,e.evidence_type,e.uploaded_at FROM delivery_evidence e
+            JOIN private_files f ON f.object_key=e.object_key AND f.owner_id=e.uploaded_by AND f.order_id=? AND f.purpose='EVIDENCE'
+            WHERE e.delivery_id=? AND e.uploaded_by=? AND e.deleted_at IS NULL AND f.deleted_at IS NULL AND f.delete_after>now() AND e.delete_after>now()
+            ORDER BY e.evidence_id");
+        $q->execute([$receipt['order_id'],$receipt['delivery_id'],$shipperId]);$receipt['evidence']=$q->fetchAll();
+        if(empty($receipt['picked_up_at'])&&!in_array($receipt['assignment_status'],['COMPLETED','RETURNED'],true))unset($receipt['sender_name'],$receipt['sender_phone'],$receipt['receiver_name'],$receipt['receiver_phone']);
+        unset($receipt['delivery_id']);
+        return ['receipt'=>$receipt];
     }
 
     /** Shipper xác nhận đã lấy hàng tại điểm gửi: SHIPPER_ASSIGNED -> PICKED_UP. */

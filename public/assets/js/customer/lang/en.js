@@ -5,6 +5,9 @@
  * you add new Vietnamese text to the customer pages.
  */
 window.SomiLangEN = {
+  "Chat với Shipper": "Chat with Shipper",
+  "Hỗ trợ": "Support",
+  "Hỗ trợ từ SOMI": "SOMI support",
   "Chọn điểm lấy và điểm giao. Xem báo giá trước khi xác nhận đơn hàng.": "Choose pickup and delivery locations. Review the quote before confirming your order.",
   "Địa chỉ lấy hàng": "Pickup address",
   "Địa chỉ giao hàng": "Delivery address",

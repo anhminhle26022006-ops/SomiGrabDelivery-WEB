@@ -74,7 +74,13 @@ final class InteractionService
             $events=$this->rows('SELECT ticket_event_id,old_status,new_status,note,created_at FROM support_ticket_events WHERE ticket_id=? AND ticket_event_id<? ORDER BY ticket_event_id DESC LIMIT 50',[$ticket['ticket_id'],$this->cursor($in)]);
             return ['ticket'=>$ticket,'events'=>$events,'next_cursor'=>count($events)===50?(string)end($events)['ticket_event_id']:null];
         }
-        $items=$this->rows('SELECT ticket_id,ticket_code,order_id,category,subject,status,created_at FROM support_tickets WHERE opened_by=? AND opened_role=? AND ticket_id<? ORDER BY ticket_id DESC LIMIT 50',[$user,$role,$this->cursor($in)]);
+        $filter='';$params=[$user,$role,$this->cursor($in)];
+        if(isset($in['order_id'])){
+            $orderId=DeliveryInput::id($in['order_id'],'order_id');
+            self::requireConversation($this->db,$user,$role,$orderId);
+            $filter=' AND t.order_id=?';$params[]=$orderId;
+        }
+        $items=$this->rows('SELECT t.ticket_id,t.ticket_code,t.order_id,t.category,t.subject,t.status,t.created_at,o.order_code FROM support_tickets t LEFT JOIN orders o ON o.order_id=t.order_id WHERE t.opened_by=? AND t.opened_role=? AND t.ticket_id<?'.$filter.' ORDER BY t.ticket_id DESC LIMIT 50',$params);
         return ['items'=>$items,'next_cursor'=>count($items)===50?(string)end($items)['ticket_id']:null];
     }
     public function replies(int $user,string $role,array $in,bool $write):array {

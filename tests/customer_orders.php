@@ -86,6 +86,8 @@ try {
     rejects(fn() => $quotes->create(1, $input), 'OUTSIDE_SERVICE_AREA');
     $provider->distance = '4.000';
     $quote = $quotes->create(1, $input);
+    $appointmentQuote = $quotes->create(1, $input + ['schedule'=>['mode'=>'later','at'=>gmdate(DATE_ATOM,time()+7200)]]);
+    check($appointmentQuote['snapshot']['schedule']['mode']==='later','quote captures pickup appointment');
     check($quote['snapshot']['components']['total_charge_minor'] === '102', 'exact ceiling of composed multipliers');
     check(OrderQuoteService::total('9007199254740993','1.0000','1.0000') === '9007199254740993', 'money beyond JS precision remains exact');
     $night = ['starts_at_local' => '22:00:00', 'ends_at_local' => '02:00:00', 'day_of_week' => 1];
@@ -130,12 +132,12 @@ try {
     check($scheduledOrder['pricing_snapshot']['schedule'] == $scheduledQuote['snapshot']['schedule'], 'pickup schedule survives quote to order');
     foreach (['+10 minutes', '-1 hour', '+8 days'] as $offset) {
         $badSchedule = $input; $badSchedule['schedule']=['mode'=>'later','at'=>(new DateTimeImmutable($offset))->format(DATE_ATOM)];
-        rejects(fn()=>$quotes->create(1,$badSchedule),'INVALID_PICKUP_TIME');
+        rejects(fn()=>$quotes->create(1,$badSchedule),'SCHEDULE_OUT_OF_RANGE');
     }
     $expiredSchedule = $scheduledQuote['snapshot']; $expiredSchedule['schedule']['at']=(new DateTimeImmutable('-1 minute'))->format(DATE_ATOM);
     $freshScheduledQuote = $quotes->create(1, $scheduledInput);
     $db->prepare('UPDATE order_quotes SET snapshot=CAST(? AS jsonb) WHERE quote_id=?')->execute([json_encode($expiredSchedule),$freshScheduledQuote['quote_id']]);
-    rejects(fn()=>$orders->create(1,$freshScheduledQuote['quote_id'],'expired-schedule-1'),'INVALID_PICKUP_TIME');
+    rejects(fn()=>$orders->create(1,$freshScheduledQuote['quote_id'],'expired-schedule-1'),'SCHEDULE_EXPIRED');
     $db->exec('ROLLBACK TO SAVEPOINT schedule_checks');
     $other = $quotes->create(1, $input);
     rejects(fn() => $orders->create(1, $other['quote_id'], 'test-create-0001'), 'IDEMPOTENCY_CONFLICT');
@@ -259,6 +261,11 @@ try {
     $mixedVnd=$orders->create(2,$chosenVnd['quote_id'],'test-mixed-language-vnd')['order'];
     check($mixedUsd['currency_code']==='USD' && $mixedUsd['app_language_at_order']==='vi','Vietnamese account creates USD order with Vietnamese email language');
     check($mixedVnd['currency_code']==='VND' && $mixedVnd['app_language_at_order']==='en','English account creates VND order with English email language');
+    $scheduledOrder=$orders->create(1,$appointmentQuote['quote_id'],'test-scheduled-pickup')['order'];
+    check($scheduledOrder['pricing_snapshot']['schedule']==$appointmentQuote['snapshot']['schedule'],'order preserves quoted appointment');
+    $scheduledList=$orders->list(1,null,100,null)['items'];
+    $scheduledRow=array_values(array_filter($scheduledList,fn($row)=>(int)$row['order_id']===(int)$scheduledOrder['order_id']))[0];
+    check($scheduledRow['schedule']['at']===$appointmentQuote['snapshot']['schedule']['at'],'order list exposes appointment without exposing full quote');
     $db->rollBack();
     echo json_encode(['result' => 'PASS', 'checks' => $checks, 'isolation' => 'temporary tables only; rolled back', 'persistent_business_writes' => 0], JSON_PRETTY_PRINT) . PHP_EOL;
 } catch (Throwable $e) {

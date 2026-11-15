@@ -15,6 +15,7 @@ final class OfferService
      */
     public function pending(int $shipperId): array
     {
+        $due = OrderSchedule::dueSql(); $priority = OrderSchedule::prioritySql();
         $q = $this->db->prepare(
             "SELECT f.offer_id, f.order_id, o.order_code, f.distance_to_pickup_km, f.sent_at, f.expires_at,
                     NULL AS seconds_left,
@@ -27,13 +28,15 @@ final class OfferService
              JOIN orders o ON o.order_id = f.order_id
              JOIN parcel_categories c ON c.category_id = o.category_id
              WHERE f.shipper_id = ? AND f.status = 'PENDING' AND o.status = 'SEARCHING_SHIPPER' AND clock_timestamp()<" . MatchingService::deadlineSql() . "
-             ORDER BY f.sent_at, f.offer_id"
+               AND $due
+             ORDER BY $priority, f.sent_at, f.offer_id"
         );
         $q->execute([$shipperId]);
         $offers = $q->fetchAll();
         foreach ($offers as &$offer) {
             $offer['estimated_earning_minor'] = $this->estimatedEarning($offer);
             $offer['pickup_schedule'] = $offer['pickup_schedule'] ? json_decode($offer['pickup_schedule'], true) : null;
+            $offer['schedule'] = $offer['pickup_schedule'];
         }
         unset($offer);
         $notice = null;

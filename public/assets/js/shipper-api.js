@@ -17,6 +17,8 @@
     ACTIVE_DELIVERY_EXISTS: "Bạn cần hoàn tất đơn đang giao trước.",
     ARRIVAL_REQUIRED: "Cần ghi nhận đã đến điểm giao trước khi chụp ảnh và hoàn tất đơn.",
     ARRIVAL_LOCATION_REQUIRED: "Cần GPS mới, độ chính xác dưới 200 m và vị trí trong 200 m quanh điểm giao. Hãy bật GPS và thử lại.",
+    SCHEDULE_NOT_DUE: "Đơn hẹn giờ chưa đến thời điểm tìm shipper.",
+    PICKUP_TOO_EARLY: "Chưa đến giờ lấy hàng đã hẹn. Vui lòng chờ đến giờ để xác nhận.",
     EVIDENCE_REQUIRED: "Cần thêm ảnh bằng chứng trước khi xác nhận.",
     INVALID_ORDER_STATE: "Thao tác không phù hợp với trạng thái hiện tại của đơn.",
     VEHICLE_REGISTRATION_TAKEN: "Biển số này đã thuộc về một hồ sơ khác.",

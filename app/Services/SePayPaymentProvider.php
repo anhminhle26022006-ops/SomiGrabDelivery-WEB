@@ -38,7 +38,9 @@ final class SePayPaymentProvider implements PaymentProvider
     {
         $this->checkout($p,'');$return=rtrim(getenv('SOMI_PUBLIC_URL'),'/').'/?page=customer&view=payment&id='.$p['order_id'];
         $fields=['order_amount'=>(string)$p['amount_minor'],'merchant'=>getenv('SEPAY_MERCHANT_ID'),'currency'=>'VND','operation'=>'PURCHASE','order_description'=>'SOMI order '.$p['order_id'],'order_invoice_number'=>$this->invoice((int)$p['payment_id'])];
-        if($p['method']!=='GATEWAY')$fields['payment_method']=$p['method'];
+        // SOMI's QR option retains the existing GATEWAY database value. This is
+        // SePay QR Banking, separate from SOMI's manual BANK_TRANSFER workflow.
+        $fields['payment_method']=$p['method']==='GATEWAY'?'BANK_TRANSFER':$p['method'];
         $fields+=['success_url'=>$return,'error_url'=>$return,'cancel_url'=>$return];
         $signed=[];foreach($fields as $name=>$value)$signed[]=$name.'='.$value;
         $fields['lang']=$language==='vi'?'vi':'en';$fields['signature']=base64_encode(hash_hmac('sha256',implode(',',$signed),getenv('SEPAY_SECRET_KEY'),true));

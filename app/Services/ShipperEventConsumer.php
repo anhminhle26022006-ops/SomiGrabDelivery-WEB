@@ -17,12 +17,14 @@ final class ShipperEventConsumer
         if ($db->inTransaction()) throw new LogicException('Event worker owns its transaction.');
         $db->beginTransaction();
         try {
+            $due = OrderSchedule::dueSql(); $priority = OrderSchedule::prioritySql();
             // SKIP LOCKED cho phép chạy nhiều worker song song mà không xử lý trùng một sự kiện.
             $q = $db->prepare(
-                "SELECT e.event_id, e.order_id FROM order_events e
+                "SELECT e.event_id, e.order_id FROM order_events e JOIN orders o ON o.order_id=e.order_id
                  WHERE e.event_type = 'OrderReadyForMatching'
+                   AND ($due OR o.status <> 'SEARCHING_SHIPPER')
                    AND NOT EXISTS (SELECT 1 FROM event_consumer_receipts r WHERE r.consumer = ? AND r.event_id = e.event_id)
-                 ORDER BY e.event_id FOR UPDATE OF e SKIP LOCKED LIMIT 1"
+                 ORDER BY $priority, e.event_id FOR UPDATE OF e SKIP LOCKED LIMIT 1"
             );
             $q->execute([self::CONSUMER]);
             $event = $q->fetch();

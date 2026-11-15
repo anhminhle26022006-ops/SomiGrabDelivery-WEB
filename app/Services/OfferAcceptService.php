@@ -4,6 +4,7 @@ require_once __DIR__ . '/AccessControl.php';
 require_once __DIR__ . '/OrderLifecycleService.php';
 require_once __DIR__ . '/ShipperEligibility.php';
 require_once __DIR__ . '/MatchingService.php';
+require_once __DIR__ . '/OrderSchedule.php';
 
 /**
  * Nhận đơn "nguyên tử": trong một transaction, hoặc Shipper nhận được đơn trọn vẹn
@@ -39,6 +40,9 @@ final class OfferAcceptService
 
         // 3) Trạng thái đơn và thanh toán, kiểm tra khi đang giữ khóa.
         if ($order['status'] !== 'SEARCHING_SHIPPER') throw new DeliveryApiError(409, 'ORDER_NOT_AVAILABLE', 'This order is no longer looking for a Shipper.');
+        $schedule = OrderSchedule::fromOrder($order);
+        if ($schedule !== null && strtotime($schedule['dispatch_at']) > time())
+            throw new DeliveryApiError(409, 'SCHEDULE_NOT_DUE', 'This pickup appointment is not open for matching yet.');
         if ((new MatchingService($this->db))->searchExpired($orderId)) throw new DeliveryApiError(409,'ORDER_SEARCH_EXPIRED','No shipper accepted within the five-minute matching window.');
         $q = $this->db->prepare('SELECT status FROM payments WHERE order_id = ?');
         $q->execute([$orderId]);

@@ -8,7 +8,7 @@ const server=http.createServer((req,res)=>{
  if(['maps.js','places.js','create-route.js','server.js'].includes(script)){res.setHeader('Content-Type','application/javascript; charset=utf-8');return res.end(fs.readFileSync(path.join(root,'public/assets/js/customer',script)));}
  if(script==='bootstrap.css'||script==='customer.css'){res.setHeader('Content-Type','text/css');return res.end(fs.readFileSync(path.join(root,'public/assets',script==='bootstrap.css'?'vendor/bootstrap/bootstrap.min.css':'css/modules/customer.css')));}
  if(u.pathname!=='/'){res.writeHead(404);return res.end();}
- const view=['create','orders','order','tracking'].includes(u.searchParams.get('view'))?u.searchParams.get('view'):'orders';
+ const view=['create','orders','order','tracking','payment'].includes(u.searchParams.get('view'))?u.searchParams.get('view'):'orders';
  const fragment=fs.readFileSync(path.join(root,'app/Views/customer/pages',view+'.php'),'utf8').replace(/<\?php.*?\?>/gs,'');
  const lang=u.searchParams.get('lang')==='en'?'en':'vi';
  res.setHeader('Content-Type','text/html; charset=utf-8');res.end(`<!doctype html><html lang="${lang}"><head><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/bootstrap.css"><link rel="stylesheet" href="/customer.css"></head><body data-page="customer" data-c-view="${view}"><div class="c-app"><div><span data-locale-current></span><button data-set-currency="VND">VND</button><button data-set-currency="USD">USD</button></div><main class="c-main" data-customer-server data-geoapify-key="${u.searchParams.has('noMap')?'':'fixture-browser-key'}">${fragment}</main></div>${u.searchParams.has('embedded')?'<script type="application/json" id="customer-profile-data">{"profile":{"user_id":"1","full_name":"Embedded Customer","phone":"0900000001","app_language":"vi"}}</script>':''}<script defer src="/maps.js"></script><script defer src="/places.js"></script><script defer src="/create-route.js"></script><script defer src="/server.js"></script></body></html>`);
@@ -32,6 +32,7 @@ const check=(ok,label)=>{assert.ok(ok,label);checks++;};
   window.fixtureRequests=[];window.fixtureReturnHanded=false;window.fixtureLocationMode='ready';window.fixtureCancelConflict=false;window.fixtureQuoteError=null;
   window.fixtureGpsMode=new URL(location.href).searchParams.get('gps')||'ready';window.fixtureMarkers=[];window.fixtureMapEvents={};window.fixturePendingReverse=[];window.fixtureHoldReverse=false;window.fixturePendingRoute=[];window.fixtureHoldRoute=false;
   window.fixtureGpsOptions=[];
+  window.fixturePaymentError=false;
   window.fixtureHoldSearch=false;window.fixtureSearchPending=[];window.fixtureEmptyAutocomplete=false;
   Object.defineProperty(navigator,'geolocation',{value:{getCurrentPosition(resolve,reject,options){fixtureGpsOptions.push(options);setTimeout(()=>fixtureGpsMode==='ready'||fixtureGpsMode==='retry'&&fixtureGpsOptions.length>1?resolve({coords:{latitude:10.8,longitude:106.68,accuracy:10}}):reject({code:fixtureGpsMode==='denied'?1:fixtureGpsMode==='timeout'?3:2}),0);}}});
   window.L={
@@ -43,6 +44,7 @@ const check=(ok,label)=>{assert.ok(ok,label);checks++;};
   const snapshot={currency_code:'VND',context:{distance_km:'4.500',weather_condition:'LIGHT_RAIN'},parcel:{weight_kg:'3.500'},cancellation_fees:{PENDING_PAYMENT:'0'},components:{base_fee_minor:'20000',distance_component_minor:'6000',weight_component_minor:'1250',time_multiplier:'1.2000',weather_multiplier:'1.1000',total_charge_minor:'35970'}};
   const history=[{old_status:null,new_status:'PENDING_PAYMENT',created_at:'2026-11-09T01:00:00Z'}];
   window.fixtureOrder={order_id:'7',order_code:'SOMI-FIXTURE-007',status:'PENDING_PAYMENT',currency_code:'VND',total_charge_minor:'35970',pickup_address:'Frozen pickup',pickup_latitude:'10.8',pickup_longitude:'106.68',delivery_address:'Frozen delivery',delivery_latitude:'10.83',delivery_longitude:'106.70',sender_name:'Sender',sender_phone:'0900000001',receiver_name:'Receiver',receiver_phone:'0900000002',distance_km:'4.500',estimated_weight_kg:'3.500',parcel_description:'Fixture parcel',created_at:'2026-11-09T01:00:00Z',pricing_snapshot:snapshot,status_history:history};
+  if(new URLSearchParams(location.search).has('scheduled')){snapshot.schedule={mode:'later',at:new Date(Date.now()+3600000).toISOString(),dispatch_at:new Date(Date.now()+2700000).toISOString()};fixtureOrder.status='SEARCHING_SHIPPER';}
   window.fetch=async(url,options={})=>{
    const u=new URL(url,location.href),body=options.body?JSON.parse(options.body):null,method=options.method||'GET';fixtureRequests.push({path:u.pathname,search:u.search,method,body,key:options.headers?.['Idempotency-Key']});let data={};
    if(u.pathname.endsWith('/account/profile.php'))data={profile:{full_name:'Fixture Customer',phone:'0900000001',email:new URLSearchParams(location.search).has('demo')?'fixture@demo.somi.invalid':'fixture@example.invalid',app_language:new URLSearchParams(location.search).get('accountLang')==='en'?'en':'vi'}};
@@ -59,7 +61,7 @@ const check=(ok,label)=>{assert.ok(ok,label);checks++;};
    }
    else if(u.pathname.endsWith('/quotes.php')){
     if(fixtureQuoteError)return new Response(JSON.stringify({code:fixtureQuoteError}),{status:503});
-    data={quote:{quote_id:'0123456789abcdef0123456789abcdef',expires_at:'2099-01-01T00:00:00Z',snapshot:{...snapshot,currency_code:body.currency_code||'VND',components:{...snapshot.components,total_charge_minor:body.currency_code==='USD'?'171':'35970'}}}};
+    data={quote:{quote_id:'0123456789abcdef0123456789abcdef',expires_at:'2099-01-01T00:00:00Z',snapshot:{...snapshot,schedule:{...(body.schedule||{mode:'now',at:null}),dispatch_at:body.schedule?.mode==='later'?new Date(Date.parse(body.schedule.at)-900000).toISOString():null},currency_code:body.currency_code||'VND',components:{...snapshot.components,total_charge_minor:body.currency_code==='USD'?'171':'35970'}}}};
    }else if(u.pathname.endsWith('/cancel-order.php')){
     if(fixtureCancelConflict)return new Response(JSON.stringify({code:'ORDER_NOT_CANCELLABLE'}),{status:409});
     fixtureOrder.status='CANCELLED';history.push({old_status:'PENDING_PAYMENT',new_status:'CANCELLED',note:body.reason,created_at:'2026-11-09T01:02:00Z'});data={order:fixtureOrder};
@@ -67,7 +69,7 @@ const check=(ok,label)=>{assert.ok(ok,label);checks++;};
     // Simulate an uncertain create response to verify retry uses the same key.
     if(method==='POST')return new Response(JSON.stringify({code:'SERVICE_UNAVAILABLE'}),{status:503});
     data=u.searchParams.has('id')?{order:fixtureOrder}:{items:u.searchParams.has('before_id')?[fixtureOrder]:[{...fixtureOrder,order_id:'8',order_code:'SOMI-FIXTURE-008',status:'DELIVERED',receiver_name:'Other recipient'}],next_before_id:u.searchParams.has('before_id')?null:'8'};
-   }else if(u.pathname.endsWith('/payments.php'))data={payment:null};
+   }else if(u.pathname.endsWith('/payments.php')){if(method==='POST'&&fixturePaymentError)return new Response(JSON.stringify({code:'SERVICE_UNAVAILABLE'}),{status:503});data={payment:null};}
    else if(u.pathname.endsWith('/refunds.php'))data={items:[]};
    else throw Error('Unexpected API fixture request');
    return new Response(JSON.stringify(data),{status:200});
@@ -162,6 +164,7 @@ const check=(ok,label)=>{assert.ok(ok,label);checks++;};
  check(await evaluate(`!document.querySelector('input[value=later]').disabled&&document.querySelector('[data-later]').hidden`),'schedule choice is available, immediate pickup hides date input');
  await click('input[name=schedule][value=later]');
  check(await evaluate(`!document.querySelector('[data-later]').hidden&&field('schedule-at').required&&!field('schedule-at').disabled`),'scheduled pickup shows a required date/time on mobile');
+ await evaluate(`field('schedule-at').value=''`);
  const quotesBeforeInvalid=await evaluate(`fixtureRequests.filter(r=>r.path.endsWith('/quotes.php')).length`);
  await submit();
  check(await evaluate(`fixtureRequests.filter(r=>r.path.endsWith('/quotes.php')).length===${quotesBeforeInvalid}&&!document.querySelector('[data-step="3"]').hidden`),'missing scheduled date cannot request quote');
@@ -174,7 +177,23 @@ const check=(ok,label)=>{assert.ok(ok,label);checks++;};
  await click('[data-prev]');await click('input[name=schedule][value=now]');await submit();await waitFor(`!document.querySelector('[data-step="4"]').hidden`);
  check(await evaluate(`fixtureRequests.filter(r=>r.path.endsWith('/quotes.php')).at(-1).body.schedule.mode==='now'&&!document.querySelector('[data-summary]').textContent.includes('Hẹn lấy hàng')`),'immediate order sends now mode without an appointment');
  await click('[data-prev]');await click('input[name=schedule][value=later]');await submit();await waitFor(`!document.querySelector('[data-step="4"]').hidden`);
+ await send('Emulation.setTimezoneOverride',{timezoneId:'America/Los_Angeles'});
+ await click('[data-prev]');
+ await evaluate(`{const radio=document.querySelector('input[name=schedule][value=later]');radio.checked=true;radio.dispatchEvent(new Event('change',{bubbles:true}));}`);
+ check(await evaluate(`!document.querySelector('input[name=schedule][value=later]').disabled&&!document.querySelector('[data-later]').hidden`),'scheduled pickup selection is enabled');
+ await evaluate(`field('schedule-at').value=new Date(Date.now()+7*3600000+2*3600000).toISOString().slice(0,16);field('schedule-at').dispatchEvent(new Event('input',{bubbles:true}))`);
+ await submit();await waitFor(`!document.querySelector('[data-step="4"]').hidden`);
+ check(await evaluate(`(()=>{const r=fixtureRequests.filter(r=>r.path.endsWith('/quotes.php')).at(-1);return r.body.schedule.mode==='later'&&Math.abs(Date.parse(r.body.schedule.at)-Date.now()-2*3600000)<65000;})()`),'Vietnam appointment input is sent as UTC independent of browser timezone');
+ check(await evaluate(`document.querySelector('[data-summary]').textContent.includes('UTC+7')&&document.querySelector('[data-summary]').textContent.includes('Hẹn lấy hàng')`),'review shows the appointment before order creation');
+ await load('create',true);
+ check(await evaluate(`document.querySelector('input[name=schedule][value=later]').checked&&!document.querySelector('[data-later]').hidden&&!document.querySelector('[data-step="4"]').hidden&&document.querySelector('[data-summary]').textContent.includes('UTC+7')`),'draft preserves appointment, quote and review');
+ await click('[data-prev]');
+ await evaluate(`{const radio=document.querySelector('input[name=schedule][value=now]');radio.checked=true;radio.dispatchEvent(new Event('change',{bubbles:true}));}`);
+ await submit();await waitFor(`!document.querySelector('[data-step="4"]').hidden`);
+ check(await evaluate(`fixtureRequests.filter(r=>r.path.endsWith('/quotes.php')).at(-1).body.schedule.mode==='now'`),'switching back to immediate requests a fresh quote');
+ await send('Emulation.setTimezoneOverride',{timezoneId:'Asia/Ho_Chi_Minh'});
 
+ await click('[data-prev]');await click('input[name=schedule][value=later]');await submit();await waitFor(`!document.querySelector('[data-step="4"]').hidden`);
  await load('create&lang=en',true);await waitFor(`!document.querySelector('[data-use-location]').disabled`);
  check(await evaluate(`!document.querySelector('[data-step="4"]').hidden&&field('delivery-name').value==='Receiver'&&field('pkg-weight').value==='3.5'&&field('pickup-latitude').value==='10.83'&&document.querySelector('input[value=later]').checked&&!!field('schedule-at').value`),'language reload preserves confirmation step, addresses, recipient and parcel');
  await load('create',true);await waitFor(`!document.querySelector('[data-use-location]').disabled`);
@@ -266,6 +285,25 @@ const check=(ok,label)=>{assert.ok(ok,label);checks++;};
  check(await evaluate(`!document.querySelector('[data-step="1"]').hidden&&document.querySelector('#delivery-detail').parentElement.querySelector('[role=option]').textContent==='Full address fallback'`),'empty autocomplete automatically shows geocoding suggestions without Enter');
  await evaluate(`field('delivery-detail').dispatchEvent(new Event('blur'));field('delivery-detail').dispatchEvent(new Event('focus'))`);
  check(await evaluate(`field('delivery-detail').getAttribute('aria-expanded')==='true'`),'returning to a filled address automatically reopens suggestions');
+ await load('payment&id=7&checkout=1');
+ check(await evaluate(`document.querySelectorAll('[data-pay] input[name=method]').length===2&&!!document.querySelector('[data-pay] input[value=GATEWAY]')&&!!document.querySelector('[data-pay] input[value=CARD]')`),'payment page offers QR and card');
+ check(await evaluate(`!fixtureRequests.some(r=>r.path.endsWith('/payments.php')&&r.method==='POST')&&!new URL(location.href).searchParams.has('checkout')`),'legacy checkout link shows choices without creating a payment');
+ await evaluate(`fixturePaymentError=true`);
+ await evaluate(`{const input=document.querySelector('[data-pay] input[value=CARD]');input.checked=true;input.dispatchEvent(new Event('change',{bubbles:true}));}`);
+ await click('[data-refresh]');
+ await waitFor(`document.querySelector('[data-pay] input[value=CARD]').checked`);
+ check(await evaluate(`document.querySelector('[data-pay] input[value=CARD]').checked`),'selected card survives detail refresh');
+ await evaluate(`document.querySelector('[data-pay]').requestSubmit();document.querySelector('[data-pay]').requestSubmit()`);
+ await waitFor(`!!document.querySelector('[data-payment-error] [role=alert]')&&!document.querySelector('[data-pay] button').disabled`);
+ check(await evaluate(`fixtureRequests.filter(r=>r.path.endsWith('/payments.php')&&r.method==='POST').length===1&&fixtureRequests.filter(r=>r.path.endsWith('/payments.php')&&r.method==='POST')[0].body.method==='CARD'`),'proceed sends selected card exactly once');
+ await evaluate(`{const input=document.querySelector('[data-pay] input[value=GATEWAY]');input.checked=true;input.dispatchEvent(new Event('change',{bubbles:true}));document.querySelector('[data-pay]').requestSubmit();}`);
+ await waitFor(`fixtureRequests.filter(r=>r.path.endsWith('/payments.php')&&r.method==='POST').length===2&&!document.querySelector('[data-pay] button').disabled`);
+ await evaluate(`document.querySelector('[data-pay]').requestSubmit()`);
+ await waitFor(`fixtureRequests.filter(r=>r.path.endsWith('/payments.php')&&r.method==='POST').length===3&&!document.querySelector('[data-pay] button').disabled`);
+ check(await evaluate(`(()=>{const r=fixtureRequests.filter(r=>r.path.endsWith('/payments.php')&&r.method==='POST');return r[1].body.method==='GATEWAY'&&r[1].key===r[2].key&&r[0].key!==r[1].key;})()`),'QR retry preserves its own idempotency key');
+ for(const width of [1440,390,320]){await send('Emulation.setDeviceMetricsOverride',{width,height:1000,deviceScaleFactor:1,mobile:false});await sleep(50);check(await evaluate(`document.querySelector('[data-pay]').scrollWidth<=document.querySelector('[data-pay]').clientWidth+1`),'payment selector fits '+width+' pixels');}
+ await load('order&id=7&scheduled=1');
+ check(await evaluate(`document.querySelector('[data-schedule-status]').textContent.includes('UTC+7')&&document.querySelector('.c-head').textContent.includes('Chờ lịch lấy hàng')`),'paid future appointment shows waiting state and matching start time');
  check(errors.length===0,'no browser exceptions: '+errors.join('; '));
  const result={passed:checks,live_database_writes:0,provider_requests:0};fs.writeFileSync(path.join(runtime,'results.json'),JSON.stringify(result,null,2));console.log(JSON.stringify(result));
 })().catch(e=>{console.error(e);process.exitCode=1;}).finally(()=>{ws?.close();browser?.kill();server.close();});

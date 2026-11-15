@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__ . '/OrderSchedule.php';
 
 /** Pickup appointments are frozen in the quote/order snapshot, in UTC. */
 final class PickupSchedule
@@ -25,13 +26,12 @@ final class PickupSchedule
 
     public static function matchingAt(array $order): ?DateTimeImmutable
     {
-        $snapshot = is_array($order['pricing_snapshot'] ?? null) ? $order['pricing_snapshot'] : json_decode($order['pricing_snapshot'] ?? '{}', true);
-        return ($snapshot['schedule']['mode'] ?? 'now') === 'later'
-            ? (new DateTimeImmutable($snapshot['schedule']['at']))->modify('-30 minutes') : null;
+        $schedule = OrderSchedule::fromOrder($order);
+        return $schedule === null ? null : new DateTimeImmutable($schedule['dispatch_at']);
     }
 
     public static function dueSql(string $alias = 'o'): string
     {
-        return "(COALESCE($alias.pricing_snapshot #>> '{schedule,mode}', 'now') <> 'later' OR CAST($alias.pricing_snapshot #>> '{schedule,at}' AS timestamptz) <= now() + interval '30 minutes')";
+        return OrderSchedule::dueSql($alias);
     }
 }

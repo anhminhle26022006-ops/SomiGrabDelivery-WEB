@@ -43,6 +43,7 @@ final class MatchingService
         $profile = ShipperEligibility::profile($this->db, $shipperId);
         ShipperEligibility::assertCanWork($this->db, $profile);
         if (!\Somi\Domain\Shipper::fromRow($profile)->isAvailable()) return [];
+        $due = OrderSchedule::dueSql(); $priority = OrderSchedule::prioritySql();
         $q = $this->db->prepare(
             "SELECT o.order_id FROM orders o
              JOIN shipper_profiles sp ON sp.user_id = ?
@@ -55,7 +56,7 @@ final class MatchingService
                    * power(sin(radians(sp.last_longitude - o.pickup_longitude) / 2), 2)))) <= ?
                AND NOT EXISTS (SELECT 1 FROM order_assignments a WHERE a.shipper_id=sp.user_id AND a.assignment_status='ACTIVE')
                AND NOT EXISTS (SELECT 1 FROM order_match_offers f WHERE f.order_id=o.order_id AND f.shipper_id=sp.user_id AND f.status IN ('PENDING','REJECTED','ACCEPTED'))
-             ORDER BY o.matching_checked_at NULLS FIRST,o.paid_at,o.order_id LIMIT 20"
+             ORDER BY $priority, o.matching_checked_at NULLS FIRST LIMIT 20"
         );
         $q->execute([$shipperId, ShipperInput::config('location_max_age_seconds'), ShipperInput::config('radius_km')]);
         $orders = $q->fetchAll(PDO::FETCH_COLUMN);
@@ -114,7 +115,8 @@ final class MatchingService
     public static function deadlineSql(string $alias='o'): string
     {
         $seconds=(int)ShipperInput::config('search_timeout_seconds');
-        return "(GREATEST(COALESCE((SELECT max(h.created_at) FROM order_status_history h WHERE h.order_id=$alias.order_id AND h.new_status='SEARCHING_SHIPPER'),$alias.paid_at),CASE WHEN $alias.pricing_snapshot #>> '{schedule,mode}'='later' THEN CAST($alias.pricing_snapshot #>> '{schedule,at}' AS timestamptz)-interval '30 minutes' ELSE NULL END)+make_interval(secs=>$seconds))";
+        $started = "GREATEST(COALESCE((SELECT max(h.created_at) FROM order_status_history h WHERE h.order_id=$alias.order_id AND h.new_status='SEARCHING_SHIPPER'),$alias.paid_at),CASE WHEN $alias.pricing_snapshot #>> '{schedule,mode}'='later' THEN CAST($alias.pricing_snapshot #>> '{schedule,at}' AS timestamptz)-interval '15 minutes' ELSE NULL END)";
+        return "GREATEST(($started + make_interval(secs=>$seconds)),CASE WHEN $alias.pricing_snapshot #>> '{schedule,mode}'='later' THEN CAST($alias.pricing_snapshot #>> '{schedule,at}' AS timestamptz)+interval '15 minutes' ELSE NULL END)";
     }
 
     public function searchExpired(int $orderId): bool
@@ -141,11 +143,12 @@ final class MatchingService
     /** Fair sweep also includes orders already visible to other shippers, so newcomers can join. */
     public function ordersNeedingDispatch(int $limit = 20): array
     {
+        $due = OrderSchedule::dueSql(); $priority = OrderSchedule::prioritySql();
         $q = $this->db->prepare(
             "SELECT o.order_id FROM orders o
              WHERE o.status = 'SEARCHING_SHIPPER' AND o.paid_at IS NOT NULL
                AND " . PickupSchedule::dueSql() . "
-             ORDER BY o.matching_checked_at NULLS FIRST, o.paid_at, o.order_id LIMIT ?"
+             ORDER BY $priority, o.matching_checked_at NULLS FIRST LIMIT ?"
         );
         $q->execute([$limit]);
         return array_map('intval', $q->fetchAll(PDO::FETCH_COLUMN));

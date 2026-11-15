@@ -176,7 +176,7 @@
     return offer.estimated_earning_minor === null ? "Chưa công bố" : money(offer.estimated_earning_minor);
   }
 
-  function pickupSchedule(offer){const s=offer.pickup_schedule;if(s?.mode!=='later')return '';const label=new Intl.DateTimeFormat(document.body.dataset.shipperLang==='en'?'en-US':'vi-VN',{dateStyle:'short',timeStyle:'short'}).format(new Date(s.at));return `<p class="s-pickup-schedule">Hẹn lấy hàng: <strong>${esc(label)}</strong></p>`;}
+  function pickupSchedule(offer){const s=offer.pickup_schedule;if(s?.mode!=='later')return '';const label=new Intl.DateTimeFormat(document.body.dataset.shipperLang==='en'?'en-US':'vi-VN',{dateStyle:'short',timeStyle:'short',timeZone:'Asia/Ho_Chi_Minh'}).format(new Date(s.at));return `<p class="s-pickup-schedule">Ưu tiên hẹn lấy hàng: <strong>${esc(label)} (UTC+7)</strong></p>`;}
   function offerCard(offer) {
     const id = esc(offer.offer_id);
     return `<article class="order" data-offer="${id}">
@@ -197,8 +197,11 @@
     const sort = document.getElementById("offerSort")?.value;
     if (sort === "pay") list.sort((a, b) => Number(b.estimated_earning_minor ?? 0) - Number(a.estimated_earning_minor ?? 0));
     if (sort === "distance") list.sort((a, b) => Number(a.distance_to_pickup_km) - Number(b.distance_to_pickup_km));
+    list.sort((a,b)=>Number(b.schedule?.mode === 'later')-Number(a.schedule?.mode === 'later') || (a.schedule?.mode === 'later' && b.schedule?.mode === 'later' ? Date.parse(a.schedule.at)-Date.parse(b.schedule.at) : 0));
     return list;
   }
+
+
 
   function renderOffers() {
     offersRendered = true;
@@ -220,7 +223,7 @@
       <div class="detail-grid"><section class="detailbox"><h3>Hàng vận chuyển</h3><b>${esc(offer.category_name_vi)}</b><span>${esc(offer.estimated_weight_kg)} kg</span><p>${esc(offer.parcel_description || "Không có mô tả thêm.")}</p></section>
         <section class="detailbox"><h3>Liên hệ</h3><p>Tên và số điện thoại người gửi, người nhận chỉ hiển thị sau khi bạn nhận đơn.</p></section></div>
       <section class="detailbox locationbox"><h3>Địa điểm</h3><div class="address"><strong>Điểm lấy hàng</strong><small>${esc(offer.pickup_address)}</small><div style="height:12px"></div><strong>Điểm giao hàng</strong><small>${esc(offer.delivery_address)}</small></div></section>
-      <div class="detail-actions"><button class="outline rejectbtn" data-offer-reject="${id}">Từ chối đơn</button><button class="primary blue" data-offer-accept="${id}">Nhận đơn</button></div>`;
+            <div class="detail-actions"><button class="outline rejectbtn" data-offer-reject="${id}">Từ chối đơn</button><button class="primary blue" data-offer-accept="${id}">Nhận đơn</button></div>`;
     document.getElementById("orderDetailModal").classList.remove("hidden");
   }
 

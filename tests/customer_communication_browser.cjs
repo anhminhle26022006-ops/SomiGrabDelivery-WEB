@@ -3,7 +3,7 @@ const {chromium}=require('playwright');
 (async()=>{
  const browser=await chromium.launch({headless:true,channel:'chrome'});
  try {
- const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[],calls=[];let count=0,failUpload=true,failSend=true;
+ const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[],calls=[];await page.addInitScript(()=>{if(!localStorage.getItem('somi-language'))localStorage.setItem('somi-language','vi');});let count=0,failUpload=true,failSend=true;
  const check=(value,name)=>{assert.ok(value,name);count++;};page.on('pageerror',e=>errors.push(e.message));
  const orders=[{order_id:'1',order_code:'SOMI-OLD',status:'CANCELLED'},{order_id:'2',order_code:'SOMI-NEW',status:'IN_DELIVERY'}];
  const tickets=[{ticket_id:'10',ticket_code:'TK-OLD',order_id:'1',order_code:'SOMI-OLD',subject:'Hoàn tiền đơn cũ',description:'Nội dung đơn cũ',status:'NEW'}],files=[],replies=[],messages=[];
@@ -11,7 +11,7 @@ const {chromium}=require('playwright');
   const req=route.request(),url=new URL(req.url());
   if(url.pathname==='/')return route.fulfill({contentType:'text/html',body:cp.execFileSync('C:/xampp/php/php.exe',['tests/customer_communication_fixture.php',url.search.slice(1)],{encoding:'utf8',windowsHide:true})});
   if(url.pathname.startsWith('/public/assets/')){
-   if(url.pathname.endsWith('.js')&&!url.pathname.endsWith('/customer/communication.js'))return route.fulfill({contentType:'application/javascript',body:''});
+   if(url.pathname.endsWith('.js')&&!['/customer/communication.js','/app.js','/customer/i18n.js','/customer/lang/en.js','/customer/locale-menu.js','/bootstrap.bundle.min.js'].some(name=>url.pathname.endsWith(name)))return route.fulfill({contentType:'application/javascript',body:''});
    const file=path.join(process.cwd(),url.pathname.slice(1));return fs.existsSync(file)?route.fulfill({contentType:url.pathname.endsWith('.css')?'text/css':url.pathname.endsWith('.js')?'application/javascript':'application/octet-stream',body:fs.readFileSync(file)}):route.abort();
   }
   const body=req.headers()['content-type']?.includes('application/json')?req.postDataJSON():null;calls.push({url:req.url(),body,method:req.method()});let data={},status=200;
@@ -29,6 +29,7 @@ const {chromium}=require('playwright');
     else data={items:[...messages].reverse(),next_cursor:null};
    }
   }else if(url.pathname.endsWith('/storage.php')){
+   if(url.searchParams.has('content'))return route.fulfill({contentType:'image/png',body:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+j5K0AAAAASUVORK5CYII=','base64')});
    if(req.method()==='POST'){
     const text=req.postData();if(text.includes('name="ticket_id"')){if(failUpload){failUpload=false;status=503;data={error:'Fixture upload failed'};}else{files.push({file_id:'91',original_name:'ticket.pdf',ticket_id:'11'});data={file_id:'91'};}}
     else data={file_id:'92'};
@@ -36,6 +37,9 @@ const {chromium}=require('playwright');
   }else if(url.pathname.endsWith('/support/replies.php')){if(body)replies.push({reply_id:'1',sender_role:'CUSTOMER',body:body.body,created_at:'2026-11-15T03:00:00Z'});data={items:[...replies].reverse(),next_cursor:null};}
   return route.fulfill({status,contentType:'application/json',body:JSON.stringify(data)});
  });
+ await page.goto('http://customer.test/?page=customer&view=chat');await page.locator('.cc-composer').waitFor();check((await page.locator('[data-thread-label]').textContent()).includes('SOMI-NEW'),'menu entry automatically opens an assigned delivery');
+ await page.getByRole('button',{name:'Mở trò chuyện',exact:true}).click();await page.waitForFunction(()=>document.querySelector('[data-messages]').getAttribute('aria-busy')==='false');check((await page.locator('[data-thread-label]').textContent()).includes('SOMI-NEW'),'open conversation button works without URL id');
+ await page.locator('[data-open] select').selectOption('1');await page.locator('.cc-closed').waitFor();check((await page.locator('[data-thread-label]').textContent()).includes('SOMI-OLD'),'changing selected delivery opens correct conversation');
  await page.goto('http://customer.test/?page=customer&view=reports&id=2');await page.locator('[data-create]').waitFor();
  check(await page.locator('[data-tickets]').getByText('Hoàn tiền đơn cũ').count()===0,'order support excludes unrelated ticket');
  check(await page.locator('[data-create] [name=order_id]').isDisabled(),'order scope is fixed');
@@ -73,6 +77,7 @@ const {chromium}=require('playwright');
  await page.goto('http://customer.test/?page=customer&view=notifications');check(await page.locator('[data-p3-tab=chat]').count()===0,'notifications page does not expose legacy support/chat navigation');
  await page.goto('http://customer.test/?page=customer&view=chat&id=2');await page.locator('.cc-composer').waitFor();orders[1].status='CANCELLED';await page.locator('[data-refresh]').click();await page.locator('.cc-closed').waitFor();check(await page.locator('.cc-composer').count()===0,'status change closes composer on refresh');orders[1].status='IN_DELIVERY';
  await page.evaluate(()=>localStorage.setItem('somi-language','en'));await page.goto('http://customer.test/?page=customer&view=reports&id=2');await page.getByRole('heading',{name:'SOMI support',exact:true}).waitFor();check(await page.locator('[data-create] [type=submit]').textContent()==='Submit request ↗','English support interface available');
+ await page.goto('http://customer.test/?page=customer&view=chat&id=2');await page.locator('.cc-composer').waitFor();messages[0].attachments=[{file_id:'93',original_name:'delivery-photo.png',mime_type:'image/png'},{file_id:'94',original_name:'document.pdf',mime_type:'application/pdf'}];await page.locator('[data-refresh]').click();await page.locator('.cc-photo img').waitFor();await page.waitForFunction(()=>document.querySelector('.cc-photo img')?.naturalWidth>0);check(await page.locator('.cc-photo img').count()===1,'saved image attachment loads inline through authenticated endpoint');check((await page.locator('.cc-photo img').getAttribute('src')).includes('content=1&disposition=inline'),'image uses private content route');check(await page.getByRole('button',{name:'document.pdf',exact:false}).count()===1,'PDF remains a download attachment');await page.locator('[data-photo]').click();await page.locator('.cc-photo-dialog[open]').waitFor();check(await page.locator('.cc-photo-dialog img').getAttribute('alt')==='delivery-photo.png','image click opens named full preview');await page.keyboard.press('Escape');check(await page.locator('.cc-photo-dialog').count()===0,'Escape closes and removes preview');
  check(errors.length===0,'no runtime errors');console.log(`Customer communication: ${count} checks passed; local HTTP fixtures, no live uploads.`);
  }finally{await browser.close();}
 })().catch(e=>{console.error(e);process.exitCode=1;});

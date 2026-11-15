@@ -66,8 +66,23 @@
     const a = document.createElement('a'); a.href = 'public/api/storage.php?' + signed.download_query; a.download = ''; a.click();
   }
   function fileButtons(files, target) {
-    target.innerHTML = files.map(f => `<button type="button" class="cc-file" data-file="${h(f.file_id)}"><span aria-hidden="true">↧</span> ${h(f.original_name)}</button>`).join('');
+    target.innerHTML = files.map(f => ['image/jpeg','image/png','image/webp'].includes(f.mime_type)
+      ? `<figure class="cc-photo"><button type="button" class="cc-photo-open" data-photo="${h(f.file_id)}" data-name="${h(f.original_name)}" aria-label="${h(t('Xem ảnh: ','View image: ') + f.original_name)}"><img src="public/api/storage.php?file_id=${encodeURIComponent(f.file_id)}&content=1&disposition=inline" alt="${h(f.original_name)}" loading="lazy"></button><figcaption><span>${h(f.original_name)}</span><button type="button" data-file="${h(f.file_id)}">${h(t('Tải xuống','Download'))} ↓</button></figcaption></figure>`
+      : `<button type="button" class="cc-file" data-file="${h(f.file_id)}"><span aria-hidden="true">↧</span> ${h(f.original_name)}</button>`).join('');
     target.querySelectorAll('[data-file]').forEach(b => b.onclick = () => download(b.dataset.file).catch(error => { notice.textContent = error.message; }));
+    target.querySelectorAll('[data-photo]').forEach(b => {
+      const img=b.querySelector('img');
+      img.addEventListener('error',()=>{img.hidden=true;const text=document.createElement('span');text.className='cc-photo-error';text.textContent=t('Không tải được ảnh. Bấm để thử xem lại.','Image could not load. Click to retry viewing.');b.append(text);},{once:true});
+      b.onclick=()=>showPhoto(b.dataset.photo,b.dataset.name);
+    });
+  }
+  function showPhoto(id,name) {
+    root.querySelector('.cc-photo-dialog')?.close();
+    const dialog=document.createElement('dialog');dialog.className='cc-photo-dialog';dialog.setAttribute('aria-label',t('Xem ảnh đính kèm','Attachment preview'));
+    dialog.innerHTML=`<header><strong>${h(name)}</strong><button type="button" data-close aria-label="${h(t('Đóng','Close'))}">×</button></header><img src="public/api/storage.php?file_id=${encodeURIComponent(id)}&content=1&disposition=inline" alt="${h(name)}"><p data-image-error role="status"></p><button type="button" class="cc-secondary" data-download>${h(t('Tải ảnh xuống','Download image'))} ↓</button>`;
+    dialog.querySelector('[data-close]').onclick=()=>dialog.close();dialog.querySelector('[data-download]').onclick=()=>download(id).catch(error=>{dialog.querySelector('[data-image-error]').textContent=error.message;});
+    dialog.querySelector('img').onerror=()=>{dialog.querySelector('[data-image-error]').textContent=t('Không thể tải ảnh. Quyền truy cập hoặc thời hạn lưu có thể đã thay đổi.','The image could not load. Access or retention may have changed.');};
+    dialog.addEventListener('close',()=>dialog.remove(),{once:true});root.append(dialog);dialog.showModal();
   }
   function lock(form, locked) { form.querySelectorAll('input,textarea,select,button').forEach(el => { el.disabled = locked; }); }
 
@@ -136,18 +151,28 @@
         finally { sending = false; lock(composer,false); form.querySelector('button').disabled = false; }
       };
     }
+    let opening=false;
     async function open() {
-      if (sending) return;
+      if (sending || opening || !items.length) return;
+      const button=form.querySelector('button'),select=form.elements.order_id;
+      opening=true;button.disabled=true;select.disabled=true;button.textContent=t('Đang mở…','Opening…');messages.setAttribute('aria-busy','true');
+      try {
       clearInterval(timer); token++; current = form.elements.order_id.value; latestState = ''; notice.textContent = '';
       const version = token;
       while (refreshing) { await new Promise(resolve => setTimeout(resolve,30)); if (version !== token || !alive) return; }
       await load();
       if (!alive || version !== token) return;
       timer = setInterval(() => { if (!document.hidden && !sending) load(null,true).catch(showError); },8000);
+      } finally { opening=false;button.disabled=false;select.disabled=false;button.textContent=t('Mở trò chuyện','Open conversation');messages.setAttribute('aria-busy','false'); }
     }
     form.onsubmit = event => { event.preventDefault(); open().catch(showError); };
-    content.querySelector('[data-refresh]').onclick = () => load().catch(showError);
-    if (scope && items.length) await open();
+    form.querySelector('button').type='submit';
+    form.elements.order_id.onchange=()=>open().catch(showError);
+    content.querySelector('[data-refresh]').onclick = () => (current ? load() : open()).catch(showError);
+    if (items.length) {
+      if(!scope)form.elements.order_id.value=String((items.find(item=>canChat(item.status))||items[0]).order_id);
+      await open();
+    }
   }
 
   async function support() {

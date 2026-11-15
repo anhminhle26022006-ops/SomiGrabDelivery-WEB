@@ -9,4 +9,4 @@ $sessionUser=['user_id'=>2,'full_name'=>'Khách hàng thử nghiệm','app_langu
 $hasShipperWorkspace=true;
 ?><!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/public/assets/css/app.css"></head><body data-page="customer">
 <?php require __DIR__.'/../app/Views/customer/index.php'; ?>
-</body></html>
+<script defer src="/public/assets/js/app.js"></script></body></html>

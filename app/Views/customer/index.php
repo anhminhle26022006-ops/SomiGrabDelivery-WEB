@@ -17,7 +17,8 @@ $customerViews = [
     'tracking'      => ['Theo dõi đơn', 'orders'],
     'review'        => ['Đánh giá shipper', 'orders'],
     'report'        => ['Báo cáo sự cố', 'reports'],
-    'reports'       => ['Báo cáo của tôi', 'reports'],
+    'reports'       => ['Hỗ trợ từ SOMI', 'reports'],
+    'chat'          => ['Chat với Shipper', 'chat'],
     'notifications' => ['Thông báo', 'notifications'],
     'account'       => ['Tài khoản', 'account'],
     'addresses'     => ['Sổ địa chỉ', 'account'],
@@ -37,13 +38,15 @@ $nav = [
     'dashboard' => ['Tổng quan', 'home'],
     'create'    => ['Gửi hàng', 'send'],
     'orders'    => ['Đơn hàng', 'list'],
-    'reports'   => ['Báo cáo', 'report'],
+    'chat'      => ['Chat với Shipper', 'chat'],
+    'reports'   => ['Hỗ trợ', 'report'],
 ];
 $navIcon = [
     'home' => '<path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-5h4v5"/>',
     'send' => '<path d="M4 12h12"/><path d="m11 6 6 6-6 6"/><path d="M20 5v14"/>',
     'list' => '<rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 8h8M8 12h8M8 16h5"/>',
     'report' => '<path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M10 13h6M10 17h4"/>',
+    'chat' => '<path d="M21 11a8 8 0 0 1-8 8H4l-2 2V11a9 9 0 0 1 19 0Z"/>',
     'bell' => '<path d="M18 9a6 6 0 0 0-12 0c0 6-2.5 7.5-2.5 7.5h17S18 15 18 9"/><path d="M10.5 20a1.7 1.7 0 0 0 3 0"/>',
     'user' => '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
     'globe' => '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3"/>',
@@ -110,8 +113,19 @@ function customerIcon(string $paths, int $size = 20): string {
 
   <main data-geoapify-key="<?= e(getenv('GEOAPIFY_BROWSER_API_KEY') ?: '') ?>" class="c-main" id="c-main"<?= $liveCustomerView ? ' data-customer-server aria-busy="true"' : '' ?>>
     <div data-account-banner></div>
-    <?php if ($person3View): require __DIR__.'/../shared/person3-panel.php'; else: require __DIR__ . '/pages/' . $customerView . '.php'; endif; ?>
-    <?php if (in_array($customerView,['order','tracking'],true)) require __DIR__.'/../shared/person3-panel.php'; ?>
+    <?php if (in_array($customerView,['report','reports','chat'],true)): ?>
+      <?php $customerCommunicationMode=$customerView==='chat'?'chat':'support'; require __DIR__.'/communication.php'; ?>
+    <?php elseif ($customerView==='notifications'): ?>
+      <section class="p3-panel card" data-person3-panel>
+        <h2>Thông báo</h2><nav hidden><button type="button" data-p3-tab="notifications">Thông báo</button></nav>
+        <p data-p3-status role="status" aria-live="polite"></p><div data-p3-content></div>
+      </section>
+      <link rel="stylesheet" href="<?= e(assetUrl('public/assets/css/person3.css')) ?>">
+      <script defer src="<?= e(assetUrl('public/assets/js/person3.js')) ?>"></script>
+    <?php else: require __DIR__ . '/pages/' . $customerView . '.php'; endif; ?>
+    <?php if (in_array($customerView,['order','tracking'],true)): ?>
+      <?php $customerCommunicationMode='chat'; require __DIR__.'/communication.php'; ?>
+    <?php endif; ?>
   </main>
 
   <?php if (!$hasShipperWorkspace): ?>
@@ -132,7 +146,7 @@ function customerIcon(string $paths, int $size = 20): string {
 
   <nav class="c-tabbar d-md-none" aria-label="Điều hướng nhanh">
     <?php
-    $tabs = ['dashboard' => ['Tổng quan', 'home'], 'create' => ['Gửi hàng', 'send'], 'orders' => ['Đơn hàng', 'list'], 'notifications' => ['Thông báo', 'bell'], 'account' => ['Tài khoản', 'user']];
+    $tabs = ['dashboard' => ['Tổng quan', 'home'], 'create' => ['Gửi hàng', 'send'], 'orders' => ['Đơn hàng', 'list'], 'chat' => ['Chat với Shipper', 'chat'], 'reports' => ['Hỗ trợ', 'report'], 'account' => ['Tài khoản', 'user']];
     foreach ($tabs as $key => [$label, $iconKey]): ?>
       <a href="?page=customer&amp;view=<?= e($key) ?>"<?= $key === 'create' ? ' data-send-link' : '' ?> class="<?= $customerSection === $key ? 'active' : '' ?>"<?= $customerSection === $key ? ' aria-current="page"' : '' ?>>
         <?= customerIcon($navIcon[$iconKey], 21) ?><span><?= e($label) ?></span><?php if ($key === 'notifications'): ?><i class="badge rounded-pill c-count" data-unread hidden>0</i><?php endif; ?>
@@ -140,7 +154,7 @@ function customerIcon(string $paths, int $size = 20): string {
     <?php endforeach; ?>
   </nav>
 
-  <?php if (!$liveCustomerView && !$person3View): ?>
+  <?php if (!$liveCustomerView && !$person3View && $customerView!=='chat'): ?>
   <aside class="c-demo" data-demo <?= $liveCustomerView ? 'hidden' : '' ?>>
     <button type="button" class="c-demo-toggle" data-demo-toggle aria-expanded="false"><?= customerIcon('<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>', 18) ?><span>Mô phỏng demo</span></button>
     <div class="c-demo-body" data-demo-body hidden></div>
@@ -164,7 +178,7 @@ function customerIcon(string $paths, int $size = 20): string {
 <script type="application/json" id="customer-profile-data"><?= json_encode(['profile'=>array_intersect_key($sessionUser,array_flip(['user_id','full_name','email','phone','nationality_code','app_language','account_status','email_verified_at','phone_verified_at']))],JSON_HEX_TAG|JSON_HEX_AMP|JSON_HEX_APOS|JSON_HEX_QUOT|JSON_UNESCAPED_UNICODE) ?></script>
 <?php endif; ?>
 <script defer src="<?= e(assetUrl($asset . 'server.js')) ?>"></script>
-<?php elseif ($person3View): ?>
+<?php elseif ($person3View || $customerView==='chat'): ?>
 <script defer src="<?= e(assetUrl($asset . 'locale-menu.js')) ?>"></script>
 <?php else: ?>
 <script defer src="<?= e(assetUrl($asset . 'store.js')) ?>"></script>

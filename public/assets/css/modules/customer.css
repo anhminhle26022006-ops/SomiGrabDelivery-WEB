@@ -550,7 +550,7 @@ body[data-page="customer"] .modal-footer > * { margin: 0; }
   .c-figures strong { font-size: 20px; }
   .c-map { min-height: 300px; }
   .c-form-actions .btn { flex: 1; }
-  .c-tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; display: grid; grid-template-columns: repeat(5, 1fr); padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); background: rgba(255, 255, 255, .96); backdrop-filter: blur(16px); border-top: 1px solid var(--c-line); }
+  .c-tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 50; display: grid; grid-template-columns: repeat(6, 1fr); padding: 6px 4px calc(6px + env(safe-area-inset-bottom)); background: rgba(255, 255, 255, .96); backdrop-filter: blur(16px); border-top: 1px solid var(--c-line); }
   .c-tabbar a { position: relative; display: grid; justify-items: center; gap: 3px; padding: 6px 2px; border-radius: 12px; font-size: 10.5px; font-weight: 600; color: var(--c-muted); }
   .c-tabbar a.active { color: var(--c-navy); }
   .c-tabbar a.active .c-icon { stroke-width: 2.3; }

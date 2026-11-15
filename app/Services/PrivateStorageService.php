@@ -59,6 +59,13 @@ final class PrivateStorageService
     }
     public function listing(int $user,array $in,string $role='CUSTOMER'):array {
         if(isset($in['ticket_id'])){
+            if($role!=='ADMIN'){
+                $ticket=DeliveryInput::id($in['ticket_id']);
+                $q=$this->db->prepare('SELECT 1 FROM support_tickets WHERE ticket_id=? AND opened_by=? AND opened_role=?');$q->execute([$ticket,$user,$role]);
+                if(!$q->fetchColumn())throw new DeliveryApiError(404,'TICKET_NOT_FOUND','Ticket not found.');
+                $q=$this->db->prepare("SELECT file_id,purpose,original_name,mime_type,byte_size FROM private_files WHERE ticket_id=? AND owner_id=? AND purpose='TICKET' AND deleted_at IS NULL AND delete_after>now() ORDER BY file_id DESC LIMIT 50");$q->execute([$ticket,$user]);
+                return ['items'=>$q->fetchAll()];
+            }
             AccessControl::requirePermission($this->db,$user,'ADMIN','storage.read_support');AccessControl::requirePermission($this->db,$user,'ADMIN','support.manage_all');
             $ticket=DeliveryInput::id($in['ticket_id']);$q=$this->db->prepare('SELECT order_id FROM support_tickets WHERE ticket_id=?');$q->execute([$ticket]);$row=$q->fetch();if(!$row)throw new DeliveryApiError(404,'TICKET_NOT_FOUND','Ticket not found.');
             $q=$this->db->prepare("SELECT file_id,purpose,original_name,mime_type,byte_size FROM private_files WHERE (ticket_id=? OR (order_id=? AND (purpose='EVIDENCE' OR (purpose='CHAT' AND message_id IS NOT NULL)))) AND deleted_at IS NULL AND delete_after>now() ORDER BY file_id DESC LIMIT 50");$q->execute([$ticket,$row['order_id']]);

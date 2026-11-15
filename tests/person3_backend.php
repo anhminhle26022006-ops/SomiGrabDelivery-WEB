@@ -62,6 +62,12 @@ try{
     $ticketBody=['order_id'=>$id,'category'=>'DELIVERY','subject'=>'Test','description'=>'Need help','client_key'=>'ticket-test-0001'];
     $ticket=tx($db,fn()=>$svc->tickets(2,'CUSTOMER',$ticketBody,true))['ticket'];tx($db,fn()=>$svc->tickets(2,'CUSTOMER',$ticketBody,true));check((int)value($db,'SELECT count(*) FROM support_tickets')===1,'ticket retry dedup');
     rejects(fn()=>$svc->tickets(3,'CUSTOMER',['id'=>$ticket['ticket_id']],false),'TICKET_NOT_FOUND');
+    check(count($svc->tickets(2,'CUSTOMER',['order_id'=>$id],false)['items'])===1,'ticket list filtered to selected order');
+    $differentOrder=newOrder($db);
+    check(count($svc->tickets(2,'CUSTOMER',['order_id'=>$differentOrder],false)['items'])===0,'other order does not show unrelated ticket');
+    rejects(fn()=>$svc->tickets(3,'CUSTOMER',['order_id'=>$id],false),'ORDER_NOT_FOUND');
+    check(isset($svc->tickets(2,'CUSTOMER',[],false)['items'][0]['order_code']),'general ticket list includes related order code');
+
     check(count($svc->tickets(2,'CUSTOMER',['id'=>$ticket['ticket_id']],false)['events'])===1,'ticket creation history');
     tx($db,fn()=>$svc->tickets(3,'CUSTOMER',['category'=>'ACCOUNT','subject'=>'Account','description'=>'Test','client_key'=>'account-test-0001'],true));check((int)value($db,'SELECT count(*) FROM support_tickets WHERE order_id IS NULL')===1,'account ticket');
     $finance=new ShipperFinanceService($db);check(tx($db,fn()=>$finance->accrue($id))===null,'no earnings before delivery');
@@ -110,9 +116,12 @@ try{
     check($storage->content($fileId,2,'CUSTOMER')['path']===$path,'direct authenticated owner download');
     rejects(fn()=>$storage->content($fileId,3,'CUSTOMER'),'FILE_NOT_FOUND');
     check(tx($db,fn()=>$storage->content($fileId,1,'ADMIN'))['path']===$path,'direct admin read requires permissions and audit');
-    check(count(tx($db,fn()=>$storage->listing(1,['ticket_id'=>$ticket['ticket_id']]))['items'])===1,'admin lists related support files');
+    check(count(tx($db,fn()=>$storage->listing(1,['ticket_id'=>$ticket['ticket_id']],'ADMIN'))['items'])===1,'admin lists related support files');
+    check(count(tx($db,fn()=>$storage->listing(2,['ticket_id'=>$ticket['ticket_id']],'CUSTOMER'))['items'])===1,'customer sees saved file on their own ticket');
+    rejects(fn()=>tx($db,fn()=>$storage->listing(3,['ticket_id'=>$ticket['ticket_id']],'CUSTOMER')),'TICKET_NOT_FOUND');
+    rejects(fn()=>tx($db,fn()=>$storage->listing(2,['ticket_id'=>$ticket['ticket_id']],'SHIPPER')),'TICKET_NOT_FOUND');
     check(isset(tx($db,fn()=>$storage->signed($fileId,1,'ADMIN'))['download_query']),'admin signed ticket file audited');
-    rejects(fn()=>tx($db,fn()=>$storage->listing(3,['ticket_id'=>$ticket['ticket_id']])),'PERMISSION_DENIED');
+    rejects(fn()=>tx($db,fn()=>$storage->listing(3,['ticket_id'=>$ticket['ticket_id']],'ADMIN')),'PERMISSION_DENIED');
     rejects(fn()=>$storage->signed($fileId,3,'CUSTOMER'),'FILE_NOT_FOUND');
     rejects(fn()=>$storage->download($fileId,3,'CUSTOMER',$query),'LINK_EXPIRED');
     rejects(fn()=>$storage->download($fileId,2,'CUSTOMER',array_replace($query,['signature'=>'tampered'])),'LINK_EXPIRED');
@@ -150,13 +159,13 @@ try{
     $q=$db->prepare("INSERT INTO private_files(owner_id,order_id,purpose,object_key,original_name,mime_type,byte_size,checksum_sha256) VALUES(2,?,'CHAT',?,'photo.png','image/png',7,?) RETURNING file_id");$q->execute([$chatOrder,bin2hex(random_bytes(32)),hash('sha256','fixture')]);$chatFile=(int)$q->fetchColumn();
     rejects(fn()=>(new PrivateStorageService($db))->signed($chatFile,4,'SHIPPER'),'FILE_NOT_FOUND');
     $chatTicket=tx($db,fn()=>$svc->tickets(2,'CUSTOMER',['order_id'=>$chatOrder,'category'=>'DELIVERY','subject'=>'Chat support fixture','description'=>'Fixture','client_key'=>'ticket-chat-privacy'],true))['ticket'];
-    check(count(tx($db,fn()=>(new PrivateStorageService($db))->listing(1,['ticket_id'=>$chatTicket['ticket_id']]))['items'])===0,'admin ticket files exclude unshared chat drafts');
+    check(count(tx($db,fn()=>(new PrivateStorageService($db))->listing(1,['ticket_id'=>$chatTicket['ticket_id']],'ADMIN'))['items'])===0,'admin ticket files exclude unshared chat drafts');
     rejects(fn()=>tx($db,fn()=>(new PrivateStorageService($db))->signed($chatFile,1,'ADMIN')),'FILE_NOT_FOUND');
     $attachment=['order_id'=>$chatOrder,'body'=>'','file_ids'=>[(string)$chatFile],'client_key'=>'attachment-test-1'];
     $attached=tx($db,fn()=>$svc->chat(2,'CUSTOMER',$attachment,true));check(isset($attached['message']['message_id']),'attachment-only message');
     tx($db,fn()=>$svc->chat(2,'CUSTOMER',$attachment,true));check(true,'attachment retry preserves same message');
     check(count(tx($db,fn()=>$svc->chat(4,'SHIPPER',['order_id'=>$chatOrder],false))['items'][0]['attachments'])===1,'peer receives bound attachment metadata');
-    check(count(tx($db,fn()=>(new PrivateStorageService($db))->listing(1,['ticket_id'=>$chatTicket['ticket_id']]))['items'])===1,'admin ticket files include intentionally shared attachment');
+    check(count(tx($db,fn()=>(new PrivateStorageService($db))->listing(1,['ticket_id'=>$chatTicket['ticket_id']],'ADMIN'))['items'])===1,'admin ticket files include intentionally shared attachment');
     check(isset(tx($db,fn()=>(new PrivateStorageService($db))->signed($chatFile,4,'SHIPPER'))['download_query']),'peer can sign shared attachment');
     rejects(fn()=>tx($db,fn()=>$svc->chat(2,'CUSTOMER',array_replace($attachment,['client_key'=>'attachment-test-2']),true)),'FILE_NOT_ATTACHABLE');
     rejects(fn()=>tx($db,fn()=>(new PrivateStorageService($db))->discard(2,$chatFile)),'FILE_IN_USE');
